@@ -12,3 +12,13 @@ docs/
 
 # Dotenv file
 .env
+
+# IDE
+.idea/
+
+# node_modules
+node_modules/
+
+# coverage
+lcov.info
+lcov.html
