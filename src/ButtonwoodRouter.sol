@@ -1,4 +1,5 @@
-pragma solidity =0.6.6;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.13;
 
 import 'buttonwood-core/contracts/interfaces/IButtonwoodFactory.sol';
 import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
@@ -16,7 +17,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     address public immutable override WETH;
 
     modifier ensure(uint256 deadline) {
-        require(deadline >= block.timestamp, 'ButtonwoodRouter: EXPIRED');
+        if (block.timestamp > deadline) {
+            revert Expired();
+        }
         _;
     }
 
@@ -48,12 +51,16 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         } else {
             uint256 amountBOptimal = ButtonwoodLibrary.quote(amountADesired, poolA, poolB);
             if (amountBOptimal <= amountBDesired) {
-                require(amountBOptimal >= amountBMin, 'ButtonwoodRouter: INSUFFICIENT_B_AMOUNT');
+                if(amountBOptimal < amountBMin) {
+                    revert InsufficientBAmount();
+                }
                 (amountA, amountB) = (amountADesired, amountBOptimal);
             } else {
                 uint256 amountAOptimal = ButtonwoodLibrary.quote(amountBDesired, poolB, poolA);
                 assert(amountAOptimal <= amountADesired);
-                require(amountAOptimal >= amountAMin, 'ButtonwoodRouter: INSUFFICIENT_A_AMOUNT');
+                if(amountAOptimal < amountAMin) {
+                    revert InsufficientAAmount();
+                }
                 (amountA, amountB) = (amountAOptimal, amountBDesired);
             }
         }
@@ -73,22 +80,34 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         }
         (uint256 poolA, uint256 poolB) = ButtonwoodLibrary.getPools(factory, tokenA, tokenB);
         (uint256 reservoirA, uint256 reservoirB) = ButtonwoodLibrary.getReservoirs(factory, tokenA, tokenB);
-        require(reservoirA > 0 || reservoirB > 0, 'ButtonwoodRouter: NO_RESERVOIR');
+        if (reservoirA == 0 && reservoirB == 0) {
+            revert NoReservoir();
+        }
         // can't initialize by matching with a reservoir
         // the first liquidity addition should happen through _addLiquidity
-        require(poolA > 0 && poolB > 0, 'ButtonwoodRouter: NOT_INITIALIZED');
+        if (poolA == 0 || poolB == 0) {
+            revert NotInitialized();
+        }
 
         if (reservoirA > 0) {
             // we take from reservoirA and the user-provided amountBDesired
             uint256 amountAOptimal = ButtonwoodLibrary.quote(amountBDesired, poolB, poolA);
-            require(amountAOptimal >= amountAMin, 'ButtonwoodRouter: INSUFFICIENT_A_AMOUNT');
-            require(reservoirA >= amountAOptimal, 'ButtonwoodRouter: INSUFFICIENT_A_RESERVOIR');
+            if (amountAOptimal < amountAMin) {
+                revert InsufficientAAmount();
+            }
+            if (reservoirA < amountAOptimal) {
+                revert InsufficientAReservoir();
+            }
             (amountA, amountB) = (0, amountBDesired);
         } else {
             // we take from reservoirB and the user-provided amountADesired
             uint256 amountBOptimal = ButtonwoodLibrary.quote(amountADesired, poolA, poolB);
-            require(amountBOptimal >= amountBMin, 'ButtonwoodRouter: INSUFFICIENT_B_AMOUNT');
-            require(reservoirB >= amountBOptimal, 'ButtonwoodRouter: INSUFFICIENT_B_RESERVOIR');
+            if (amountBOptimal < amountBMin) {
+                revert InsufficientBAmount();
+            }
+            if (reservoirB < amountBOptimal) {
+                revert InsufficientBReservoir();
+            }
             (amountA, amountB) = (amountADesired, 0);
         }
     }
@@ -248,8 +267,12 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         (uint256 amount0, uint256 amount1) = IButtonwoodPair(pair).burn(to);
         (address token0, ) = ButtonwoodLibrary.sortTokens(tokenA, tokenB);
         (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
-        require(amountA >= amountAMin, 'ButtonwoodRouter: INSUFFICIENT_A_AMOUNT');
-        require(amountB >= amountBMin, 'ButtonwoodRouter: INSUFFICIENT_B_AMOUNT');
+        if (amountA < amountAMin) {
+            revert InsufficientAAmount();
+        }
+        if (amountB < amountBMin) {
+            revert InsufficientBAmount();
+        }
     }
 
     // **** REMOVE LIQUIDITY ****
@@ -267,8 +290,12 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         (uint256 amount0, uint256 amount1) = IButtonwoodPair(pair).burnFromReservoir(to);
         (address token0, ) = ButtonwoodLibrary.sortTokens(tokenA, tokenB);
         (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
-        require(amountA >= amountAMin, 'ButtonwoodRouter: INSUFFICIENT_A_AMOUNT');
-        require(amountB >= amountBMin, 'ButtonwoodRouter: INSUFFICIENT_B_AMOUNT');
+        if (amountA < amountAMin) {
+            revert InsufficientAAmount();
+        }
+        if (amountB < amountBMin) {
+            revert InsufficientBAmount();
+        }
     }
 
     function removeLiquidityETH(
@@ -427,7 +454,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
         amounts = ButtonwoodLibrary.getAmountsOut(factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, 'ButtonwoodRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+        if (amounts[amounts.length -1] < amountOutMin) {
+            revert InsufficientOutputAmount();
+        }
         IButtonwoodPair pair = IButtonwoodPair(ButtonwoodLibrary.pairFor(factory, path[0], path[1]));
         pair.sync();
 
@@ -443,7 +472,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
         amounts = ButtonwoodLibrary.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= amountInMax, 'ButtonwoodRouter: EXCESSIVE_INPUT_AMOUNT');
+        if (amounts[0] < amountInMax) {
+            revert ExcessiveInputAmount();
+        }
         IButtonwoodPair pair = IButtonwoodPair(ButtonwoodLibrary.pairFor(factory, path[0], path[1]));
         pair.sync();
 
@@ -457,9 +488,13 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         address to,
         uint256 deadline
     ) external virtual override payable ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == WETH, 'ButtonwoodRouter: INVALID_PATH');
+        if (path[0] != WETH) {
+            revert InvalidPath();
+        }
         amounts = ButtonwoodLibrary.getAmountsOut(factory, msg.value, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, 'ButtonwoodRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+        if (amounts[amounts.length -1] < amountOutMin) {
+            revert InsufficientOutputAmount();
+        }
         IButtonwoodPair pair = IButtonwoodPair(ButtonwoodLibrary.pairFor(factory, path[0], path[1]));
         pair.sync();
 
@@ -475,9 +510,13 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[path.length - 1] == WETH, 'ButtonwoodRouter: INVALID_PATH');
+        if (path[path.length - 1] != WETH) {
+            revert InvalidPath();
+        }
         amounts = ButtonwoodLibrary.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= amountInMax, 'ButtonwoodRouter: EXCESSIVE_INPUT_AMOUNT');
+        if (amounts[0] > amountInMax) {
+            revert ExcessiveInputAmount();
+        }
         IButtonwoodPair pair = IButtonwoodPair(ButtonwoodLibrary.pairFor(factory, path[0], path[1]));
         pair.sync();
 
@@ -494,9 +533,13 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[path.length - 1] == WETH, 'ButtonwoodRouter: INVALID_PATH');
+        if (path[path.length -1 ] != WETH) {
+            revert InvalidPath();
+        }
         amounts = ButtonwoodLibrary.getAmountsOut(factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, 'ButtonwoodRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+        if (amounts[amounts.length - 1] < amountOutMin) {
+            revert InsufficientOutputAmount();
+        }
         IButtonwoodPair pair = IButtonwoodPair(ButtonwoodLibrary.pairFor(factory, path[0], path[1]));
         pair.sync();
 
@@ -512,9 +555,13 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         address to,
         uint256 deadline
     ) external virtual override payable ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == WETH, 'ButtonwoodRouter: INVALID_PATH');
+        if (path[0] != WETH) {
+            return InvalidPath();
+        }
         amounts = ButtonwoodLibrary.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= msg.value, 'ButtonwoodRouter: EXCESSIVE_INPUT_AMOUNT');
+        if (amounts[0] > msg.value) {
+            revert ExcessiveInputAmount();
+        }
         IButtonwoodPair pair = IButtonwoodPair(ButtonwoodLibrary.pairFor(factory, path[0], path[1]));
         pair.sync();
 
@@ -580,10 +627,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         TransferHelper.safeTransferFrom(path[0], msg.sender, address(pair), amountIn);
         uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
         _swapSupportingFeeOnTransferTokens(path, to);
-        require(
-            IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) >= amountOutMin,
-            'ButtonwoodRouter: INSUFFICIENT_OUTPUT_AMOUNT'
-        );
+        if (IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) < amountOutMin) {
+            revert InsufficientOutputAmount();
+        }
     }
 
     function swapExactETHForTokensSupportingFeeOnTransferTokens(
@@ -592,7 +638,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         address to,
         uint256 deadline
     ) external virtual override payable ensure(deadline) {
-        require(path[0] == WETH, 'ButtonwoodRouter: INVALID_PATH');
+        if (path[0] != WETH) {
+            revert InvalidPath();
+        }
         uint256 amountIn = msg.value;
         IButtonwoodPair pair = IButtonwoodPair(ButtonwoodLibrary.pairFor(factory, path[0], path[1]));
         pair.sync();
@@ -601,10 +649,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         assert(IWETH(WETH).transfer(address(pair), amountIn));
         uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
         _swapSupportingFeeOnTransferTokens(path, to);
-        require(
-            IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) >= amountOutMin,
-            'ButtonwoodRouter: INSUFFICIENT_OUTPUT_AMOUNT'
-        );
+        if (IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) < amountOutMin) {
+            revert InsufficientOutputAmount();
+        }
     }
 
     function swapExactTokensForETHSupportingFeeOnTransferTokens(
@@ -614,14 +661,18 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) {
-        require(path[path.length - 1] == WETH, 'ButtonwoodRouter: INVALID_PATH');
+        if (path[path.length - 1] != WETH) {
+            revert InvalidPath();
+        }
         IButtonwoodPair pair = IButtonwoodPair(ButtonwoodLibrary.pairFor(factory, path[0], path[1]));
         pair.sync();
 
         TransferHelper.safeTransferFrom(path[0], msg.sender, address(pair), amountIn);
         _swapSupportingFeeOnTransferTokens(path, address(this));
         uint256 amountOut = IERC20(WETH).balanceOf(address(this));
-        require(amountOut >= amountOutMin, 'ButtonwoodRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+        if (amountOut < amountOutMin) {
+            revert InsufficientOutputAmount();
+        }
         IWETH(WETH).withdraw(amountOut);
         TransferHelper.safeTransferETH(to, amountOut);
     }

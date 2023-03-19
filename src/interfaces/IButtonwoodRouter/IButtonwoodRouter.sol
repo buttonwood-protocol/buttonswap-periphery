@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
+import "./IButtonwoodRouterErrors.sol";
 
-interface IButtonwoodRouter {
+interface IButtonwoodRouter is IButtonwoodRouterErrors {
   function factory() external pure returns (address);
 
   function WETH() external pure returns (address);
