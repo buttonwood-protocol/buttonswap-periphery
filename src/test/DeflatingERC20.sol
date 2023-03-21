@@ -1,12 +1,12 @@
 pragma solidity =0.6.6;
 
-import '../libraries/SafeMath.sol';
+import "../libraries/SafeMath.sol";
 
 contract DeflatingERC20 {
     using SafeMath for uint256;
 
-    string public constant name = 'Deflating Test Token';
-    string public constant symbol = 'DTT';
+    string public constant name = "Deflating Test Token";
+    string public constant symbol = "DTT";
     uint8 public constant decimals = 18;
     uint256 public totalSupply;
     mapping(address => uint256) public balanceOf;
@@ -27,9 +27,9 @@ contract DeflatingERC20 {
         }
         DOMAIN_SEPARATOR = keccak256(
             abi.encode(
-                keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
                 keccak256(bytes(name)),
-                keccak256(bytes('1')),
+                keccak256(bytes("1")),
                 chainId,
                 address(this)
             )
@@ -49,20 +49,12 @@ contract DeflatingERC20 {
         emit Transfer(from, address(0), value);
     }
 
-    function _approve(
-        address owner,
-        address spender,
-        uint256 value
-    ) private {
+    function _approve(address owner, address spender, uint256 value) private {
         allowance[owner][spender] = value;
         emit Approval(owner, spender, value);
     }
 
-    function _transfer(
-        address from,
-        address to,
-        uint256 value
-    ) private {
+    function _transfer(address from, address to, uint256 value) private {
         uint256 burnAmount = value / 100;
         _burn(from, burnAmount);
         uint256 transferAmount = value.sub(burnAmount);
@@ -81,11 +73,7 @@ contract DeflatingERC20 {
         return true;
     }
 
-    function transferFrom(
-        address from,
-        address to,
-        uint256 value
-    ) external returns (bool) {
+    function transferFrom(address from, address to, uint256 value) external returns (bool) {
         if (allowance[from][msg.sender] != uint256(-1)) {
             allowance[from][msg.sender] = allowance[from][msg.sender].sub(value);
         }
@@ -93,25 +81,19 @@ contract DeflatingERC20 {
         return true;
     }
 
-    function permit(
-        address owner,
-        address spender,
-        uint256 value,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external {
-        require(deadline >= block.timestamp, 'EXPIRED');
+    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
+        external
+    {
+        require(deadline >= block.timestamp, "EXPIRED");
         bytes32 digest = keccak256(
             abi.encodePacked(
-                '\x19\x01',
+                "\x19\x01",
                 DOMAIN_SEPARATOR,
                 keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonces[owner]++, deadline))
             )
         );
         address recoveredAddress = ecrecover(digest, v, r, s);
-        require(recoveredAddress != address(0) && recoveredAddress == owner, 'INVALID_SIGNATURE');
+        require(recoveredAddress != address(0) && recoveredAddress == owner, "INVALID_SIGNATURE");
         _approve(owner, spender, value);
     }
 }

@@ -1,11 +1,11 @@
 pragma solidity =0.6.6;
 
-import 'buttonwood-core/contracts/interfaces/IButtonwoodFactory.sol';
-import 'buttonwood-core/contracts/interfaces/IButtonwoodPair.sol';
-import '@uniswap/lib/contracts/libraries/FixedPoint.sol';
+import "buttonwood-core/contracts/interfaces/IButtonwoodFactory.sol";
+import "buttonwood-core/contracts/interfaces/IButtonwoodPair.sol";
+import "@uniswap/lib/contracts/libraries/FixedPoint.sol";
 
-import '../libraries/ButtonwoodOracleLibrary.sol';
-import '../libraries/ButtonwoodLibrary.sol';
+import "../libraries/ButtonwoodOracleLibrary.sol";
+import "../libraries/ButtonwoodLibrary.sol";
 
 // fixed window oracle that recomputes the average price for the entire period once every period
 // note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
@@ -24,11 +24,7 @@ contract ExampleOracleSimple {
     FixedPoint.uq112x112 public price0Average;
     FixedPoint.uq112x112 public price1Average;
 
-    constructor(
-        address factory,
-        address tokenA,
-        address tokenB
-    ) public {
+    constructor(address factory, address tokenA, address tokenB) public {
         IButtonwoodPair _pair = IButtonwoodPair(ButtonwoodLibrary.pairFor(factory, tokenA, tokenB));
         pair = _pair;
         token0 = _pair.token0();
@@ -38,16 +34,16 @@ contract ExampleOracleSimple {
         uint112 reserve0;
         uint112 reserve1;
         (reserve0, reserve1, blockTimestampLast) = _pair.getPools();
-        require(reserve0 != 0 && reserve1 != 0, 'ExampleOracleSimple: NO_RESERVES'); // ensure that there's liquidity in the pair
+        require(reserve0 != 0 && reserve1 != 0, "ExampleOracleSimple: NO_RESERVES"); // ensure that there's liquidity in the pair
     }
 
     function update() external {
-        (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp) = ButtonwoodOracleLibrary
-            .currentCumulativePrices(address(pair));
+        (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp) =
+            ButtonwoodOracleLibrary.currentCumulativePrices(address(pair));
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
 
         // ensure that at least one full period has passed since the last update
-        require(timeElapsed >= PERIOD, 'ExampleOracleSimple: PERIOD_NOT_ELAPSED');
+        require(timeElapsed >= PERIOD, "ExampleOracleSimple: PERIOD_NOT_ELAPSED");
 
         // overflow is desired, casting never truncates
         // cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
@@ -64,7 +60,7 @@ contract ExampleOracleSimple {
         if (token == token0) {
             amountOut = price0Average.mul(amountIn).decode144();
         } else {
-            require(token == token1, 'ExampleOracleSimple: INVALID_TOKEN');
+            require(token == token1, "ExampleOracleSimple: INVALID_TOKEN");
             amountOut = price1Average.mul(amountIn).decode144();
         }
     }

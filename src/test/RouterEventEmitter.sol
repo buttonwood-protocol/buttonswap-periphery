@@ -1,6 +1,6 @@
 pragma solidity =0.6.6;
 
-import '../interfaces/IButtonwoodRouter.sol';
+import "../interfaces/IButtonwoodRouter.sol";
 
 contract RouterEventEmitter {
     event Amounts(uint256[] amounts);
@@ -17,12 +17,7 @@ contract RouterEventEmitter {
     ) external {
         (bool success, bytes memory returnData) = router.delegatecall(
             abi.encodeWithSelector(
-                IButtonwoodRouter(router).swapExactTokensForTokens.selector,
-                amountIn,
-                amountOutMin,
-                path,
-                to,
-                deadline
+                IButtonwoodRouter(router).swapExactTokensForTokens.selector, amountIn, amountOutMin, path, to, deadline
             )
         );
         assert(success);
@@ -39,12 +34,7 @@ contract RouterEventEmitter {
     ) external {
         (bool success, bytes memory returnData) = router.delegatecall(
             abi.encodeWithSelector(
-                IButtonwoodRouter(router).swapTokensForExactTokens.selector,
-                amountOut,
-                amountInMax,
-                path,
-                to,
-                deadline
+                IButtonwoodRouter(router).swapTokensForExactTokens.selector, amountOut, amountInMax, path, to, deadline
             )
         );
         assert(success);
@@ -60,11 +50,7 @@ contract RouterEventEmitter {
     ) external payable {
         (bool success, bytes memory returnData) = router.delegatecall(
             abi.encodeWithSelector(
-                IButtonwoodRouter(router).swapExactETHForTokens.selector,
-                amountOutMin,
-                path,
-                to,
-                deadline
+                IButtonwoodRouter(router).swapExactETHForTokens.selector, amountOutMin, path, to, deadline
             )
         );
         assert(success);
@@ -81,12 +67,7 @@ contract RouterEventEmitter {
     ) external {
         (bool success, bytes memory returnData) = router.delegatecall(
             abi.encodeWithSelector(
-                IButtonwoodRouter(router).swapTokensForExactETH.selector,
-                amountOut,
-                amountInMax,
-                path,
-                to,
-                deadline
+                IButtonwoodRouter(router).swapTokensForExactETH.selector, amountOut, amountInMax, path, to, deadline
             )
         );
         assert(success);
@@ -103,12 +84,7 @@ contract RouterEventEmitter {
     ) external {
         (bool success, bytes memory returnData) = router.delegatecall(
             abi.encodeWithSelector(
-                IButtonwoodRouter(router).swapExactTokensForETH.selector,
-                amountIn,
-                amountOutMin,
-                path,
-                to,
-                deadline
+                IButtonwoodRouter(router).swapExactTokensForETH.selector, amountIn, amountOutMin, path, to, deadline
             )
         );
         assert(success);
@@ -124,11 +100,7 @@ contract RouterEventEmitter {
     ) external payable {
         (bool success, bytes memory returnData) = router.delegatecall(
             abi.encodeWithSelector(
-                IButtonwoodRouter(router).swapETHForExactTokens.selector,
-                amountOut,
-                path,
-                to,
-                deadline
+                IButtonwoodRouter(router).swapETHForExactTokens.selector, amountOut, path, to, deadline
             )
         );
         assert(success);
