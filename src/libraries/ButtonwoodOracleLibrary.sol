@@ -1,7 +1,7 @@
 pragma solidity >=0.5.0;
 
-import 'buttonwood-core/contracts/interfaces/IButtonwoodPair.sol';
-import '@uniswap/lib/contracts/libraries/FixedPoint.sol';
+import "buttonwood-core/contracts/interfaces/IButtonwoodPair.sol";
+import "@uniswap/lib/contracts/libraries/FixedPoint.sol";
 
 // library with helper methods for oracles that are concerned with computing average prices
 library ButtonwoodOracleLibrary {
@@ -9,18 +9,14 @@ library ButtonwoodOracleLibrary {
 
     // helper function that returns the current block timestamp within the range of uint32, i.e. [0, 2**32 - 1]
     function currentBlockTimestamp() internal view returns (uint32) {
-        return uint32(block.timestamp % 2**32);
+        return uint32(block.timestamp % 2 ** 32);
     }
 
     // produces the cumulative price using counterfactuals to save gas and avoid a call to sync.
     function currentCumulativePrices(address pair)
         internal
         view
-        returns (
-            uint256 price0Cumulative,
-            uint256 price1Cumulative,
-            uint32 blockTimestamp
-        )
+        returns (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp)
     {
         blockTimestamp = currentBlockTimestamp();
         price0Cumulative = IButtonwoodPair(pair).price0CumulativeLast();

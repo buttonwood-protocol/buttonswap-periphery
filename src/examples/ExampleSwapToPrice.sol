@@ -1,13 +1,13 @@
 pragma solidity =0.6.6;
 
-import 'buttonwood-core/contracts/interfaces/IButtonwoodPair.sol';
-import '@uniswap/lib/contracts/libraries/Babylonian.sol';
-import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
+import "buttonwood-core/contracts/interfaces/IButtonwoodPair.sol";
+import "@uniswap/lib/contracts/libraries/Babylonian.sol";
+import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
-import '../interfaces/IERC20.sol';
-import '../interfaces/IButtonwoodRouter.sol';
-import '../libraries/SafeMath.sol';
-import '../libraries/ButtonwoodLibrary.sol';
+import "../interfaces/IERC20.sol";
+import "../interfaces/IButtonwoodRouter.sol";
+import "../libraries/SafeMath.sol";
+import "../libraries/ButtonwoodLibrary.sol";
 
 contract ExampleSwapToPrice {
     using SafeMath for uint256;
@@ -32,8 +32,8 @@ contract ExampleSwapToPrice {
         uint256 invariant = reserveA.mul(reserveB);
 
         uint256 leftSide = Babylonian.sqrt(
-            invariant.mul(aToB ? truePriceTokenA : truePriceTokenB).mul(1000) /
-                uint256(aToB ? truePriceTokenB : truePriceTokenA).mul(997)
+            invariant.mul(aToB ? truePriceTokenA : truePriceTokenB).mul(1000)
+                / uint256(aToB ? truePriceTokenB : truePriceTokenA).mul(997)
         );
         uint256 rightSide = (aToB ? reserveA.mul(1000) : reserveB.mul(1000)) / 997;
 
@@ -55,9 +55,9 @@ contract ExampleSwapToPrice {
         uint256 deadline
     ) public {
         // true price is expressed as a ratio, so both values must be non-zero
-        require(truePriceTokenA != 0 && truePriceTokenB != 0, 'ExampleSwapToPrice: ZERO_PRICE');
+        require(truePriceTokenA != 0 && truePriceTokenB != 0, "ExampleSwapToPrice: ZERO_PRICE");
         // caller can specify 0 for either if they wish to swap in only one direction, but not both
-        require(maxSpendTokenA != 0 || maxSpendTokenB != 0, 'ExampleSwapToPrice: ZERO_SPEND');
+        require(maxSpendTokenA != 0 || maxSpendTokenB != 0, "ExampleSwapToPrice: ZERO_SPEND");
 
         bool aToB;
         uint256 amountIn;

@@ -1,12 +1,12 @@
 pragma solidity =0.6.6;
 
-import 'buttonwood-core/contracts/interfaces/IButtonwoodFactory.sol';
-import 'buttonwood-core/contracts/interfaces/IButtonwoodPair.sol';
-import '@uniswap/lib/contracts/libraries/FixedPoint.sol';
+import "buttonwood-core/contracts/interfaces/IButtonwoodFactory.sol";
+import "buttonwood-core/contracts/interfaces/IButtonwoodPair.sol";
+import "@uniswap/lib/contracts/libraries/FixedPoint.sol";
 
-import '../libraries/SafeMath.sol';
-import '../libraries/ButtonwoodLibrary.sol';
-import '../libraries/ButtonwoodOracleLibrary.sol';
+import "../libraries/SafeMath.sol";
+import "../libraries/ButtonwoodLibrary.sol";
+import "../libraries/ButtonwoodOracleLibrary.sol";
 
 // sliding window oracle that uses observations collected over a window to provide moving price averages in the past
 // `windowSize` with a precision of `windowSize / granularity`
@@ -39,15 +39,11 @@ contract ExampleSlidingWindowOracle {
     // mapping from pair address to a list of price observations of that pair
     mapping(address => Observation[]) public pairObservations;
 
-    constructor(
-        address factory_,
-        uint256 windowSize_,
-        uint8 granularity_
-    ) public {
-        require(granularity_ > 1, 'SlidingWindowOracle: GRANULARITY');
+    constructor(address factory_, uint256 windowSize_, uint8 granularity_) public {
+        require(granularity_ > 1, "SlidingWindowOracle: GRANULARITY");
         require(
             (periodSize = windowSize_ / granularity_) * granularity_ == windowSize_,
-            'SlidingWindowOracle: WINDOW_NOT_EVENLY_DIVISIBLE'
+            "SlidingWindowOracle: WINDOW_NOT_EVENLY_DIVISIBLE"
         );
         factory = factory_;
         windowSize = windowSize_;
@@ -85,9 +81,8 @@ contract ExampleSlidingWindowOracle {
         // we only want to commit updates once per period (i.e. windowSize / granularity)
         uint256 timeElapsed = block.timestamp - observation.timestamp;
         if (timeElapsed > periodSize) {
-            (uint256 price0Cumulative, uint256 price1Cumulative, ) = ButtonwoodOracleLibrary.currentCumulativePrices(
-                pair
-            );
+            (uint256 price0Cumulative, uint256 price1Cumulative,) =
+                ButtonwoodOracleLibrary.currentCumulativePrices(pair);
             observation.timestamp = block.timestamp;
             observation.price0Cumulative = price0Cumulative;
             observation.price1Cumulative = price1Cumulative;
@@ -103,30 +98,25 @@ contract ExampleSlidingWindowOracle {
         uint256 amountIn
     ) private pure returns (uint256 amountOut) {
         // overflow is desired.
-        FixedPoint.uq112x112 memory priceAverage = FixedPoint.uq112x112(
-            uint224((priceCumulativeEnd - priceCumulativeStart) / timeElapsed)
-        );
+        FixedPoint.uq112x112 memory priceAverage =
+            FixedPoint.uq112x112(uint224((priceCumulativeEnd - priceCumulativeStart) / timeElapsed));
         amountOut = priceAverage.mul(amountIn).decode144();
     }
 
     // returns the amount out corresponding to the amount in for a given token using the moving average over the time
     // range [now - [windowSize, windowSize - periodSize * 2], now]
     // update must have been called for the bucket corresponding to timestamp `now - windowSize`
-    function consult(
-        address tokenIn,
-        uint256 amountIn,
-        address tokenOut
-    ) external view returns (uint256 amountOut) {
+    function consult(address tokenIn, uint256 amountIn, address tokenOut) external view returns (uint256 amountOut) {
         address pair = ButtonwoodLibrary.pairFor(factory, tokenIn, tokenOut);
         Observation storage firstObservation = getFirstObservationInWindow(pair);
 
         uint256 timeElapsed = block.timestamp - firstObservation.timestamp;
-        require(timeElapsed <= windowSize, 'SlidingWindowOracle: MISSING_HISTORICAL_OBSERVATION');
+        require(timeElapsed <= windowSize, "SlidingWindowOracle: MISSING_HISTORICAL_OBSERVATION");
         // should never happen.
-        require(timeElapsed >= windowSize - periodSize * 2, 'SlidingWindowOracle: UNEXPECTED_TIME_ELAPSED');
+        require(timeElapsed >= windowSize - periodSize * 2, "SlidingWindowOracle: UNEXPECTED_TIME_ELAPSED");
 
-        (uint256 price0Cumulative, uint256 price1Cumulative, ) = ButtonwoodOracleLibrary.currentCumulativePrices(pair);
-        (address token0, ) = ButtonwoodLibrary.sortTokens(tokenIn, tokenOut);
+        (uint256 price0Cumulative, uint256 price1Cumulative,) = ButtonwoodOracleLibrary.currentCumulativePrices(pair);
+        (address token0,) = ButtonwoodLibrary.sortTokens(tokenIn, tokenOut);
 
         if (token0 == tokenIn) {
             return computeAmountOut(firstObservation.price0Cumulative, price0Cumulative, timeElapsed, amountIn);

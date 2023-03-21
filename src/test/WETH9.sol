@@ -16,8 +16,8 @@
 pragma solidity =0.6.6;
 
 contract WETH9 {
-    string public name = 'Wrapped Ether';
-    string public symbol = 'WETH';
+    string public name = "Wrapped Ether";
+    string public symbol = "WETH";
     uint8 public decimals = 18;
 
     event Approval(address indexed src, address indexed guy, uint256 wad);
@@ -37,7 +37,7 @@ contract WETH9 {
     }
 
     function withdraw(uint256 wad) public {
-        require(balanceOf[msg.sender] >= wad, '');
+        require(balanceOf[msg.sender] >= wad, "");
         balanceOf[msg.sender] -= wad;
         msg.sender.transfer(wad);
         emit Withdrawal(msg.sender, wad);
@@ -57,15 +57,11 @@ contract WETH9 {
         return transferFrom(msg.sender, dst, wad);
     }
 
-    function transferFrom(
-        address src,
-        address dst,
-        uint256 wad
-    ) public returns (bool) {
-        require(balanceOf[src] >= wad, '');
+    function transferFrom(address src, address dst, uint256 wad) public returns (bool) {
+        require(balanceOf[src] >= wad, "");
 
         if (src != msg.sender && allowance[src][msg.sender] != uint256(-1)) {
-            require(allowance[src][msg.sender] >= wad, '');
+            require(allowance[src][msg.sender] >= wad, "");
             allowance[src][msg.sender] -= wad;
         }
 
@@ -753,5 +749,4 @@ may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <http://www.gnu.org/philosophy/why-not-lgpl.html>.
-
 */

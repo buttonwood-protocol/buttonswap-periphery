@@ -1,24 +1,20 @@
 pragma solidity =0.6.6;
 
-import 'buttonwood-core/contracts/interfaces/IButtonwoodCallee.sol';
+import "buttonwood-core/contracts/interfaces/IButtonwoodCallee.sol";
 
-import '../libraries/ButtonwoodLibrary.sol';
-import '../interfaces/V1/IUniswapV1Factory.sol';
-import '../interfaces/V1/IUniswapV1Exchange.sol';
-import '../interfaces/IButtonwoodRouter.sol';
-import '../interfaces/IERC20.sol';
-import '../interfaces/IWETH.sol';
+import "../libraries/ButtonwoodLibrary.sol";
+import "../interfaces/V1/IUniswapV1Factory.sol";
+import "../interfaces/V1/IUniswapV1Exchange.sol";
+import "../interfaces/IButtonwoodRouter.sol";
+import "../interfaces/IERC20.sol";
+import "../interfaces/IWETH.sol";
 
 contract ExampleFlashSwap is IButtonwoodCallee {
     IUniswapV1Factory immutable factoryV1;
     address immutable factory;
     IWETH immutable WETH;
 
-    constructor(
-        address _factory,
-        address _factoryV1,
-        address router
-    ) public {
+    constructor(address _factory, address _factoryV1, address router) public {
         factoryV1 = IUniswapV1Factory(_factoryV1);
         factory = _factory;
         WETH = IWETH(IButtonwoodRouter(router).WETH());
@@ -29,12 +25,7 @@ contract ExampleFlashSwap is IButtonwoodCallee {
     receive() external payable {}
 
     // gets tokens/WETH via a V2 flash swap, swaps for the ETH/tokens on V1, repays V2, and keeps the rest!
-    function buttonwoodCall(
-        address sender,
-        uint256 amount0,
-        uint256 amount1,
-        bytes calldata data
-    ) external override {
+    function buttonwoodCall(address sender, uint256 amount0, uint256 amount1, bytes calldata data) external override {
         address[] memory path = new address[](2);
         uint256 amountToken;
         uint256 amountETH;
@@ -60,14 +51,14 @@ contract ExampleFlashSwap is IButtonwoodCallee {
             uint256 amountReceived = exchangeV1.tokenToEthSwapInput(amountToken, minETH, uint256(-1));
             uint256 amountRequired = ButtonwoodLibrary.getAmountsIn(factory, amountToken, path)[0];
             assert(amountReceived > amountRequired); // fail if we didn't get enough ETH back to repay our flash loan
-            WETH.deposit{ value: amountRequired }();
+            WETH.deposit{value: amountRequired}();
             assert(WETH.transfer(msg.sender, amountRequired)); // return WETH to V2 pair
-            (bool success, ) = sender.call{ value: amountReceived - amountRequired }(new bytes(0)); // keep the rest! (ETH)
+            (bool success,) = sender.call{value: amountReceived - amountRequired}(new bytes(0)); // keep the rest! (ETH)
             assert(success);
         } else {
             uint256 minTokens = abi.decode(data, (uint256)); // slippage parameter for V1, passed in by caller
             WETH.withdraw(amountETH);
-            uint256 amountReceived = exchangeV1.ethToTokenSwapInput{ value: amountETH }(minTokens, uint256(-1));
+            uint256 amountReceived = exchangeV1.ethToTokenSwapInput{value: amountETH}(minTokens, uint256(-1));
             uint256 amountRequired = ButtonwoodLibrary.getAmountsIn(factory, amountETH, path)[0];
             assert(amountReceived > amountRequired); // fail if we didn't get enough tokens back to repay our flash loan
             assert(token.transfer(msg.sender, amountRequired)); // return tokens to V2 pair
