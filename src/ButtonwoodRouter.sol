@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import 'buttonwood-core/contracts/interfaces/IButtonwoodFactory.sol';
-import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
+import "buttonwood-core/contracts/interfaces/IButtonwoodFactory.sol";
+import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
-import './interfaces/IButtonwoodRouter.sol';
-import './libraries/ButtonwoodLibrary.sol';
-import './libraries/SafeMath.sol';
-import './interfaces/IERC20.sol';
-import './interfaces/IWETH.sol';
+import "./interfaces/IButtonwoodRouter.sol";
+import "./libraries/ButtonwoodLibrary.sol";
+import "./libraries/SafeMath.sol";
+import "./interfaces/IERC20.sol";
+import "./interfaces/IWETH.sol";
 
 contract ButtonwoodRouter is IButtonwoodRouter {
     using SafeMath for uint256;
@@ -51,14 +51,14 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         } else {
             uint256 amountBOptimal = ButtonwoodLibrary.quote(amountADesired, poolA, poolB);
             if (amountBOptimal <= amountBDesired) {
-                if(amountBOptimal < amountBMin) {
+                if (amountBOptimal < amountBMin) {
                     revert InsufficientBAmount();
                 }
                 (amountA, amountB) = (amountADesired, amountBOptimal);
             } else {
                 uint256 amountAOptimal = ButtonwoodLibrary.quote(amountBDesired, poolB, poolA);
                 assert(amountAOptimal <= amountADesired);
-                if(amountAOptimal < amountAMin) {
+                if (amountAOptimal < amountAMin) {
                     revert InsufficientAAmount();
                 }
                 (amountA, amountB) = (amountAOptimal, amountBDesired);
@@ -121,17 +121,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         uint256 amountBMin,
         address to,
         uint256 deadline
-    )
-    external
-    virtual
-    override
-    ensure(deadline)
-    returns (
-        uint256 amountA,
-        uint256 amountB,
-        uint256 liquidity
-    )
-    {
+    ) external virtual override ensure(deadline) returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
         (amountA, amountB) = _addLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);
         address pair = ButtonwoodLibrary.pairFor(factory, tokenA, tokenB);
         TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);
@@ -148,25 +138,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         uint256 amountBMin,
         address to,
         uint256 deadline
-    )
-    external
-    virtual
-    override
-    ensure(deadline)
-    returns (
-        uint256 amountA,
-        uint256 amountB,
-        uint256 liquidity
-    )
-    {
-        (amountA, amountB) = _addLiquidityWithReservoir(
-            tokenA,
-            tokenB,
-            amountADesired,
-            amountBDesired,
-            amountAMin,
-            amountBMin
-        );
+    ) external virtual override ensure(deadline) returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
+        (amountA, amountB) =
+            _addLiquidityWithReservoir(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);
         address pair = ButtonwoodLibrary.pairFor(factory, tokenA, tokenB);
         if (amountA > 0) {
             TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);
@@ -185,28 +159,18 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         address to,
         uint256 deadline
     )
-    external
-    virtual
-    override
-    payable
-    ensure(deadline)
-    returns (
-        uint256 amountToken,
-        uint256 amountETH,
-        uint256 liquidity
-    )
+        external
+        payable
+        virtual
+        override
+        ensure(deadline)
+        returns (uint256 amountToken, uint256 amountETH, uint256 liquidity)
     {
-        (amountToken, amountETH) = _addLiquidity(
-            token,
-            WETH,
-            amountTokenDesired,
-            msg.value,
-            amountTokenMin,
-            amountETHMin
-        );
+        (amountToken, amountETH) =
+            _addLiquidity(token, WETH, amountTokenDesired, msg.value, amountTokenMin, amountETHMin);
         address pair = ButtonwoodLibrary.pairFor(factory, token, WETH);
         TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
-        IWETH(WETH).deposit{ value: amountETH }();
+        IWETH(WETH).deposit{value: amountETH}();
         assert(IWETH(WETH).transfer(pair, amountETH));
         liquidity = IButtonwoodPair(pair).mint(to);
         // refund dust eth, if any
@@ -221,30 +185,20 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         address to,
         uint256 deadline
     )
-    external
-    virtual
-    override
-    payable
-    ensure(deadline)
-    returns (
-        uint256 amountToken,
-        uint256 amountETH,
-        uint256 liquidity
-    )
+        external
+        payable
+        virtual
+        override
+        ensure(deadline)
+        returns (uint256 amountToken, uint256 amountETH, uint256 liquidity)
     {
-        (amountToken, amountETH) = _addLiquidityWithReservoir(
-            token,
-            WETH,
-            amountTokenDesired,
-            msg.value,
-            amountTokenMin,
-            amountETHMin
-        );
+        (amountToken, amountETH) =
+            _addLiquidityWithReservoir(token, WETH, amountTokenDesired, msg.value, amountTokenMin, amountETHMin);
         address pair = ButtonwoodLibrary.pairFor(factory, token, WETH);
         if (amountToken > 0) {
             TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
         } else if (amountETH > 0) {
-            IWETH(WETH).deposit{ value: amountETH }();
+            IWETH(WETH).deposit{value: amountETH}();
             assert(IWETH(WETH).transfer(pair, amountETH));
         }
         liquidity = IButtonwoodPair(pair).mintWithReservoir(to);
@@ -265,7 +219,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         address pair = ButtonwoodLibrary.pairFor(factory, tokenA, tokenB);
         IButtonwoodPair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
         (uint256 amount0, uint256 amount1) = IButtonwoodPair(pair).burn(to);
-        (address token0, ) = ButtonwoodLibrary.sortTokens(tokenA, tokenB);
+        (address token0,) = ButtonwoodLibrary.sortTokens(tokenA, tokenB);
         (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
         if (amountA < amountAMin) {
             revert InsufficientAAmount();
@@ -288,7 +242,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         address pair = ButtonwoodLibrary.pairFor(factory, tokenA, tokenB);
         IButtonwoodPair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
         (uint256 amount0, uint256 amount1) = IButtonwoodPair(pair).burnFromReservoir(to);
-        (address token0, ) = ButtonwoodLibrary.sortTokens(tokenA, tokenB);
+        (address token0,) = ButtonwoodLibrary.sortTokens(tokenA, tokenB);
         (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
         if (amountA < amountAMin) {
             revert InsufficientAAmount();
@@ -306,15 +260,8 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         address to,
         uint256 deadline
     ) public virtual override ensure(deadline) returns (uint256 amountToken, uint256 amountETH) {
-        (amountToken, amountETH) = removeLiquidity(
-            token,
-            WETH,
-            liquidity,
-            amountTokenMin,
-            amountETHMin,
-            address(this),
-            deadline
-        );
+        (amountToken, amountETH) =
+            removeLiquidity(token, WETH, liquidity, amountTokenMin, amountETHMin, address(this), deadline);
         TransferHelper.safeTransfer(token, to, amountToken);
         IWETH(WETH).withdraw(amountETH);
         TransferHelper.safeTransferETH(to, amountETH);
@@ -328,15 +275,8 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         address to,
         uint256 deadline
     ) public virtual override ensure(deadline) returns (uint256 amountToken, uint256 amountETH) {
-        (amountToken, amountETH) = removeLiquidityFromReservoir(
-            token,
-            WETH,
-            liquidity,
-            amountTokenMin,
-            amountETHMin,
-            address(this),
-            deadline
-        );
+        (amountToken, amountETH) =
+            removeLiquidityFromReservoir(token, WETH, liquidity, amountTokenMin, amountETHMin, address(this), deadline);
         if (amountToken > 0) {
             TransferHelper.safeTransfer(token, to, amountToken);
         } else if (amountETH > 0) {
@@ -413,35 +353,22 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         uint256 value = approveMax ? uint256(-1) : liquidity;
         IButtonwoodPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
         amountETH = removeLiquidityETHSupportingFeeOnTransferTokens(
-            token,
-            liquidity,
-            amountTokenMin,
-            amountETHMin,
-            to,
-            deadline
+            token, liquidity, amountTokenMin, amountETHMin, to, deadline
         );
     }
 
     // **** SWAP ****
     // requires the initial amount to have already been sent to the first pair
-    function _swap(
-        uint256[] memory amounts,
-        address[] memory path,
-        address _to
-    ) internal virtual {
+    function _swap(uint256[] memory amounts, address[] memory path, address _to) internal virtual {
         for (uint256 i; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
-            (address token0, ) = ButtonwoodLibrary.sortTokens(input, output);
+            (address token0,) = ButtonwoodLibrary.sortTokens(input, output);
             uint256 amountOut = amounts[i + 1];
-            (uint256 amount0Out, uint256 amount1Out) = input == token0
-            ? (uint256(0), amountOut)
-            : (amountOut, uint256(0));
+            (uint256 amount0Out, uint256 amount1Out) =
+                input == token0 ? (uint256(0), amountOut) : (amountOut, uint256(0));
             address to = i < path.length - 2 ? ButtonwoodLibrary.pairFor(factory, output, path[i + 2]) : _to;
             IButtonwoodPair(ButtonwoodLibrary.pairFor(factory, input, output)).swap(
-                amount0Out,
-                amount1Out,
-                to,
-                new bytes(0)
+                amount0Out, amount1Out, to, new bytes(0)
             );
         }
     }
@@ -454,7 +381,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
         amounts = ButtonwoodLibrary.getAmountsOut(factory, amountIn, path);
-        if (amounts[amounts.length -1] < amountOutMin) {
+        if (amounts[amounts.length - 1] < amountOutMin) {
             revert InsufficientOutputAmount();
         }
         IButtonwoodPair pair = IButtonwoodPair(ButtonwoodLibrary.pairFor(factory, path[0], path[1]));
@@ -472,7 +399,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
         amounts = ButtonwoodLibrary.getAmountsIn(factory, amountOut, path);
-        if (amounts[0] < amountInMax) {
+        if (amounts[0] > amountInMax) {
             revert ExcessiveInputAmount();
         }
         IButtonwoodPair pair = IButtonwoodPair(ButtonwoodLibrary.pairFor(factory, path[0], path[1]));
@@ -482,23 +409,25 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         _swap(amounts, path, to);
     }
 
-    function swapExactETHForTokens(
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external virtual override payable ensure(deadline) returns (uint256[] memory amounts) {
+    function swapExactETHForTokens(uint256 amountOutMin, address[] calldata path, address to, uint256 deadline)
+        external
+        payable
+        virtual
+        override
+        ensure(deadline)
+        returns (uint256[] memory amounts)
+    {
         if (path[0] != WETH) {
             revert InvalidPath();
         }
         amounts = ButtonwoodLibrary.getAmountsOut(factory, msg.value, path);
-        if (amounts[amounts.length -1] < amountOutMin) {
+        if (amounts[amounts.length - 1] < amountOutMin) {
             revert InsufficientOutputAmount();
         }
         IButtonwoodPair pair = IButtonwoodPair(ButtonwoodLibrary.pairFor(factory, path[0], path[1]));
         pair.sync();
 
-        IWETH(WETH).deposit{ value: amounts[0] }();
+        IWETH(WETH).deposit{value: amounts[0]}();
         assert(IWETH(WETH).transfer(address(pair), amounts[0]));
         _swap(amounts, path, to);
     }
@@ -533,7 +462,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        if (path[path.length -1 ] != WETH) {
+        if (path[path.length - 1] != WETH) {
             revert InvalidPath();
         }
         amounts = ButtonwoodLibrary.getAmountsOut(factory, amountIn, path);
@@ -549,12 +478,14 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
     }
 
-    function swapETHForExactTokens(
-        uint256 amountOut,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external virtual override payable ensure(deadline) returns (uint256[] memory amounts) {
+    function swapETHForExactTokens(uint256 amountOut, address[] calldata path, address to, uint256 deadline)
+        external
+        payable
+        virtual
+        override
+        ensure(deadline)
+        returns (uint256[] memory amounts)
+    {
         if (path[0] != WETH) {
             return InvalidPath();
         }
@@ -565,7 +496,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         IButtonwoodPair pair = IButtonwoodPair(ButtonwoodLibrary.pairFor(factory, path[0], path[1]));
         pair.sync();
 
-        IWETH(WETH).deposit{ value: amounts[0] }();
+        IWETH(WETH).deposit{value: amounts[0]}();
         assert(IWETH(WETH).transfer(address(pair), amounts[0]));
         _swap(amounts, path, to);
         // refund dust eth, if any
@@ -574,15 +505,11 @@ contract ButtonwoodRouter is IButtonwoodRouter {
 
     // Return the input token's pool, output token's pool, and input token's reservoir
     function _getSortedPoolsAndReservoirs(IButtonwoodPair pair, bool inputIsFirst)
-    internal
-    view
-    returns (
-        uint256 poolInput,
-        uint256 poolOutput,
-        uint256 reservoirInput
-    )
+        internal
+        view
+        returns (uint256 poolInput, uint256 poolOutput, uint256 reservoirInput)
     {
-        (uint256 pool0, uint256 pool1, ) = pair.getPools();
+        (uint256 pool0, uint256 pool1,) = pair.getPools();
         (uint256 reservoir0, uint256 reservoir1) = pair.getReservoirs();
         return inputIsFirst ? (pool0, pool1, reservoir0) : (pool1, pool0, reservoir1);
     }
@@ -592,24 +519,21 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     function _swapSupportingFeeOnTransferTokens(address[] memory path, address _to) internal virtual {
         for (uint256 i; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
-            (address token0, ) = ButtonwoodLibrary.sortTokens(input, output);
+            (address token0,) = ButtonwoodLibrary.sortTokens(input, output);
             IButtonwoodPair pair = IButtonwoodPair(ButtonwoodLibrary.pairFor(factory, input, output));
 
             uint256 amountInput;
             uint256 amountOutput;
             {
                 // scope to avoid stack too deep errors
-                (uint256 poolInput, uint256 poolOutput, uint256 reservoirInput) = _getSortedPoolsAndReservoirs(
-                    pair,
-                    input == token0
-                );
+                (uint256 poolInput, uint256 poolOutput, uint256 reservoirInput) =
+                    _getSortedPoolsAndReservoirs(pair, input == token0);
 
                 amountInput = IERC20(input).balanceOf(address(pair)).sub(poolInput).sub(reservoirInput);
                 amountOutput = ButtonwoodLibrary.getAmountOut(amountInput, poolInput, poolOutput);
             }
-            (uint256 amount0Out, uint256 amount1Out) = input == token0
-            ? (uint256(0), amountOutput)
-            : (amountOutput, uint256(0));
+            (uint256 amount0Out, uint256 amount1Out) =
+                input == token0 ? (uint256(0), amountOutput) : (amountOutput, uint256(0));
             address to = i < path.length - 2 ? ButtonwoodLibrary.pairFor(factory, output, path[i + 2]) : _to;
             pair.swap(amount0Out, amount1Out, to, new bytes(0));
         }
@@ -637,7 +561,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         address[] calldata path,
         address to,
         uint256 deadline
-    ) external virtual override payable ensure(deadline) {
+    ) external payable virtual override ensure(deadline) {
         if (path[0] != WETH) {
             revert InvalidPath();
         }
@@ -645,7 +569,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         IButtonwoodPair pair = IButtonwoodPair(ButtonwoodLibrary.pairFor(factory, path[0], path[1]));
         pair.sync();
 
-        IWETH(WETH).deposit{ value: amountIn }();
+        IWETH(WETH).deposit{value: amountIn}();
         assert(IWETH(WETH).transfer(address(pair), amountIn));
         uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
         _swapSupportingFeeOnTransferTokens(path, to);
@@ -678,46 +602,52 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     // **** LIBRARY FUNCTIONS ****
-    function quote(
-        uint256 amountA,
-        uint256 reserveA,
-        uint256 reserveB
-    ) public virtual override pure returns (uint256 amountB) {
+    function quote(uint256 amountA, uint256 reserveA, uint256 reserveB)
+        public
+        pure
+        virtual
+        override
+        returns (uint256 amountB)
+    {
         return ButtonwoodLibrary.quote(amountA, reserveA, reserveB);
     }
 
-    function getAmountOut(
-        uint256 amountIn,
-        uint256 reserveIn,
-        uint256 reserveOut
-    ) public virtual override pure returns (uint256 amountOut) {
+    function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)
+        public
+        pure
+        virtual
+        override
+        returns (uint256 amountOut)
+    {
         return ButtonwoodLibrary.getAmountOut(amountIn, reserveIn, reserveOut);
     }
 
-    function getAmountIn(
-        uint256 amountOut,
-        uint256 reserveIn,
-        uint256 reserveOut
-    ) public virtual override pure returns (uint256 amountIn) {
+    function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut)
+        public
+        pure
+        virtual
+        override
+        returns (uint256 amountIn)
+    {
         return ButtonwoodLibrary.getAmountIn(amountOut, reserveIn, reserveOut);
     }
 
     function getAmountsOut(uint256 amountIn, address[] memory path)
-    public
-    virtual
-    override
-    view
-    returns (uint256[] memory amounts)
+        public
+        view
+        virtual
+        override
+        returns (uint256[] memory amounts)
     {
         return ButtonwoodLibrary.getAmountsOut(factory, amountIn, path);
     }
 
     function getAmountsIn(uint256 amountOut, address[] memory path)
-    public
-    virtual
-    override
-    view
-    returns (uint256[] memory amounts)
+        public
+        view
+        virtual
+        override
+        returns (uint256[] memory amounts)
     {
         return ButtonwoodLibrary.getAmountsIn(factory, amountOut, path);
     }
