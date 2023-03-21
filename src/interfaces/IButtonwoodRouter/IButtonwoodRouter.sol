@@ -4,9 +4,9 @@ pragma solidity ^0.8.13;
 import "./IButtonwoodRouterErrors.sol";
 
 interface IButtonwoodRouter is IButtonwoodRouterErrors {
-    function factory() external pure returns (address);
+    function factory() external view returns (address);
 
-    function WETH() external pure returns (address);
+    function WETH() external view returns (address);
 
     function addLiquidity(
         address tokenA,
