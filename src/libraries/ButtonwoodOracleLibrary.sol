@@ -1,7 +1,8 @@
 pragma solidity >=0.5.0;
 
-import "buttonwood-core/contracts/interfaces/IButtonwoodPair.sol";
-import "@uniswap/lib/contracts/libraries/FixedPoint.sol";
+import {IButtonswapPair } from 'buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol';
+import { FixedPoint } from "solidity-lib/libraries/FixedPoint.sol";
+
 
 // library with helper methods for oracles that are concerned with computing average prices
 library ButtonwoodOracleLibrary {
@@ -19,11 +20,11 @@ library ButtonwoodOracleLibrary {
         returns (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp)
     {
         blockTimestamp = currentBlockTimestamp();
-        price0Cumulative = IButtonwoodPair(pair).price0CumulativeLast();
-        price1Cumulative = IButtonwoodPair(pair).price1CumulativeLast();
+        price0Cumulative = IButtonswapPair(pair).price0CumulativeLast();
+        price1Cumulative = IButtonswapPair(pair).price1CumulativeLast();
 
         // if time has elapsed since the last update on the pair, mock the accumulated price values
-        (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast) = IButtonwoodPair(pair).getPools();
+        (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast) = IButtonswapPair(pair).getPools();
         if (blockTimestampLast != blockTimestamp) {
             // subtraction overflow is desired
             uint32 timeElapsed = blockTimestamp - blockTimestampLast;

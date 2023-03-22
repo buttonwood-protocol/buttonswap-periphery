@@ -1,6 +1,6 @@
-pragma solidity =0.6.6;
+pragma solidity >=0.6.6; // ToDo - update to 0.8.13
 
-import "../interfaces/IButtonwoodRouter.sol";
+import "../interfaces/IButtonwoodRouter/IButtonwoodRouter.sol";
 
 contract RouterEventEmitter {
     event Amounts(uint256[] amounts);

@@ -1,11 +1,10 @@
-pragma solidity =0.6.6;
+pragma solidity >=0.6.6; // ToDo - update to 0.8.13
 
-import "buttonwood-core/contracts/interfaces/IButtonwoodFactory.sol";
-import "buttonwood-core/contracts/interfaces/IButtonwoodPair.sol";
-import "@uniswap/lib/contracts/libraries/FixedPoint.sol";
+import { IButtonswapPair } from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
+import { FixedPoint } from "solidity-lib/libraries/FixedPoint.sol";
 
 import "../libraries/ButtonwoodOracleLibrary.sol";
-import "../libraries/ButtonwoodLibrary.sol";
+import { ButtonwoodLibrary } from "../libraries/ButtonwoodLibrary.sol";
 
 // fixed window oracle that recomputes the average price for the entire period once every period
 // note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
@@ -14,7 +13,7 @@ contract ExampleOracleSimple {
 
     uint256 public constant PERIOD = 24 hours;
 
-    IButtonwoodPair immutable pair;
+    IButtonswapPair immutable pair;
     address public immutable token0;
     address public immutable token1;
 
@@ -25,7 +24,7 @@ contract ExampleOracleSimple {
     FixedPoint.uq112x112 public price1Average;
 
     constructor(address factory, address tokenA, address tokenB) public {
-        IButtonwoodPair _pair = IButtonwoodPair(ButtonwoodLibrary.pairFor(factory, tokenA, tokenB));
+        IButtonswapPair _pair = IButtonswapPair(ButtonwoodLibrary.pairFor(factory, tokenA, tokenB));
         pair = _pair;
         token0 = _pair.token0();
         token1 = _pair.token1();
