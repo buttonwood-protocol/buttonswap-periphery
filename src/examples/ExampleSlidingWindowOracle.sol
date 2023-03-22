@@ -1,8 +1,8 @@
-pragma solidity >=0.6.6; // ToDo - update to 0.8.13
+pragma solidity >=0.8.13; // ToDo - update to 0.8.13
 
 import { IButtonswapFactory } from "buttonswap-core/interfaces/IButtonswapFactory/IButtonswapFactory.sol";
 import { IButtonswapPair } from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
-import { FixedPoint } from "solidity-lib/libraries/FixedPoint.sol";
+import { UQ112x112 } from 'buttonswap-core/libraries/UQ112x112.sol';
 
 import "../libraries/SafeMath.sol";
 import { ButtonwoodLibrary } from "../libraries/ButtonwoodLibrary.sol";
@@ -13,7 +13,7 @@ import "../libraries/ButtonwoodOracleLibrary.sol";
 // note this is a singleton oracle and only needs to be deployed once per desired parameters, which
 // differs from the simple oracle which must be deployed once per pair.
 contract ExampleSlidingWindowOracle {
-    using FixedPoint for *;
+    using UQ112x112 for uint224;
     using SafeMath for uint256;
 
     struct Observation {
@@ -98,9 +98,8 @@ contract ExampleSlidingWindowOracle {
         uint256 amountIn
     ) private pure returns (uint256 amountOut) {
         // overflow is desired.
-        FixedPoint.uq112x112 memory priceAverage =
-            FixedPoint.uq112x112(uint224((priceCumulativeEnd - priceCumulativeStart) / timeElapsed));
-        amountOut = priceAverage.mul(amountIn).decode144();
+        uint224 priceAverage = uint224((priceCumulativeEnd - priceCumulativeStart) / timeElapsed);
+        amountOut = (priceAverage * amountIn) >> 112;
     }
 
     // returns the amount out corresponding to the amount in for a given token using the moving average over the time

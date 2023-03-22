@@ -7,7 +7,3 @@
 [submodule "lib/buttonswap-core"]
 	path = lib/buttonswap-core
 	url = https://github.com/buttonwood-protocol/buttonswap-core
-[submodule "lib/solidity-lib"]
-	path = lib/solidity-lib
-	url = https://github.com/Uniswap/solidity-lib
-	branch = v2.1.0

@@ -1,7 +1,7 @@
-pragma solidity >=0.6.6; // ToDo - update to 0.8.13
+pragma solidity ^0.8.13;
 
 import { IButtonswapPair } from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
-import { FixedPoint } from "solidity-lib/libraries/FixedPoint.sol";
+import { UQ112x112 } from 'buttonswap-core/libraries/UQ112x112.sol';
 
 import "../libraries/ButtonwoodOracleLibrary.sol";
 import { ButtonwoodLibrary } from "../libraries/ButtonwoodLibrary.sol";
@@ -9,7 +9,7 @@ import { ButtonwoodLibrary } from "../libraries/ButtonwoodLibrary.sol";
 // fixed window oracle that recomputes the average price for the entire period once every period
 // note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
 contract ExampleOracleSimple {
-    using FixedPoint for *;
+    using UQ112x112 for uint224;
 
     uint256 public constant PERIOD = 24 hours;
 
@@ -20,8 +20,8 @@ contract ExampleOracleSimple {
     uint256 public price0CumulativeLast;
     uint256 public price1CumulativeLast;
     uint32 public blockTimestampLast;
-    FixedPoint.uq112x112 public price0Average;
-    FixedPoint.uq112x112 public price1Average;
+    uint224 public price0Average;
+    uint224 public price1Average;
 
     constructor(address factory, address tokenA, address tokenB) public {
         IButtonswapPair _pair = IButtonswapPair(ButtonwoodLibrary.pairFor(factory, tokenA, tokenB));
@@ -46,8 +46,8 @@ contract ExampleOracleSimple {
 
         // overflow is desired, casting never truncates
         // cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
-        price0Average = FixedPoint.uq112x112(uint224((price0Cumulative - price0CumulativeLast) / timeElapsed));
-        price1Average = FixedPoint.uq112x112(uint224((price1Cumulative - price1CumulativeLast) / timeElapsed));
+        price0Average = uint224((price0Cumulative - price0CumulativeLast) / timeElapsed);
+        price1Average = uint224((price1Cumulative - price1CumulativeLast) / timeElapsed);
 
         price0CumulativeLast = price0Cumulative;
         price1CumulativeLast = price1Cumulative;
@@ -57,10 +57,10 @@ contract ExampleOracleSimple {
     // note this will always return 0 before update has been called successfully for the first time.
     function consult(address token, uint256 amountIn) external view returns (uint256 amountOut) {
         if (token == token0) {
-            amountOut = price0Average.mul(amountIn).decode144();
+            amountOut = (price0Average * amountIn) >> 112;
         } else {
             require(token == token1, "ExampleOracleSimple: INVALID_TOKEN");
-            amountOut = price1Average.mul(amountIn).decode144();
+            amountOut = (price1Average * amountIn) >> 112;
         }
     }
 }

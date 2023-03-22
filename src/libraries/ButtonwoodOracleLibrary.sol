@@ -1,12 +1,12 @@
-pragma solidity >=0.5.0;
+pragma solidity >=0.5.0; // ToDo - update to 0.8.13
 
 import {IButtonswapPair } from 'buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol';
-import { FixedPoint } from "solidity-lib/libraries/FixedPoint.sol";
+import { UQ112x112 } from 'buttonswap-core/libraries/UQ112x112.sol';
 
 
 // library with helper methods for oracles that are concerned with computing average prices
 library ButtonwoodOracleLibrary {
-    using FixedPoint for *;
+    using UQ112x112 for uint224;
 
     // helper function that returns the current block timestamp within the range of uint32, i.e. [0, 2**32 - 1]
     function currentBlockTimestamp() internal view returns (uint32) {
@@ -30,9 +30,9 @@ library ButtonwoodOracleLibrary {
             uint32 timeElapsed = blockTimestamp - blockTimestampLast;
             // addition overflow is desired
             // counterfactual
-            price0Cumulative += uint256(FixedPoint.fraction(reserve1, reserve0)._x) * timeElapsed;
+            price0Cumulative += uint256(UQ112x112.encode(reserve1).uqdiv(reserve0)) * timeElapsed;
             // counterfactual
-            price1Cumulative += uint256(FixedPoint.fraction(reserve0, reserve1)._x) * timeElapsed;
+            price1Cumulative += uint256(UQ112x112.encode(reserve0).uqdiv(reserve1)) * timeElapsed;
         }
     }
 }
