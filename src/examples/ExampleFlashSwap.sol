@@ -1,15 +1,15 @@
-pragma solidity =0.6.6;
+pragma solidity >=0.6.6; // ToDo - update to 0.8.13
 
-import "buttonwood-core/contracts/interfaces/IButtonwoodCallee.sol";
-
-import "../libraries/ButtonwoodLibrary.sol";
+import { IButtonswapCallee } from "buttonswap-core/interfaces/IButtonswapCallee.sol";
+import {IButtonswapPair } from 'buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol';
+import { ButtonwoodLibrary } from "../libraries/ButtonwoodLibrary.sol";
 import "../interfaces/V1/IUniswapV1Factory.sol";
 import "../interfaces/V1/IUniswapV1Exchange.sol";
-import "../interfaces/IButtonwoodRouter.sol";
+import { IButtonwoodRouter } from "../interfaces/IButtonwoodRouter/IButtonwoodRouter.sol";
 import "../interfaces/IERC20.sol";
 import "../interfaces/IWETH.sol";
 
-contract ExampleFlashSwap is IButtonwoodCallee {
+contract ExampleFlashSwap is IButtonswapCallee {
     IUniswapV1Factory immutable factoryV1;
     address immutable factory;
     IWETH immutable WETH;
@@ -25,14 +25,14 @@ contract ExampleFlashSwap is IButtonwoodCallee {
     receive() external payable {}
 
     // gets tokens/WETH via a V2 flash swap, swaps for the ETH/tokens on V1, repays V2, and keeps the rest!
-    function buttonwoodCall(address sender, uint256 amount0, uint256 amount1, bytes calldata data) external override {
+    function buttonswapCall(address sender, uint256 amount0, uint256 amount1, bytes calldata data) external override {
         address[] memory path = new address[](2);
         uint256 amountToken;
         uint256 amountETH;
         {
             // scope for token{0,1}, avoids stack too deep errors
-            address token0 = IButtonwoodPair(msg.sender).token0();
-            address token1 = IButtonwoodPair(msg.sender).token1();
+            address token0 = IButtonswapPair(msg.sender).token0();
+            address token1 = IButtonswapPair(msg.sender).token1();
             assert(msg.sender == ButtonwoodLibrary.pairFor(factory, token0, token1)); // ensure that msg.sender is actually a V2 pair
             assert(amount0 == 0 || amount1 == 0); // this strategy is unidirectional
             path[0] = amount0 == 0 ? token0 : token1;
@@ -48,7 +48,7 @@ contract ExampleFlashSwap is IButtonwoodCallee {
         if (amountToken > 0) {
             uint256 minETH = abi.decode(data, (uint256)); // slippage parameter for V1, passed in by caller
             token.approve(address(exchangeV1), amountToken);
-            uint256 amountReceived = exchangeV1.tokenToEthSwapInput(amountToken, minETH, uint256(-1));
+            uint256 amountReceived = exchangeV1.tokenToEthSwapInput(amountToken, minETH, type(uint256).max);
             uint256 amountRequired = ButtonwoodLibrary.getAmountsIn(factory, amountToken, path)[0];
             assert(amountReceived > amountRequired); // fail if we didn't get enough ETH back to repay our flash loan
             WETH.deposit{value: amountRequired}();
@@ -58,7 +58,7 @@ contract ExampleFlashSwap is IButtonwoodCallee {
         } else {
             uint256 minTokens = abi.decode(data, (uint256)); // slippage parameter for V1, passed in by caller
             WETH.withdraw(amountETH);
-            uint256 amountReceived = exchangeV1.ethToTokenSwapInput{value: amountETH}(minTokens, uint256(-1));
+            uint256 amountReceived = exchangeV1.ethToTokenSwapInput{value: amountETH}(minTokens, type(uint256).max);
             uint256 amountRequired = ButtonwoodLibrary.getAmountsIn(factory, amountETH, path)[0];
             assert(amountReceived > amountRequired); // fail if we didn't get enough tokens back to repay our flash loan
             assert(token.transfer(msg.sender, amountRequired)); // return tokens to V2 pair

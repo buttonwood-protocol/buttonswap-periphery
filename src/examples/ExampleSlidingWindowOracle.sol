@@ -1,11 +1,11 @@
-pragma solidity =0.6.6;
+pragma solidity >=0.6.6; // ToDo - update to 0.8.13
 
-import "buttonwood-core/contracts/interfaces/IButtonwoodFactory.sol";
-import "buttonwood-core/contracts/interfaces/IButtonwoodPair.sol";
-import "@uniswap/lib/contracts/libraries/FixedPoint.sol";
+import { IButtonswapFactory } from "buttonswap-core/interfaces/IButtonswapFactory/IButtonswapFactory.sol";
+import { IButtonswapPair } from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
+import { FixedPoint } from "solidity-lib/libraries/FixedPoint.sol";
 
 import "../libraries/SafeMath.sol";
-import "../libraries/ButtonwoodLibrary.sol";
+import { ButtonwoodLibrary } from "../libraries/ButtonwoodLibrary.sol";
 import "../libraries/ButtonwoodOracleLibrary.sol";
 
 // sliding window oracle that uses observations collected over a window to provide moving price averages in the past
