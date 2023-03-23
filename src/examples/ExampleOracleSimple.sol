@@ -39,7 +39,11 @@ contract ExampleOracleSimple {
     function update() external {
         (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp) =
             ButtonwoodOracleLibrary.currentCumulativePrices(address(pair));
-        uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
+        // overflow is desired
+        uint32 timeElapsed;
+        unchecked {
+            timeElapsed = blockTimestamp - blockTimestampLast;
+        }
 
         // ensure that at least one full period has passed since the last update
         require(timeElapsed >= PERIOD, "ExampleOracleSimple: PERIOD_NOT_ELAPSED");

@@ -1,4 +1,4 @@
-pragma solidity >=0.8.13; // ToDo - update to 0.8.13
+pragma solidity ^0.8.13;
 
 import { IButtonswapFactory } from "buttonswap-core/interfaces/IButtonswapFactory/IButtonswapFactory.sol";
 import { IButtonswapPair } from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
@@ -98,7 +98,10 @@ contract ExampleSlidingWindowOracle {
         uint256 amountIn
     ) private pure returns (uint256 amountOut) {
         // overflow is desired.
-        uint224 priceAverage = uint224((priceCumulativeEnd - priceCumulativeStart) / timeElapsed);
+        uint224 priceAverage;
+        unchecked {
+            priceAverage = uint224((priceCumulativeEnd - priceCumulativeStart) / timeElapsed);
+        }
         amountOut = (priceAverage * amountIn) >> 112;
     }
 
