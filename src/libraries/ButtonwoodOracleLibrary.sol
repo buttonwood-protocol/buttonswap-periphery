@@ -27,12 +27,17 @@ library ButtonwoodOracleLibrary {
         (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast) = IButtonswapPair(pair).getPools();
         if (blockTimestampLast != blockTimestamp) {
             // subtraction overflow is desired
-            uint32 timeElapsed = blockTimestamp - blockTimestampLast;
+            uint32 timeElapsed;
+            unchecked {
+                timeElapsed = blockTimestamp - blockTimestampLast;
+            }
             // addition overflow is desired
-            // counterfactual
-            price0Cumulative += uint256(UQ112x112.encode(reserve1).uqdiv(reserve0)) * timeElapsed;
-            // counterfactual
-            price1Cumulative += uint256(UQ112x112.encode(reserve0).uqdiv(reserve1)) * timeElapsed;
+            unchecked {
+                // counterfactual
+                price0Cumulative += uint256(UQ112x112.encode(reserve1).uqdiv(reserve0)) * timeElapsed;
+                // counterfactual
+                price1Cumulative += uint256(UQ112x112.encode(reserve0).uqdiv(reserve1)) * timeElapsed;
+            }
         }
     }
 }
