@@ -1,10 +1,10 @@
 pragma solidity ^0.8.13;
 
-import { IButtonswapPair } from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
-import { UQ112x112 } from 'buttonswap-core/libraries/UQ112x112.sol';
+import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
+import {UQ112x112} from "buttonswap-core/libraries/UQ112x112.sol";
 
 import "../libraries/ButtonwoodOracleLibrary.sol";
-import { ButtonwoodLibrary } from "../libraries/ButtonwoodLibrary.sol";
+import {ButtonwoodLibrary} from "../libraries/ButtonwoodLibrary.sol";
 
 // fixed window oracle that recomputes the average price for the entire period once every period
 // note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period

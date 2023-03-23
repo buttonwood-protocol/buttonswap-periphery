@@ -1,8 +1,7 @@
 pragma solidity >=0.5.0; // ToDo - update to 0.8.13
 
-import {IButtonswapPair } from 'buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol';
-import { UQ112x112 } from 'buttonswap-core/libraries/UQ112x112.sol';
-
+import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
+import {UQ112x112} from "buttonswap-core/libraries/UQ112x112.sol";
 
 // library with helper methods for oracles that are concerned with computing average prices
 library ButtonwoodOracleLibrary {

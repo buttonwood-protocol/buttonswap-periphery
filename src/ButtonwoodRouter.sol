@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import { IButtonswapFactory } from "buttonswap-core/interfaces/IButtonswapFactory/IButtonswapFactory.sol";
-import { IButtonswapPair } from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
-import { TransferHelper } from "./libraries/TransferHelper.sol";
+import {IButtonswapFactory} from "buttonswap-core/interfaces/IButtonswapFactory/IButtonswapFactory.sol";
+import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
+import {TransferHelper} from "./libraries/TransferHelper.sol";
 import "./interfaces/IButtonwoodRouter/IButtonwoodRouter.sol";
 import "./libraries/ButtonwoodLibrary.sol";
 import "./libraries/SafeMath.sol";
@@ -299,7 +299,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         bytes32 s
     ) external virtual override returns (uint256 amountA, uint256 amountB) {
         address pair = ButtonwoodLibrary.pairFor(factory, tokenA, tokenB);
-        uint256 value = approveMax ? type(uint256).max  : liquidity;
+        uint256 value = approveMax ? type(uint256).max : liquidity;
         IButtonswapPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
         (amountA, amountB) = removeLiquidity(tokenA, tokenB, liquidity, amountAMin, amountBMin, to, deadline);
     }
@@ -317,7 +317,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         bytes32 s
     ) external virtual override returns (uint256 amountToken, uint256 amountETH) {
         address pair = ButtonwoodLibrary.pairFor(factory, token, WETH);
-        uint256 value = approveMax ? type(uint256).max  : liquidity;
+        uint256 value = approveMax ? type(uint256).max : liquidity;
         IButtonswapPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
         (amountToken, amountETH) = removeLiquidityETH(token, liquidity, amountTokenMin, amountETHMin, to, deadline);
     }
@@ -350,7 +350,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         bytes32 s
     ) external virtual override returns (uint256 amountETH) {
         address pair = ButtonwoodLibrary.pairFor(factory, token, WETH);
-        uint256 value = approveMax ? type(uint256).max  : liquidity;
+        uint256 value = approveMax ? type(uint256).max : liquidity;
         IButtonswapPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
         amountETH = removeLiquidityETHSupportingFeeOnTransferTokens(
             token, liquidity, amountTokenMin, amountETHMin, to, deadline
