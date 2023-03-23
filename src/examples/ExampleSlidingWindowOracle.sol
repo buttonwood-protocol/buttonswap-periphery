@@ -1,11 +1,11 @@
 pragma solidity ^0.8.13;
 
-import { IButtonswapFactory } from "buttonswap-core/interfaces/IButtonswapFactory/IButtonswapFactory.sol";
-import { IButtonswapPair } from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
-import { UQ112x112 } from 'buttonswap-core/libraries/UQ112x112.sol';
+import {IButtonswapFactory} from "buttonswap-core/interfaces/IButtonswapFactory/IButtonswapFactory.sol";
+import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
+import {UQ112x112} from "buttonswap-core/libraries/UQ112x112.sol";
 
 import "../libraries/SafeMath.sol";
-import { ButtonwoodLibrary } from "../libraries/ButtonwoodLibrary.sol";
+import {ButtonwoodLibrary} from "../libraries/ButtonwoodLibrary.sol";
 import "../libraries/ButtonwoodOracleLibrary.sol";
 
 // sliding window oracle that uses observations collected over a window to provide moving price averages in the past
