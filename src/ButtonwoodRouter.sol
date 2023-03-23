@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import { IButtonswapFactory } from "buttonswap-core/interfaces/IButtonswapFactory/IButtonswapFactory.sol";
 import { IButtonswapPair } from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
-import "solidity-lib/libraries/TransferHelper.sol";
+import { TransferHelper } from "./libraries/TransferHelper.sol";
 import "./interfaces/IButtonwoodRouter/IButtonwoodRouter.sol";
 import "./libraries/ButtonwoodLibrary.sol";
 import "./libraries/SafeMath.sol";

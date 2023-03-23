@@ -1,13 +1,13 @@
-pragma solidity >=0.6.6; // ToDo - update to 0.8.13
+pragma solidity ^0.8.13;
 
 import { IButtonswapPair } from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
-import { Babylonian } from "solidity-lib/libraries/Babylonian.sol";
-import { TransferHelper } from "solidity-lib/libraries/TransferHelper.sol";
 
 import "../interfaces/IERC20.sol";
 import { IButtonwoodRouter } from "../interfaces/IButtonwoodRouter/IButtonwoodRouter.sol";
 import "../libraries/SafeMath.sol";
 import { ButtonwoodLibrary } from "../libraries/ButtonwoodLibrary.sol";
+import { Babylonian } from "../libraries/Babylonian.sol";
+import { TransferHelper } from "../libraries/TransferHelper.sol";
 
 contract ExampleSwapToPrice {
     using SafeMath for uint256;

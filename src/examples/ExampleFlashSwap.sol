@@ -1,4 +1,4 @@
-pragma solidity >=0.6.6; // ToDo - update to 0.8.13
+pragma solidity ^0.8.13;
 
 import { IButtonswapCallee } from "buttonswap-core/interfaces/IButtonswapCallee.sol";
 import {IButtonswapPair } from 'buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol';
