@@ -4,8 +4,14 @@ pragma solidity ^0.8.13;
 import "./IButtonwoodRouterErrors.sol";
 
 interface IButtonwoodRouter is IButtonwoodRouterErrors {
+    /**
+     * @notice Returns the address of the Buttonswap Factory
+     */
     function factory() external view returns (address);
 
+    /**
+     * @notice Returns the address of the WETH token
+     */
     function WETH() external view returns (address);
 
     function addLiquidity(

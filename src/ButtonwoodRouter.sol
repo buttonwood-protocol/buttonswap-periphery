@@ -4,11 +4,11 @@ pragma solidity ^0.8.13;
 import {IButtonswapFactory} from "buttonswap-core/interfaces/IButtonswapFactory/IButtonswapFactory.sol";
 import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
 import {TransferHelper} from "./libraries/TransferHelper.sol";
-import "./interfaces/IButtonwoodRouter/IButtonwoodRouter.sol";
-import "./libraries/ButtonwoodLibrary.sol";
-import "./libraries/SafeMath.sol";
-import "./interfaces/IERC20.sol";
-import "./interfaces/IWETH.sol";
+import {IButtonwoodRouter} from "./interfaces/IButtonwoodRouter/IButtonwoodRouter.sol";
+import {ButtonwoodLibrary} from "./libraries/ButtonwoodLibrary.sol";
+import {SafeMath} from "./libraries/SafeMath.sol";
+import {IERC20} from "./interfaces/IERC20.sol";
+import {IWETH} from "./interfaces/IWETH.sol";
 
 contract ButtonwoodRouter is IButtonwoodRouter {
     using SafeMath for uint256;
@@ -112,6 +112,17 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         }
     }
 
+    /**
+     * @dev Adds liquidity to a pair, creating it if it doesn't exist yet, and transfers the liquidity tokens to the recipient.
+     * @param tokenA The address of the first token in the pair.
+     * @param tokenB The address of the second token in the pair.
+     * @param amountADesired The amount of the first token to add to the pair.
+     * @param amountBDesired The amount of the second token to add to the pair.
+     * @param amountAMin The minimum amount of the first token to add to the pair.
+     * @param amountBMin The minimum amount of the second token to add to the pair.
+     * @param to The address to send the liquidity tokens to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     */
     function addLiquidity(
         address tokenA,
         address tokenB,
