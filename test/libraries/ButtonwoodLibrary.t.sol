@@ -78,7 +78,7 @@ contract ButtonwoodLibraryTest is Test {
         assertEq(pair, factoryPair);
     }
 
-    function test_getPools_emptyPools(bytes32 saltA, bytes32 saltB) public {
+    function test_getPools_emptyPair(bytes32 saltA, bytes32 saltB) public {
         MockERC20 tokenA = new MockERC20{salt: saltB}("Token A", "TKN_A");
         MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B");
 
@@ -94,7 +94,7 @@ contract ButtonwoodLibraryTest is Test {
         assertEq(poolB, 0);
     }
 
-    function test_getPools_nonEmptyPools(bytes32 saltA, bytes32 saltB, uint112 amountA, uint112 amountB) public {
+    function test_getPools_nonEmptyPair(bytes32 saltA, bytes32 saltB, uint112 amountA, uint112 amountB) public {
         // Ensuring that amountA and amountB are enough to mint minimum liquidity
         vm.assume(amountA > 1000);
         vm.assume(amountB > 1000);
