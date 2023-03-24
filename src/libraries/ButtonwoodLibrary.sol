@@ -31,8 +31,10 @@ library ButtonwoodLibrary {
     }
 
     /**
-     * @notice Calculates the CREATE2 address for a pair without making any external calls
-     * @param factory The address of the ButtonswapFactory
+     * @notice Predicts the address that the Pair contract for given tokens would have been deployed to
+     *  @dev Specifically, this calculates the CREATE2 address for a Pair contract.
+     *     It's done this way to avoid making any external calls, and thus saving on gas versus other approaches.
+     * @param factory The address of the ButtonswapFactory used to create the pair
      * @param tokenA First token address
      * @param tokenB Second token address
      * @return pair The pair address
@@ -58,7 +60,7 @@ library ButtonwoodLibrary {
     }
 
     /**
-     * @notice Fetches and sorts the pools for a pair
+     * @notice Fetches and sorts the pools for a pair. Pools are the current token balances in the pair contract serving as liquidity.
      * @param factory The address of the ButtonswapFactory
      * @param tokenA First token address
      * @param tokenB Second token address

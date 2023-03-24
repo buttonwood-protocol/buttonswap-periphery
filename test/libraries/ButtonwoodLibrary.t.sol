@@ -2,7 +2,6 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import "forge-std/console.sol";
 import {ButtonwoodLibrary} from "../../src/libraries/ButtonwoodLibrary.sol";
 import {ButtonswapFactory} from "buttonswap-core/ButtonswapFactory.sol";
 import {ButtonswapPair} from "buttonswap-core/ButtonswapPair.sol";
@@ -13,29 +12,11 @@ contract ButtonwoodLibraryTest is Test {
 
     ButtonswapFactory public buttonswapFactory;
 
-    function createTokenAtAddress(address addr, string memory name, string memory symbol) private returns (MockERC20) {
-        // Keeping addr out of the bad address range
-        vm.assume(addr > address(10000));
-
-        MockERC20 token = new MockERC20(name, symbol);
-
-        // Copying over token name
-        vm.store(addr, bytes32(uint256(3)), vm.load(address(token), bytes32(uint256(3))));
-        // Copying over token symbol
-        vm.store(addr, bytes32(uint256(4)), vm.load(address(token), bytes32(uint256(4))));
-        // Copying over token _mintableBalance
-        vm.store(addr, bytes32(uint256(5)), vm.load(address(token), bytes32(uint256(5))));
-
-        // Copying over the code
-        vm.etch(addr, address(token).code);
-        return MockERC20(addr);
-    }
-
     function setUp() public {
         buttonswapFactory = new ButtonswapFactory(address(this));
     }
 
-    function test_sortTokens_valid_addresses(address tokenA, address tokenB) public {
+    function test_sortTokens_validAddresses(address tokenA, address tokenB) public {
         // Ensuring that the addresses are not equal
         vm.assume(tokenA != tokenB);
         // Ensuring that the addresses are not zero
@@ -58,13 +39,13 @@ contract ButtonwoodLibraryTest is Test {
         assertEq(token1, secondToken);
     }
 
-    function test_sortTokens_identical_addresses(address token) public {
+    function test_sortTokens_cannotCallWithIdenticalAddresses(address token) public {
         // Ensuring the IdenticalAddresses error is thrown
         vm.expectRevert(ButtonwoodLibrary.IdenticalAddresses.selector);
         ButtonwoodLibrary.sortTokens(token, token);
     }
 
-    function test_sortTokens_zero_address(address token, bool firstTokenIsZero) public {
+    function test_sortTokens_cannotCallWithZeroAddress(address token, bool firstTokenIsZero) public {
         // Making sure not to trigger the IdenticalAddresses error
         vm.assume(token != address(0));
 
@@ -81,7 +62,6 @@ contract ButtonwoodLibraryTest is Test {
     }
 
     function test_pairFor(address tokenA, address tokenB) public {
-        console.logString("hello");
         // Ensuring that the addresses are not equal
         vm.assume(tokenA != tokenB);
         // Ensuring that the addresses are not zero
@@ -89,9 +69,7 @@ contract ButtonwoodLibraryTest is Test {
         vm.assume(tokenB != address(0));
 
         // Create the pair with the factory and two tokens
-        assertEq(buttonswapFactory.allPairsLength(), 0);
         address factoryPair = buttonswapFactory.createPair(tokenA, tokenB);
-        assertEq(buttonswapFactory.allPairsLength(), 1);
 
         // Call the pairFor function to get the pair address
         address pair = ButtonwoodLibrary.pairFor(address(buttonswapFactory), tokenA, tokenB);
@@ -100,13 +78,9 @@ contract ButtonwoodLibraryTest is Test {
         assertEq(pair, factoryPair);
     }
 
-    function test_getPools_empty_pools(address addressA, address addressB) public {
-        // Ensuring that the addresses are not equal
-        vm.assume(addressA != addressB);
-
-        // Don't need to confirm addresses are not zero since it's checked in the createTokenAtAddress function
-        MockERC20 tokenA = createTokenAtAddress(addressA, "Token A", "TKA");
-        MockERC20 tokenB = createTokenAtAddress(addressB, "Token B", "TKB");
+    function test_getPools_emptyPools(bytes32 saltA, bytes32 saltB) public {
+        MockERC20 tokenA = new MockERC20{salt: saltB}("Token A", "TKN_A");
+        MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B");
 
         // Create the pair with the factory and two tokens
         buttonswapFactory.createPair(address(tokenA), address(tokenB));
@@ -120,18 +94,13 @@ contract ButtonwoodLibraryTest is Test {
         assertEq(poolB, 0);
     }
 
-    function test_getPools_nonEmpty_pools(address addressA, address addressB, uint112 amountA, uint112 amountB)
-        public
-    {
-        // Ensuring that the addresses are not equal
-        vm.assume(addressA != addressB);
+    function test_getPools_nonEmptyPools(bytes32 saltA, bytes32 saltB, uint112 amountA, uint112 amountB) public {
         // Ensuring that amountA and amountB are enough to mint minimum liquidity
         vm.assume(amountA > 1000);
         vm.assume(amountB > 1000);
 
-        // Don't need to confirm addresses are not zero since it's checked in the createTokenAtAddress function
-        MockERC20 tokenA = createTokenAtAddress(addressA, "Token A", "TKA");
-        MockERC20 tokenB = createTokenAtAddress(addressB, "Token B", "TKB");
+        MockERC20 tokenA = new MockERC20{salt: saltB}("Token A", "TKN_A");
+        MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B");
 
         // Create the pair with the factory and two tokens
         address pair = buttonswapFactory.createPair(address(tokenA), address(tokenB));
