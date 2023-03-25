@@ -32,8 +32,8 @@ library ButtonwoodLibrary {
 
     /**
      * @notice Predicts the address that the Pair contract for given tokens would have been deployed to
-     *  @dev Specifically, this calculates the CREATE2 address for a Pair contract.
-     *     It's done this way to avoid making any external calls, and thus saving on gas versus other approaches.
+     * @dev Specifically, this calculates the CREATE2 address for a Pair contract.
+     * @dev It's done this way to avoid making any external calls, and thus saving on gas versus other approaches.
      * @param factory The address of the ButtonswapFactory used to create the pair
      * @param tokenA First token address
      * @param tokenB Second token address

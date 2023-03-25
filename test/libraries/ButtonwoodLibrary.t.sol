@@ -79,7 +79,9 @@ contract ButtonwoodLibraryTest is Test {
     }
 
     function test_getPools_emptyPair(bytes32 saltA, bytes32 saltB) public {
-        MockERC20 tokenA = new MockERC20{salt: saltB}("Token A", "TKN_A");
+        // Creating the two tokens
+        // Salts are used to fuzz unique addresses in arbitrary order
+        MockERC20 tokenA = new MockERC20{salt: saltA}("Token A", "TKN_A");
         MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B");
 
         // Create the pair with the factory and two tokens
@@ -99,7 +101,9 @@ contract ButtonwoodLibraryTest is Test {
         vm.assume(amountA > 1000);
         vm.assume(amountB > 1000);
 
-        MockERC20 tokenA = new MockERC20{salt: saltB}("Token A", "TKN_A");
+        // Creating the two tokens
+        // Salts are used to fuzz unique addresses in arbitrary order
+        MockERC20 tokenA = new MockERC20{salt: saltA}("Token A", "TKN_A");
         MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B");
 
         // Create the pair with the factory and two tokens
