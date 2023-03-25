@@ -19,10 +19,10 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
     /**
      * @notice Adds liquidity to a pair, creating it if it doesn't exist yet, and transfers the liquidity tokens to the recipient.
      * @dev If the pair is empty, amountAMin and amountBMin are ignored.
-     * @dev If the pair is nonempty, it deposits as much of tokenA and tokenB as possible while maintaining 3 conditions:
-     * @dev     1. The ratio of tokenA to tokenB in the pair remains approximately the same
-     * @dev     2. The amount of tokenA in the pair is at least amountAMin but less than or equal to amountADesired
-     * @dev     3. The amount of tokenB in the pair is at least amountBMin but less than or equal to amountBDesired
+     * If the pair is nonempty, it deposits as much of tokenA and tokenB as possible while maintaining 3 conditions:
+     * 1. The ratio of tokenA to tokenB in the pair remains approximately the same
+     * 2. The amount of tokenA in the pair is at least amountAMin but less than or equal to amountADesired
+     * 3. The amount of tokenB in the pair is at least amountBMin but less than or equal to amountBDesired
      * @param tokenA The address of the first token in the pair.
      * @param tokenB The address of the second token in the pair.
      * @param amountADesired The maximum amount of the first token to add to the pair.
