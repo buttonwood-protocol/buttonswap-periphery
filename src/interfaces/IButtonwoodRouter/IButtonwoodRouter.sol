@@ -4,10 +4,37 @@ pragma solidity ^0.8.13;
 import "./IButtonwoodRouterErrors.sol";
 
 interface IButtonwoodRouter is IButtonwoodRouterErrors {
+    /**
+     * @notice Returns the address of the Buttonswap Factory
+     * @return The address of the Buttonswap Factory
+     */
     function factory() external view returns (address);
 
+    /**
+     * @notice Returns the address of the WETH token
+     * @return The address of the WETH token
+     */
     function WETH() external view returns (address);
 
+    /**
+     * @notice Adds liquidity to a pair, creating it if it doesn't exist yet, and transfers the liquidity tokens to the recipient.
+     * @dev If the pair is empty, amountAMin and amountBMin are ignored.
+     * If the pair is nonempty, it deposits as much of tokenA and tokenB as possible while maintaining 3 conditions:
+     * 1. The ratio of tokenA to tokenB in the pair remains approximately the same
+     * 2. The amount of tokenA in the pair is at least amountAMin but less than or equal to amountADesired
+     * 3. The amount of tokenB in the pair is at least amountBMin but less than or equal to amountBDesired
+     * @param tokenA The address of the first token in the pair.
+     * @param tokenB The address of the second token in the pair.
+     * @param amountADesired The maximum amount of the first token to add to the pair.
+     * @param amountBDesired The maximum amount of the second token to add to the pair.
+     * @param amountAMin The minimum amount of the first token to add to the pair.
+     * @param amountBMin The minimum amount of the second token to add to the pair.
+     * @param to The address to send the liquidity tokens to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     * @return amountA The amount of tokenA actually added to the pair.
+     * @return amountB The amount of tokenB actually added to the pair.
+     * @return liquidity The amount of liquidity tokens minted.
+     */
     function addLiquidity(
         address tokenA,
         address tokenB,
