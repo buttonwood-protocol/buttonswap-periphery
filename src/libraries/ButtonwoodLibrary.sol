@@ -11,6 +11,10 @@ library ButtonwoodLibrary {
     error IdenticalAddresses();
     /// @notice Zero address provided
     error ZeroAddress();
+    /// @notice Insufficient amount provided
+    error InsufficientAmount();
+    /// @notice Insufficient liquidity provided
+    error InsufficientLiquidity();
 
     /**
      * @notice Returns sorted token addresses, used to handle return values from pairs sorted in this order
@@ -77,7 +81,14 @@ library ButtonwoodLibrary {
         (poolA, poolB) = tokenA == token0 ? (pool0, pool1) : (pool1, pool0);
     }
 
-    // fetches and sorts the reservoirs for a pair
+    /**
+     * @notice Fetches and sorts the reservoirs for a pair. Reservoirs are the current token balances in the pair contract not actively serving as liquidity.
+     * @param factory The address of the ButtonswapFactory
+     * @param tokenA First token address
+     * @param tokenB Second token address
+     * @return reservoirA Reservoir corresponding to tokenA
+     * @return reservoirB Reservoir corresponding to tokenB
+     */
     function getReservoirs(address factory, address tokenA, address tokenB)
         internal
         view
@@ -88,11 +99,21 @@ library ButtonwoodLibrary {
         (reservoirA, reservoirB) = tokenA == token0 ? (reservoir0, reservoir1) : (reservoir1, reservoir0);
     }
 
-    // given some amount of an asset and pair reserves, returns an equivalent amount of the other asset
-    function quote(uint256 amountA, uint256 reserveA, uint256 reserveB) internal pure returns (uint256 amountB) {
-        require(amountA > 0, "ButtonwoodLibrary: INSUFFICIENT_AMOUNT");
-        require(reserveA > 0 && reserveB > 0, "ButtonwoodLibrary: INSUFFICIENT_LIQUIDITY");
-        amountB = amountA.mul(reserveB) / reserveA;
+    /**
+     * @notice Given some amount of an asset and pair pools, returns an equivalent amount of the other asset
+     * @param amountA The amount of token A
+     * @param poolA The balance of token A in the pool
+     * @param poolB The balance of token B in the pool
+     * @return amountB The amount of token B
+     */
+    function quote(uint256 amountA, uint256 poolA, uint256 poolB) internal pure returns (uint256 amountB) {
+        if (amountA == 0) {
+            revert InsufficientAmount();
+        }
+        if (poolA == 0 || poolB == 0) {
+            revert InsufficientLiquidity();
+        }
+        amountB = amountA.mul(poolB) / poolA;
     }
 
     // given an input amount of an asset and pair reserves, returns the maximum output amount of the other asset

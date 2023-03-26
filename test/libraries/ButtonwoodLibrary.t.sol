@@ -6,6 +6,7 @@ import {ButtonwoodLibrary} from "../../src/libraries/ButtonwoodLibrary.sol";
 import {ButtonswapFactory} from "buttonswap-core/ButtonswapFactory.sol";
 import {ButtonswapPair} from "buttonswap-core/ButtonswapPair.sol";
 import {MockERC20} from "mock-contracts/MockERC20.sol";
+import {MockRebasingERC20} from "mock-contracts/MockRebasingERC20.sol";
 
 contract ButtonwoodLibraryTest is Test {
     address public userA = 0x000000000000000000000000000000000000000A;
@@ -123,5 +124,119 @@ contract ButtonwoodLibraryTest is Test {
         // Assert that the pool amounts equal the token amounts minted
         assertEq(poolA, amountA);
         assertEq(poolB, amountB);
+    }
+
+    function test_getReservoirs_emptyPair(bytes32 saltA, bytes32 saltB) public {
+        // Creating the two tokens
+        // Salts are used to fuzz unique addresses in arbitrary order
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+
+        // Create the pair with the factory and two tokens
+        buttonswapFactory.createPair(address(tokenA), address(tokenB));
+
+        // Call the getReservoirs function to get the reservoirs
+        (uint256 reservoirA, uint256 reservoirB) =
+            ButtonwoodLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
+
+        // Assert that the pool amounts equal the token amounts minted
+        assertEq(reservoirA, 0);
+        assertEq(reservoirB, 0);
+    }
+
+    function test_getReservoirs_nonEmptyPair(
+        bytes32 saltA,
+        bytes32 saltB,
+        uint112 amountA,
+        uint112 amountB,
+        uint112 numerator,
+        uint112 denominator
+    ) public {
+        // Ensuring that amountA and amountB are enough to mint minimum liquidity
+        vm.assume(amountA > 1000);
+        vm.assume(amountB > 1000);
+
+        // Ensuring the rebase is valid and denominator is non-zero
+        vm.assume(numerator != 0);
+        vm.assume(denominator != 0);
+
+        // Creating the two tokens
+        // Salts are used to fuzz unique addresses in arbitrary order
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+
+        // Create the pair with the factory and two tokens
+        address pair = buttonswapFactory.createPair(address(tokenA), address(tokenB));
+
+        // First liquidity mint - determines price-ratios between the assets
+        tokenA.mint(address(this), amountA);
+        tokenA.transfer(pair, amountA);
+        tokenB.mint(address(this), amountB);
+        tokenB.transfer(pair, amountB);
+        ButtonswapPair(pair).mint(address(this));
+
+        // Rebasing tokenA
+        tokenA.applyMultiplier(numerator, denominator);
+        vm.assume((uint256(amountA) * numerator) / denominator < type(uint112).max);
+
+        // Syncing the pair's pools & reservoirs
+        ButtonswapPair(pair).sync();
+
+        // Call the getReservoirs function to get the reservoirs
+        (uint256 reservoirA, uint256 reservoirB) =
+            ButtonwoodLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
+
+        // If the rebase is positive, reservoirA should be non-zero and reservoirB should be zero
+        if (numerator > denominator) {
+            assertApproxEqAbs(reservoirA, tokenA.balanceOf(pair) - amountA, 1);
+            assertEq(reservoirB, 0);
+        } else {
+            // If the rebase is negative, reservoirA should be zero and reservoirB should be non-zero
+            assertEq(reservoirA, 0);
+            assertApproxEqAbs(reservoirB, amountB - (tokenA.balanceOf(pair) * amountB) / amountA, 1);
+        }
+    }
+
+    function test_quote_zeroAmountA(uint256 poolA, uint256 poolB) public {
+        uint256 amountA = 0;
+
+        // Ensuring that pools are not empty
+        vm.assume(poolA > 0);
+        vm.assume(poolB > 0);
+
+        vm.expectRevert(ButtonwoodLibrary.InsufficientAmount.selector);
+        ButtonwoodLibrary.quote(amountA, poolA, poolB);
+    }
+
+    function test_quote_emptyPool(uint256 amountA, uint256 poolA, uint256 poolB) public {
+        // Ensuring that amountA is non-zero
+        vm.assume(amountA > 0);
+
+        // Ensuring at least one pool is empty
+        vm.assume(poolA == 0 || poolB == 0);
+
+        vm.expectRevert(ButtonwoodLibrary.InsufficientLiquidity.selector);
+        ButtonwoodLibrary.quote(amountA, poolA, poolB);
+    }
+
+    function test_quote_nonzeroValues(uint256 amountA, uint256 poolA, uint256 poolB) public {
+        // Ensuring that amountA is non-zero
+        vm.assume(amountA > 0);
+
+        // Ensuring that pools are not empty
+        vm.assume(poolA > 0);
+        vm.assume(poolB > 0);
+
+        // Ensuring that math does not overflow
+        vm.assume(amountA < type(uint256).max / poolB);
+
+        uint256 amountB = ButtonwoodLibrary.quote(amountA, poolA, poolB);
+
+        // Assert that the amountB is correct
+        assertEq(amountB, (amountA * poolB) / poolA);
+
+        // Asserting that amountA/amountB = poolA/poolB
+        // Since amountB is calculated with a rounded division from poolA, rounding error can be at most (poolA - 1)
+        assertApproxEqAbs(amountA * poolB, amountB * poolA, poolA - 1);
     }
 }
