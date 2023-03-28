@@ -15,6 +15,12 @@ library ButtonwoodLibrary {
     error InsufficientAmount();
     /// @notice Insufficient liquidity provided
     error InsufficientLiquidity();
+    /// @notice Insufficient input amount provided
+    error InsufficientInputAmount();
+    /// @notice Insufficient output amount provided
+    error InsufficientOutputAmount();
+    /// @notice Invalid path provided
+    error InvalidPath();
 
     /**
      * @notice Returns sorted token addresses, used to handle return values from pairs sorted in this order
@@ -116,40 +122,65 @@ library ButtonwoodLibrary {
         amountB = amountA.mul(poolB) / poolA;
     }
 
-    // given an input amount of an asset and pair reserves, returns the maximum output amount of the other asset
-    function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)
+    /**
+     * @notice Given an input amount of an asset and pair pools, returns the maximum output amount of the other asset
+     * Factors in the fee on the input amount.
+     * @param amountIn The input amount of the asset
+     * @param poolIn The balance of the input asset in the pool
+     * @param poolOut The balance of the output asset in the pool
+     * @return amountOut The output amount of the other asset
+     */
+    function getAmountOut(uint256 amountIn, uint256 poolIn, uint256 poolOut)
         internal
         pure
         returns (uint256 amountOut)
     {
-        require(amountIn > 0, "ButtonwoodLibrary: INSUFFICIENT_INPUT_AMOUNT");
-        require(reserveIn > 0 && reserveOut > 0, "ButtonwoodLibrary: INSUFFICIENT_LIQUIDITY");
+        if (amountIn == 0) {
+            revert InsufficientInputAmount();
+        }
+        if (poolIn == 0 || poolOut == 0) {
+            revert InsufficientLiquidity();
+        }
         uint256 amountInWithFee = amountIn.mul(997);
-        uint256 numerator = amountInWithFee.mul(reserveOut);
-        uint256 denominator = reserveIn.mul(1000).add(amountInWithFee);
+        uint256 numerator = amountInWithFee.mul(poolOut);
+        uint256 denominator = poolIn.mul(1000).add(amountInWithFee);
         amountOut = numerator / denominator;
     }
 
-    // given an output amount of an asset and pair reserves, returns a required input amount of the other asset
-    function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut)
-        internal
-        pure
-        returns (uint256 amountIn)
-    {
-        require(amountOut > 0, "ButtonwoodLibrary: INSUFFICIENT_OUTPUT_AMOUNT");
-        require(reserveIn > 0 && reserveOut > 0, "ButtonwoodLibrary: INSUFFICIENT_LIQUIDITY");
-        uint256 numerator = reserveIn.mul(amountOut).mul(1000);
-        uint256 denominator = reserveOut.sub(amountOut).mul(997);
+    /**
+     * @notice Given an output amount of an asset and pair pools, returns a required input amount of the other asset
+     * @param amountOut The output amount of the asset
+     * @param poolIn The balance of the input asset in the pool
+     * @param poolOut The balance of the output asset in the pool
+     * @return amountIn The required input amount of the other asset
+     */
+    function getAmountIn(uint256 amountOut, uint256 poolIn, uint256 poolOut) internal pure returns (uint256 amountIn) {
+        if (amountOut == 0) {
+            revert InsufficientOutputAmount();
+        }
+        if (poolIn == 0 || poolOut == 0) {
+            revert InsufficientLiquidity();
+        }
+        uint256 numerator = poolIn.mul(amountOut).mul(1000);
+        uint256 denominator = poolOut.sub(amountOut).mul(997);
         amountIn = (numerator / denominator).add(1);
     }
 
-    // performs chained getAmountOut calculations on any number of pairs
+    /**
+     * @notice Given an ordered array of tokens and an input amount of the first asset, performs chained getAmountOut calculations to calculate the output amount of the final asset
+     * @param factory The address of the ButtonswapFactory that created the pairs
+     * @param amountIn The input amount of the first asset
+     * @param path An array of token addresses [tokenA, tokenB, tokenC, ...] representing the path the input token takes to get to the output token
+     * @return amounts The output amounts of each asset in the path
+     */
     function getAmountsOut(address factory, uint256 amountIn, address[] memory path)
         internal
         view
         returns (uint256[] memory amounts)
     {
-        require(path.length >= 2, "ButtonwoodLibrary: INVALID_PATH");
+        if (path.length < 2) {
+            revert InvalidPath();
+        }
         amounts = new uint256[](path.length);
         amounts[0] = amountIn;
         for (uint256 i; i < path.length - 1; i++) {
@@ -158,13 +189,21 @@ library ButtonwoodLibrary {
         }
     }
 
-    // performs chained getAmountIn calculations on any number of pairs
+    /**
+     * @notice Given an ordered array of tokens and an output amount of the final asset, performs chained getAmountIn calculations to calculate the input amount of the first asset
+     * @param factory The address of the ButtonswapFactory that created the pairs
+     * @param amountOut The output amount of the final asset
+     * @param path An array of token addresses [tokenA, tokenB, tokenC, ...] representing the path the input token takes to get to the output token
+     * @return amounts The input amounts of each asset in the path
+     */
     function getAmountsIn(address factory, uint256 amountOut, address[] memory path)
         internal
         view
         returns (uint256[] memory amounts)
     {
-        require(path.length >= 2, "ButtonwoodLibrary: INVALID_PATH");
+        if (path.length < 2) {
+            revert InvalidPath();
+        }
         amounts = new uint256[](path.length);
         amounts[amounts.length - 1] = amountOut;
         for (uint256 i = path.length - 1; i > 0; i--) {
