@@ -5,7 +5,7 @@ import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButto
 import {UQ112x112} from "buttonswap-core/libraries/UQ112x112.sol";
 
 import "../libraries/SafeMath.sol";
-import {ButtonwoodLibrary} from "../libraries/ButtonwoodLibrary.sol";
+import {ButtonswapLibrary} from "../libraries/ButtonswapLibrary.sol";
 import "../libraries/ButtonwoodOracleLibrary.sol";
 
 // sliding window oracle that uses observations collected over a window to provide moving price averages in the past
@@ -67,7 +67,7 @@ contract ExampleSlidingWindowOracle {
     // update the cumulative price for the observation at the current timestamp. each observation is updated at most
     // once per epoch period.
     function update(address tokenA, address tokenB) external {
-        address pair = ButtonwoodLibrary.pairFor(factory, tokenA, tokenB);
+        address pair = ButtonswapLibrary.pairFor(factory, tokenA, tokenB);
 
         // populate the array with empty observations (first call only)
         for (uint256 i = pairObservations[pair].length; i < granularity; i++) {
@@ -109,7 +109,7 @@ contract ExampleSlidingWindowOracle {
     // range [now - [windowSize, windowSize - periodSize * 2], now]
     // update must have been called for the bucket corresponding to timestamp `now - windowSize`
     function consult(address tokenIn, uint256 amountIn, address tokenOut) external view returns (uint256 amountOut) {
-        address pair = ButtonwoodLibrary.pairFor(factory, tokenIn, tokenOut);
+        address pair = ButtonswapLibrary.pairFor(factory, tokenIn, tokenOut);
         Observation storage firstObservation = getFirstObservationInWindow(pair);
 
         uint256 timeElapsed = block.timestamp - firstObservation.timestamp;
@@ -118,7 +118,7 @@ contract ExampleSlidingWindowOracle {
         require(timeElapsed >= windowSize - periodSize * 2, "SlidingWindowOracle: UNEXPECTED_TIME_ELAPSED");
 
         (uint256 price0Cumulative, uint256 price1Cumulative,) = ButtonwoodOracleLibrary.currentCumulativePrices(pair);
-        (address token0,) = ButtonwoodLibrary.sortTokens(tokenIn, tokenOut);
+        (address token0,) = ButtonswapLibrary.sortTokens(tokenIn, tokenOut);
 
         if (token0 == tokenIn) {
             return computeAmountOut(firstObservation.price0Cumulative, price0Cumulative, timeElapsed, amountIn);

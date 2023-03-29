@@ -4,7 +4,7 @@ import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButto
 import {UQ112x112} from "buttonswap-core/libraries/UQ112x112.sol";
 
 import "../libraries/ButtonwoodOracleLibrary.sol";
-import {ButtonwoodLibrary} from "../libraries/ButtonwoodLibrary.sol";
+import {ButtonswapLibrary} from "../libraries/ButtonswapLibrary.sol";
 
 // fixed window oracle that recomputes the average price for the entire period once every period
 // note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
@@ -24,7 +24,7 @@ contract ExampleOracleSimple {
     uint224 public price1Average;
 
     constructor(address factory, address tokenA, address tokenB) public {
-        IButtonswapPair _pair = IButtonswapPair(ButtonwoodLibrary.pairFor(factory, tokenA, tokenB));
+        IButtonswapPair _pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, tokenA, tokenB));
         pair = _pair;
         token0 = _pair.token0();
         token1 = _pair.token1();

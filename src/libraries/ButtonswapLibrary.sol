@@ -4,7 +4,7 @@ import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButto
 
 import "./SafeMath.sol";
 
-library ButtonwoodLibrary {
+library ButtonswapLibrary {
     using SafeMath for uint256;
 
     /// @notice Identical addresses provided
@@ -61,7 +61,7 @@ library ButtonwoodLibrary {
                             hex"ff",
                             factory,
                             keccak256(abi.encodePacked(token0, token1)),
-                            hex"82dab5db00121d93d60ba09e9d13a20d50827137450efe63a08e84a60dce9f77" // init code hash
+                            hex"7ce5d89dcbd1d02157bd26065131eff230aff8579077f73463489953bf95d488" // init code hash
                         )
                     )
                 )

@@ -2,13 +2,13 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import {ButtonwoodLibrary} from "../../src/libraries/ButtonwoodLibrary.sol";
+import {ButtonswapLibrary} from "../../src/libraries/ButtonswapLibrary.sol";
 import {ButtonswapFactory} from "buttonswap-core/ButtonswapFactory.sol";
 import {ButtonswapPair} from "buttonswap-core/ButtonswapPair.sol";
 import {MockERC20} from "mock-contracts/MockERC20.sol";
 import {MockRebasingERC20} from "mock-contracts/MockRebasingERC20.sol";
 
-contract ButtonwoodLibraryTest is Test {
+contract ButtonswapLibraryTest is Test {
     address public userA = 0x000000000000000000000000000000000000000A;
 
     ButtonswapFactory public buttonswapFactory;
@@ -33,7 +33,7 @@ contract ButtonwoodLibraryTest is Test {
         }
 
         // Call the sortTokens function
-        (address token0, address token1) = ButtonwoodLibrary.sortTokens(tokenA, tokenB);
+        (address token0, address token1) = ButtonswapLibrary.sortTokens(tokenA, tokenB);
 
         // Assert that the addresses are sorted correctly
         assertEq(token0, firstToken);
@@ -42,8 +42,8 @@ contract ButtonwoodLibraryTest is Test {
 
     function test_sortTokens_cannotCallWithIdenticalAddresses(address token) public {
         // Ensuring the IdenticalAddresses error is thrown
-        vm.expectRevert(ButtonwoodLibrary.IdenticalAddresses.selector);
-        ButtonwoodLibrary.sortTokens(token, token);
+        vm.expectRevert(ButtonswapLibrary.IdenticalAddresses.selector);
+        ButtonswapLibrary.sortTokens(token, token);
     }
 
     function test_sortTokens_cannotCallWithZeroAddress(address token, bool firstTokenIsZero) public {
@@ -58,8 +58,8 @@ contract ButtonwoodLibraryTest is Test {
         }
 
         // Ensuring the ZeroAddress error is thrown
-        vm.expectRevert(ButtonwoodLibrary.ZeroAddress.selector);
-        ButtonwoodLibrary.sortTokens(tokenA, tokenB);
+        vm.expectRevert(ButtonswapLibrary.ZeroAddress.selector);
+        ButtonswapLibrary.sortTokens(tokenA, tokenB);
     }
 
     function test_pairFor(address tokenA, address tokenB) public {
@@ -73,7 +73,7 @@ contract ButtonwoodLibraryTest is Test {
         address factoryPair = buttonswapFactory.createPair(tokenA, tokenB);
 
         // Call the pairFor function to get the pair address
-        address pair = ButtonwoodLibrary.pairFor(address(buttonswapFactory), tokenA, tokenB);
+        address pair = ButtonswapLibrary.pairFor(address(buttonswapFactory), tokenA, tokenB);
 
         // Assert that the pair address matches the factory pair address
         assertEq(pair, factoryPair);
@@ -86,7 +86,7 @@ contract ButtonwoodLibraryTest is Test {
         MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B");
 
         // Call getPools() without having created the pair
-        ButtonwoodLibrary.getPools(address(buttonswapFactory), address(tokenA), address(tokenB));
+        ButtonswapLibrary.getPools(address(buttonswapFactory), address(tokenA), address(tokenB));
     }
 
     function test_getPools_emptyPair(bytes32 saltA, bytes32 saltB) public {
@@ -100,7 +100,7 @@ contract ButtonwoodLibraryTest is Test {
 
         // Call the getPools function to get the pools
         (uint256 poolA, uint256 poolB) =
-            ButtonwoodLibrary.getPools(address(buttonswapFactory), address(tokenA), address(tokenB));
+            ButtonswapLibrary.getPools(address(buttonswapFactory), address(tokenA), address(tokenB));
 
         // Assert that the pool amounts equal the token amounts minted
         assertEq(poolA, 0);
@@ -129,7 +129,7 @@ contract ButtonwoodLibraryTest is Test {
 
         // Call the getPools function to get the pools
         (uint256 poolA, uint256 poolB) =
-            ButtonwoodLibrary.getPools(address(buttonswapFactory), address(tokenA), address(tokenB));
+            ButtonswapLibrary.getPools(address(buttonswapFactory), address(tokenA), address(tokenB));
 
         // Assert that the pool amounts equal the token amounts minted
         assertEq(poolA, amountA);
@@ -143,7 +143,7 @@ contract ButtonwoodLibraryTest is Test {
         MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B");
 
         // Call getReservoirs() without having created the pair
-        ButtonwoodLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
+        ButtonswapLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
     }
 
     function test_getReservoirs_emptyPair(bytes32 saltA, bytes32 saltB) public {
@@ -157,7 +157,7 @@ contract ButtonwoodLibraryTest is Test {
 
         // Call the getReservoirs function to get the reservoirs
         (uint256 reservoirA, uint256 reservoirB) =
-            ButtonwoodLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
+            ButtonswapLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
 
         // Assert that the pool amounts equal the token amounts minted
         assertEq(reservoirA, 0);
@@ -204,7 +204,7 @@ contract ButtonwoodLibraryTest is Test {
 
         // Call the getReservoirs function to get the reservoirs
         (uint256 reservoirA, uint256 reservoirB) =
-            ButtonwoodLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
+            ButtonswapLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
 
         // If the rebase is positive, reservoirA should be non-zero and reservoirB should be zero
         if (numerator > denominator) {
@@ -224,8 +224,8 @@ contract ButtonwoodLibraryTest is Test {
         vm.assume(poolA > 0);
         vm.assume(poolB > 0);
 
-        vm.expectRevert(ButtonwoodLibrary.InsufficientAmount.selector);
-        ButtonwoodLibrary.quote(amountA, poolA, poolB);
+        vm.expectRevert(ButtonswapLibrary.InsufficientAmount.selector);
+        ButtonswapLibrary.quote(amountA, poolA, poolB);
     }
 
     function test_quote_emptyPool(uint256 amountA, uint256 poolA, uint256 poolB) public {
@@ -235,8 +235,8 @@ contract ButtonwoodLibraryTest is Test {
         // Ensuring at least one pool is empty
         vm.assume(poolA == 0 || poolB == 0);
 
-        vm.expectRevert(ButtonwoodLibrary.InsufficientLiquidity.selector);
-        ButtonwoodLibrary.quote(amountA, poolA, poolB);
+        vm.expectRevert(ButtonswapLibrary.InsufficientLiquidity.selector);
+        ButtonswapLibrary.quote(amountA, poolA, poolB);
     }
 
     function test_quote_nonzeroValues(uint256 amountA, uint256 poolA, uint256 poolB) public {
@@ -250,7 +250,7 @@ contract ButtonwoodLibraryTest is Test {
         // Ensuring that math does not overflow
         vm.assume(amountA < type(uint256).max / poolB);
 
-        uint256 amountB = ButtonwoodLibrary.quote(amountA, poolA, poolB);
+        uint256 amountB = ButtonswapLibrary.quote(amountA, poolA, poolB);
 
         // Assert that the amountB is correct
         assertEq(amountB, (amountA * poolB) / poolA);
@@ -263,8 +263,8 @@ contract ButtonwoodLibraryTest is Test {
     function test_getAmountOut_zeroAmountIn(uint256 poolIn, uint256 poolOut) public {
         uint256 amountIn = 0;
 
-        vm.expectRevert(ButtonwoodLibrary.InsufficientInputAmount.selector);
-        ButtonwoodLibrary.getAmountOut(amountIn, poolIn, poolOut);
+        vm.expectRevert(ButtonswapLibrary.InsufficientInputAmount.selector);
+        ButtonswapLibrary.getAmountOut(amountIn, poolIn, poolOut);
     }
 
     function test_getAmountOut_emptyPool(uint256 amountIn, uint256 poolIn, uint256 poolOut) public {
@@ -274,8 +274,8 @@ contract ButtonwoodLibraryTest is Test {
         // Ensuring at least one pool is empty
         vm.assume(poolIn == 0 || poolOut == 0);
 
-        vm.expectRevert(ButtonwoodLibrary.InsufficientLiquidity.selector);
-        ButtonwoodLibrary.getAmountOut(amountIn, poolIn, poolOut);
+        vm.expectRevert(ButtonswapLibrary.InsufficientLiquidity.selector);
+        ButtonswapLibrary.getAmountOut(amountIn, poolIn, poolOut);
     }
 
     function test_getAmountOut_nonZeroValues(uint256 amountIn, uint256 poolIn, uint256 poolOut) public {
@@ -290,7 +290,7 @@ contract ButtonwoodLibraryTest is Test {
         vm.assume(amountIn < (type(uint256).max / 977) / poolOut);
         vm.assume(poolIn < (type(uint256).max / 1000) - amountIn);
 
-        uint256 amountOut = ButtonwoodLibrary.getAmountOut(amountIn, poolIn, poolOut);
+        uint256 amountOut = ButtonswapLibrary.getAmountOut(amountIn, poolIn, poolOut);
 
         // Assert that the amountOut is correct
         assertEq(amountOut, (poolOut * amountIn * 997) / (poolIn * 1000 + amountIn * 997));
@@ -299,8 +299,8 @@ contract ButtonwoodLibraryTest is Test {
     function test_getAmountIn_zeroAmountOut(uint256 poolIn, uint256 poolOut) public {
         uint256 amountOut = 0;
 
-        vm.expectRevert(ButtonwoodLibrary.InsufficientOutputAmount.selector);
-        ButtonwoodLibrary.getAmountIn(amountOut, poolIn, poolOut);
+        vm.expectRevert(ButtonswapLibrary.InsufficientOutputAmount.selector);
+        ButtonswapLibrary.getAmountIn(amountOut, poolIn, poolOut);
     }
 
     function test_getAmountIn_emptyPool(uint256 amountOut, uint256 poolIn, uint256 poolOut) public {
@@ -310,8 +310,8 @@ contract ButtonwoodLibraryTest is Test {
         // Ensuring at least one pool is empty
         vm.assume(poolIn == 0 || poolOut == 0);
 
-        vm.expectRevert(ButtonwoodLibrary.InsufficientLiquidity.selector);
-        ButtonwoodLibrary.getAmountIn(amountOut, poolIn, poolOut);
+        vm.expectRevert(ButtonswapLibrary.InsufficientLiquidity.selector);
+        ButtonswapLibrary.getAmountIn(amountOut, poolIn, poolOut);
     }
 
     function test_getAmountIn_nonZeroValues(uint256 amountOut, uint256 poolIn, uint256 poolOut) public {
@@ -327,23 +327,23 @@ contract ButtonwoodLibraryTest is Test {
         vm.assume(amountOut < poolOut);
         vm.assume(poolOut - amountOut < (type(uint256).max / 997));
 
-        uint256 amountIn = ButtonwoodLibrary.getAmountIn(amountOut, poolIn, poolOut);
+        uint256 amountIn = ButtonswapLibrary.getAmountIn(amountOut, poolIn, poolOut);
 
         // Assert that the amountIn is correct
         assertEq(amountIn, (poolIn * amountOut * 1000) / (997 * (poolOut - amountOut)) + 1);
     }
 
     function test_getAmountsOut_revertsOnEmptyPath(uint256 amountIn) public {
-        vm.expectRevert(ButtonwoodLibrary.InvalidPath.selector);
-        ButtonwoodLibrary.getAmountsOut(address(buttonswapFactory), amountIn, new address[](0));
+        vm.expectRevert(ButtonswapLibrary.InvalidPath.selector);
+        ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, new address[](0));
     }
 
     function test_getAmountsOut_revertsOnSingletonPath(uint256 amountIn, address singlePathAddress) public {
         address[] memory path = new address[](1);
         path[0] = singlePathAddress;
 
-        vm.expectRevert(ButtonwoodLibrary.InvalidPath.selector);
-        ButtonwoodLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
+        vm.expectRevert(ButtonswapLibrary.InvalidPath.selector);
+        ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
     }
 
     function testFail_getAmountsOut_revertsOnPathWithUninitializedPair(
@@ -375,7 +375,7 @@ contract ButtonwoodLibraryTest is Test {
         }
 
         // Throws EvmError because there's a missing pair in the path
-        ButtonwoodLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
+        ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
     }
 
     function test_getAmountsOut_validPath(uint256 amountIn, uint256[] memory seedPoolOutAmounts) public {
@@ -413,24 +413,24 @@ contract ButtonwoodLibraryTest is Test {
             MockERC20(path[idx + 1]).mint(address(this), poolOutAmounts[idx + 1]);
             MockERC20(path[idx + 1]).transfer(pair, poolOutAmounts[idx + 1]);
             ButtonswapPair(pair).mint(address(this));
-            expectedAmounts[idx + 1] = ButtonwoodLibrary.getAmountOut(expectedAmounts[idx], 10000, poolOutAmounts[idx + 1]);
+            expectedAmounts[idx + 1] = ButtonswapLibrary.getAmountOut(expectedAmounts[idx], 10000, poolOutAmounts[idx + 1]);
         }
 
-        uint256[] memory amounts = ButtonwoodLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
+        uint256[] memory amounts = ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
         assertEq(amounts, expectedAmounts, "Amounts out are not correct");
     }
 
     function test_getAmountsIn_revertsOnEmptyPath(uint256 amountOut) public {
-        vm.expectRevert(ButtonwoodLibrary.InvalidPath.selector);
-        ButtonwoodLibrary.getAmountsIn(address(buttonswapFactory), amountOut, new address[](0));
+        vm.expectRevert(ButtonswapLibrary.InvalidPath.selector);
+        ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, new address[](0));
     }
 
     function test_getAmountsIn_revertsOnSingletonPath(uint256 amountOut, address singlePathAddress) public {
         address[] memory path = new address[](1);
         path[0] = singlePathAddress;
 
-        vm.expectRevert(ButtonwoodLibrary.InvalidPath.selector);
-        ButtonwoodLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
+        vm.expectRevert(ButtonswapLibrary.InvalidPath.selector);
+        ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
     }
 
     function testFail_getAmountsIn_revertsOnPathWithUninitializedPair(
@@ -462,7 +462,7 @@ contract ButtonwoodLibraryTest is Test {
         }
 
         // Throws EvmError because there's a missing pair in the path
-        ButtonwoodLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
+        ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
     }
 
     function test_getAmountsIn_validPath(uint256 amountOut, uint256[] memory seedPoolOutAmounts) public {
@@ -500,10 +500,10 @@ contract ButtonwoodLibraryTest is Test {
             MockERC20(path[idx - 1]).mint(address(this), 10000);
             MockERC20(path[idx - 1]).transfer(pair, 10000);
             ButtonswapPair(pair).mint(address(this));
-            expectedAmounts[idx - 1] = ButtonwoodLibrary.getAmountIn(expectedAmounts[idx], 10000, poolOutAmounts[idx]);
+            expectedAmounts[idx - 1] = ButtonswapLibrary.getAmountIn(expectedAmounts[idx], 10000, poolOutAmounts[idx]);
         }
 
-        uint256[] memory amounts = ButtonwoodLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
+        uint256[] memory amounts = ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
         assertEq(amounts, expectedAmounts, "Amounts out are not correct");
     }
 
@@ -543,8 +543,8 @@ contract ButtonwoodLibraryTest is Test {
             ButtonswapPair(pair).mint(address(this));
         }
 
-        uint256[] memory amountsForward = ButtonwoodLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
-        uint256[] memory amountsBackward = ButtonwoodLibrary.getAmountsIn(address(buttonswapFactory), amountsForward[amountsForward.length - 1], path);
+        uint256[] memory amountsForward = ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
+        uint256[] memory amountsBackward = ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountsForward[amountsForward.length - 1], path);
 
         for(uint256 idx = 0; idx < amountsForward.length; idx++) {
             assertApproxEqRel(amountsForward[idx], amountsBackward[idx], 0.05e18, "Amounts should be equal going both ways");
