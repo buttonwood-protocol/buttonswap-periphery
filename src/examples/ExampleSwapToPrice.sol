@@ -5,7 +5,7 @@ import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButto
 import "../interfaces/IERC20.sol";
 import {IButtonwoodRouter} from "../interfaces/IButtonwoodRouter/IButtonwoodRouter.sol";
 import "../libraries/SafeMath.sol";
-import {ButtonwoodLibrary} from "../libraries/ButtonwoodLibrary.sol";
+import {ButtonswapLibrary} from "../libraries/ButtonswapLibrary.sol";
 import {Babylonian} from "../libraries/Babylonian.sol";
 import {TransferHelper} from "../libraries/TransferHelper.sol";
 
@@ -62,7 +62,7 @@ contract ExampleSwapToPrice {
         bool aToB;
         uint256 amountIn;
         {
-            (uint256 reserveA, uint256 reserveB) = ButtonwoodLibrary.getPools(factory, tokenA, tokenB);
+            (uint256 reserveA, uint256 reserveB) = ButtonswapLibrary.getPools(factory, tokenA, tokenB);
             (aToB, amountIn) = computeProfitMaximizingTrade(truePriceTokenA, truePriceTokenB, reserveA, reserveB);
         }
 
