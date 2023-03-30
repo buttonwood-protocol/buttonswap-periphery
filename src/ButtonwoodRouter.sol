@@ -13,7 +13,13 @@ import {IWETH} from "./interfaces/IWETH.sol";
 contract ButtonwoodRouter is IButtonwoodRouter {
     using SafeMath for uint256;
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     address public immutable override factory;
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     address public immutable override WETH;
 
     modifier ensure(uint256 deadline) {
@@ -28,8 +34,11 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         WETH = _WETH;
     }
 
+    /**
+     * @dev Only accepts ETH via fallback from the WETH contract
+     */
     receive() external payable {
-        assert(msg.sender == WETH); // only accept ETH via fallback from the WETH contract
+        assert(msg.sender == WETH);
     }
 
     // **** ADD LIQUIDITY ****
