@@ -23,7 +23,7 @@ library ButtonwoodLibrary {
     error InvalidPath();
 
     /**
-     * @notice Returns sorted token addresses, used to handle return values from pairs sorted in this order
+     * @dev Returns sorted token addresses, used to handle return values from pairs sorted in this order
      * @param tokenA First token address
      * @param tokenB Second token address
      * @return token0 First sorted token address
@@ -41,7 +41,7 @@ library ButtonwoodLibrary {
     }
 
     /**
-     * @notice Predicts the address that the Pair contract for given tokens would have been deployed to
+     * @dev Predicts the address that the Pair contract for given tokens would have been deployed to
      * @dev Specifically, this calculates the CREATE2 address for a Pair contract.
      * @dev It's done this way to avoid making any external calls, and thus saving on gas versus other approaches.
      * @param factory The address of the ButtonswapFactory used to create the pair
@@ -70,7 +70,7 @@ library ButtonwoodLibrary {
     }
 
     /**
-     * @notice Fetches and sorts the pools for a pair. Pools are the current token balances in the pair contract serving as liquidity.
+     * @dev Fetches and sorts the pools for a pair. Pools are the current token balances in the pair contract serving as liquidity.
      * @param factory The address of the ButtonswapFactory
      * @param tokenA First token address
      * @param tokenB Second token address
@@ -88,7 +88,7 @@ library ButtonwoodLibrary {
     }
 
     /**
-     * @notice Fetches and sorts the reservoirs for a pair. Reservoirs are the current token balances in the pair contract not actively serving as liquidity.
+     * @dev Fetches and sorts the reservoirs for a pair. Reservoirs are the current token balances in the pair contract not actively serving as liquidity.
      * @param factory The address of the ButtonswapFactory
      * @param tokenA First token address
      * @param tokenB Second token address
@@ -106,7 +106,7 @@ library ButtonwoodLibrary {
     }
 
     /**
-     * @notice Given some amount of an asset and pair pools, returns an equivalent amount of the other asset
+     * @dev Given some amount of an asset and pair pools, returns an equivalent amount of the other asset
      * @param amountA The amount of token A
      * @param poolA The balance of token A in the pool
      * @param poolB The balance of token B in the pool
@@ -123,7 +123,7 @@ library ButtonwoodLibrary {
     }
 
     /**
-     * @notice Given an input amount of an asset and pair pools, returns the maximum output amount of the other asset
+     * @dev Given an input amount of an asset and pair pools, returns the maximum output amount of the other asset
      * Factors in the fee on the input amount.
      * @param amountIn The input amount of the asset
      * @param poolIn The balance of the input asset in the pool
@@ -148,7 +148,7 @@ library ButtonwoodLibrary {
     }
 
     /**
-     * @notice Given an output amount of an asset and pair pools, returns a required input amount of the other asset
+     * @dev Given an output amount of an asset and pair pools, returns a required input amount of the other asset
      * @param amountOut The output amount of the asset
      * @param poolIn The balance of the input asset in the pool
      * @param poolOut The balance of the output asset in the pool
@@ -167,7 +167,7 @@ library ButtonwoodLibrary {
     }
 
     /**
-     * @notice Given an ordered array of tokens and an input amount of the first asset, performs chained getAmountOut calculations to calculate the output amount of the final asset
+     * @dev Given an ordered array of tokens and an input amount of the first asset, performs chained getAmountOut calculations to calculate the output amount of the final asset
      * @param factory The address of the ButtonswapFactory that created the pairs
      * @param amountIn The input amount of the first asset
      * @param path An array of token addresses [tokenA, tokenB, tokenC, ...] representing the path the input token takes to get to the output token
@@ -184,13 +184,13 @@ library ButtonwoodLibrary {
         amounts = new uint256[](path.length);
         amounts[0] = amountIn;
         for (uint256 i; i < path.length - 1; i++) {
-            (uint256 reserveIn, uint256 reserveOut) = getPools(factory, path[i], path[i + 1]);
-            amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut);
+            (uint256 poolIn, uint256 poolOut) = getPools(factory, path[i], path[i + 1]);
+            amounts[i + 1] = getAmountOut(amounts[i], poolIn, poolOut);
         }
     }
 
     /**
-     * @notice Given an ordered array of tokens and an output amount of the final asset, performs chained getAmountIn calculations to calculate the input amount of the first asset
+     * @dev Given an ordered array of tokens and an output amount of the final asset, performs chained getAmountIn calculations to calculate the input amount of the first asset
      * @param factory The address of the ButtonswapFactory that created the pairs
      * @param amountOut The output amount of the final asset
      * @param path An array of token addresses [tokenA, tokenB, tokenC, ...] representing the path the input token takes to get to the output token
@@ -207,8 +207,8 @@ library ButtonwoodLibrary {
         amounts = new uint256[](path.length);
         amounts[amounts.length - 1] = amountOut;
         for (uint256 i = path.length - 1; i > 0; i--) {
-            (uint256 reserveIn, uint256 reserveOut) = getPools(factory, path[i - 1], path[i]);
-            amounts[i - 1] = getAmountIn(amounts[i], reserveIn, reserveOut);
+            (uint256 poolIn, uint256 poolOut) = getPools(factory, path[i - 1], path[i]);
+            amounts[i - 1] = getAmountIn(amounts[i], poolIn, poolOut);
         }
     }
 }
