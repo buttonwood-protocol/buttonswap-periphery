@@ -29,7 +29,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         _;
     }
 
-    constructor(address _factory, address _WETH) public {
+    constructor(address _factory, address _WETH) {
         factory = _factory;
         WETH = _WETH;
     }

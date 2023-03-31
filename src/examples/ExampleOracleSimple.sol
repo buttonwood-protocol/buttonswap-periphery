@@ -23,7 +23,7 @@ contract ExampleOracleSimple {
     uint224 public price0Average;
     uint224 public price1Average;
 
-    constructor(address factory, address tokenA, address tokenB) public {
+    constructor(address factory, address tokenA, address tokenB) {
         IButtonswapPair _pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, tokenA, tokenB));
         pair = _pair;
         token0 = _pair.token0();
