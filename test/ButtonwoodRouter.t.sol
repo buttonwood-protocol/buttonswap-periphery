@@ -43,14 +43,16 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
     }
 
     function test_receive_rejectNonWETHSender(uint256 ethAmount) public {
-        (bool sent, bytes memory data) = payable(address(buttonwoodRouter)).call{value: ethAmount}("");
+        // Sending ETH, ignoring data in return value
+        (bool sent,) = payable(address(buttonwoodRouter)).call{value: ethAmount}("");
         assertTrue(!sent, "Expected call to fail");
     }
 
     function test_receive_acceptWETHSender(uint256 ethAmount) public {
         vm.deal(wethAddress, ethAmount);
         vm.prank(wethAddress);
-        (bool sent, bytes memory data) = payable(address(buttonwoodRouter)).call{value: ethAmount}("");
+        // Sending ETH, ignoring data in return value
+        (bool sent,) = payable(address(buttonwoodRouter)).call{value: ethAmount}("");
         assertTrue(sent, "Expected call to succeed");
     }
 
@@ -58,9 +60,6 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         // Minting enough for minimum liquidity requirement
         vm.assume(amountADesired > 10000);
         vm.assume(amountBDesired > 10000);
-
-        // Target pair address
-        address pair = ButtonswapLibrary.pairFor(address(buttonswapFactory), address(tokenA), address(tokenB));
 
         tokenA.mint(address(this), amountADesired);
         tokenB.mint(address(this), amountBDesired);
@@ -195,7 +194,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         tokenB.approve(address(buttonwoodRouter), amountBDesired);
 
         // Adding liquidity should succeed now. Not concerned with liquidity value
-        (uint256 amountA, uint256 amountB, uint256 liquidity) = buttonwoodRouter.addLiquidity(
+        (uint256 amountA, uint256 amountB,) = buttonwoodRouter.addLiquidity(
             address(tokenA), address(tokenB), amountADesired, amountBDesired, amountAMin, 0, userA, block.timestamp + 1
         );
 
