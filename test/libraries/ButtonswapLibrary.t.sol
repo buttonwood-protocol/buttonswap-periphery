@@ -413,7 +413,8 @@ contract ButtonswapLibraryTest is Test {
             MockERC20(path[idx + 1]).mint(address(this), poolOutAmounts[idx + 1]);
             MockERC20(path[idx + 1]).transfer(pair, poolOutAmounts[idx + 1]);
             ButtonswapPair(pair).mint(address(this));
-            expectedAmounts[idx + 1] = ButtonswapLibrary.getAmountOut(expectedAmounts[idx], 10000, poolOutAmounts[idx + 1]);
+            expectedAmounts[idx + 1] =
+                ButtonswapLibrary.getAmountOut(expectedAmounts[idx], 10000, poolOutAmounts[idx + 1]);
         }
 
         uint256[] memory amounts = ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
@@ -544,11 +545,13 @@ contract ButtonswapLibraryTest is Test {
         }
 
         uint256[] memory amountsForward = ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
-        uint256[] memory amountsBackward = ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountsForward[amountsForward.length - 1], path);
+        uint256[] memory amountsBackward =
+            ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountsForward[amountsForward.length - 1], path);
 
-        for(uint256 idx = 0; idx < amountsForward.length; idx++) {
-            assertApproxEqRel(amountsForward[idx], amountsBackward[idx], 0.05e18, "Amounts should be equal going both ways");
+        for (uint256 idx = 0; idx < amountsForward.length; idx++) {
+            assertApproxEqRel(
+                amountsForward[idx], amountsBackward[idx], 0.05e18, "Amounts should be equal going both ways"
+            );
         }
-
     }
 }

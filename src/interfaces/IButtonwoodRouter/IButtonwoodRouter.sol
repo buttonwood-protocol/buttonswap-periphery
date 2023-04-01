@@ -6,15 +6,15 @@ import "./IButtonwoodRouterErrors.sol";
 interface IButtonwoodRouter is IButtonwoodRouterErrors {
     /**
      * @notice Returns the address of the Buttonswap Factory
-     * @return The address of the Buttonswap Factory
+     * @return factory The address of the Buttonswap Factory
      */
-    function factory() external view returns (address);
+    function factory() external view returns (address factory);
 
     /**
      * @notice Returns the address of the WETH token
-     * @return The address of the WETH token
+     * @return WETH The address of the WETH token
      */
-    function WETH() external view returns (address);
+    function WETH() external view returns (address WETH);
 
     /**
      * @notice Adds liquidity to a pair, creating it if it doesn't exist yet, and transfers the liquidity tokens to the recipient.
