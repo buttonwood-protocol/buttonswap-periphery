@@ -656,7 +656,6 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         tokenA.mint(address(this), amountTokenDesired);
         tokenA.approve(address(buttonwoodRouter), amountTokenDesired);
         vm.deal(address(this), amountETHSent);
-        uint256 ETHBalanceBefore = address(this).balance;
 
         // Adding liquidity should succeed now. Not concerned with liquidity value
         (uint256 amountToken, uint256 amountETH,) = buttonwoodRouter.addLiquidityETH{value: amountETHSent}(
