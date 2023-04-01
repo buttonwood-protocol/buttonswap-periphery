@@ -83,19 +83,19 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         uint256 amountAMin,
         uint256 amountBMin
     ) internal virtual returns (uint256 amountA, uint256 amountB) {
-        // create the pair if it doesn't exist yet
+        // If the pair doesn't exist yet, there isn't any reservoir
         if (IButtonswapFactory(factory).getPair(tokenA, tokenB) == address(0)) {
-            IButtonswapFactory(factory).createPair(tokenA, tokenB);
+            revert NoReservoir();
         }
         (uint256 poolA, uint256 poolB) = ButtonswapLibrary.getPools(factory, tokenA, tokenB);
+        // the first liquidity addition should happen through _addLiquidity
+        // can't initialize by matching with a reservoir
+        if (poolA == 0 || poolB == 0) {
+            revert NotInitialized();
+        }
         (uint256 reservoirA, uint256 reservoirB) = ButtonswapLibrary.getReservoirs(factory, tokenA, tokenB);
         if (reservoirA == 0 && reservoirB == 0) {
             revert NoReservoir();
-        }
-        // can't initialize by matching with a reservoir
-        // the first liquidity addition should happen through _addLiquidity
-        if (poolA == 0 || poolB == 0) {
-            revert NotInitialized();
         }
 
         if (reservoirA > 0) {
@@ -186,7 +186,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         assert(IWETH(WETH).transfer(pair, amountETH));
         liquidity = IButtonswapPair(pair).mint(to);
         // refund dust eth, if any
-        if (msg.value > amountETH) TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);
+        if (msg.value > amountETH) {
+            TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);
+        }
     }
 
     function addLiquidityETHWithReservoir(

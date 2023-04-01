@@ -46,6 +46,24 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
         uint256 deadline
     ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
 
+    /**
+     * @notice Adds liquidity to a pair, opposite to the existing reservoir, and transfers the liquidity tokens to the recipient
+     * @dev Since there at most one reservoir at a given time, some conditions are checked:
+     * 1. If there is no reservoir, it rejects
+     * 2. The token with the reservoir has its amountDesired parameter ignored
+     * 3. The token with the reservoir has its amount deducted from the reservoir (checked against corresponding amountMin parameter)
+     * @param tokenA The address of the first token in the pair.
+     * @param tokenB The address of the second token in the pair.
+     * @param amountADesired The maximum amount of the first token to add to the pair.
+     * @param amountBDesired The maximum amount of the second token to add to the pair.
+     * @param amountAMin The minimum amount of the first token to add to the pair.
+     * @param amountBMin The minimum amount of the second token to add to the pair.
+     * @param to The address to send the liquidity tokens to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     * @return amountA The amount of tokenA actually added to the pair.
+     * @return amountB The amount of tokenB actually added to the pair.
+     * @return liquidity The amount of liquidity tokens minted.
+     */
     function addLiquidityWithReservoir(
         address tokenA,
         address tokenB,
@@ -57,6 +75,24 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
         uint256 deadline
     ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
 
+    /**
+     * @notice Similar to `addLiquidity` but one of the tokens is ETH wrapped into WETH.
+     * adds liquidity to a pair, creating it if it doesn't exist yet, and transfers the liquidity tokens to the recipient.
+     * @dev If the pair is empty, amountTokenMin and amountETHMin are ignored.
+     * If the pair is nonempty, it deposits as much of token and WETH as possible while maintaining 3 conditions:
+     * 1. The ratio of token to WETH in the pair remains approximately the same
+     * 2. The amount of token in the pair is at least amountTokenMin but less than or equal to amountTokenDesired
+     * 3. The amount of WETH in the pair is at least amountETHMin but less than or equal to ETH sent
+     * @param token The address of the non-ETH token in the pair.
+     * @param amountTokenDesired The maximum amount of the non-ETH token to add to the pair.
+     * @param amountTokenMin The minimum amount of the non-ETH token to add to the pair.
+     * @param amountETHMin The minimum amount of WETH to add to the pair.
+     * @param to The address to send the liquidity tokens to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     * @return amountToken The amount of token actually added to the pair.
+     * @return amountETH The amount of WETH actually added to the pair.
+     * @return liquidity The amount of liquidity tokens minted.
+     */
     function addLiquidityETH(
         address token,
         uint256 amountTokenDesired,
