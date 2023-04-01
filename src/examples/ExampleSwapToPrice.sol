@@ -15,7 +15,7 @@ contract ExampleSwapToPrice {
     IButtonwoodRouter public immutable router;
     address public immutable factory;
 
-    constructor(address factory_, IButtonwoodRouter router_) public {
+    constructor(address factory_, IButtonwoodRouter router_) {
         factory = factory_;
         router = router_;
     }
