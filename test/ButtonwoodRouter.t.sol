@@ -9,6 +9,7 @@ import {MockRebasingERC20} from "mock-contracts/MockRebasingERC20.sol";
 import {ButtonswapFactory} from "buttonswap-core/ButtonswapFactory.sol";
 import {IWETH} from "../src/interfaces/IWETH.sol";
 import {MockWeth} from "./mocks/MockWeth.sol";
+import {ButtonswapLibrary} from "../src/libraries/ButtonswapLibrary.sol";
 
 contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
     address public userA = 0x000000000000000000000000000000000000000A;
@@ -299,7 +300,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         // Making sure amountBDesired is positive
         vm.assume(amountBDesired > 0);
 
-        // Creating the pair with poolA:poolB price ratio. No rebase so no reservoir
+        // Creating the pair with poolA:poolB price ratio.
         tokenA.mint(address(this), poolA);
         tokenB.mint(address(this), poolB);
         IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
@@ -330,7 +331,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         vm.assume(poolA > 10000);
         vm.assume(poolB > 10000);
 
-        // Creating the pair with poolA:poolB price ratio. No rebase so no reservoir
+        // Creating the pair with poolA:poolB price ratio.
         tokenA.mint(address(this), poolA);
         tokenB.mint(address(this), poolB);
         IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
@@ -370,13 +371,14 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         vm.assume(rebaseNumerator > rebaseDenominator);
         vm.assume(poolA < (type(uint112).max / rebaseNumerator) * rebaseDenominator);
 
-        // Ensuring amountBDesired is between 0.01% and 100% of the reservoir, and that it doesn't cause overflow
+        // Ensuring amountBDesired is between 0.01% and 100% of the reservoir, and that it doesn't cause overflow, and enough liquidity is minted
         uint256 reservoirAInTermsOfB = (uint256(poolB) * (rebaseNumerator - rebaseDenominator)) / rebaseDenominator;
         vm.assume(amountBDesired > reservoirAInTermsOfB / 10000);
         vm.assume(amountBDesired < reservoirAInTermsOfB);
         vm.assume(amountBDesired < type(uint112).max / poolA);
+        vm.assume(10000 * 2 * uint256(amountBDesired) > 2 * uint256(poolB) + reservoirAInTermsOfB);
 
-        // Creating the pair with poolA:poolB price ratio. No rebase so no reservoir
+        // Creating the pair with poolA:poolB price ratio.
         tokenA.mint(address(this), poolA);
         tokenB.mint(address(this), poolB);
         IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
@@ -411,7 +413,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         // Making sure amountADesired is positive
         vm.assume(amountADesired > 0);
 
-        // Creating the pair with poolA:poolB price ratio. No rebase so no reservoir
+        // Creating the pair with poolA:poolB price ratio.
         tokenA.mint(address(this), poolA);
         tokenB.mint(address(this), poolB);
         IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
@@ -442,7 +444,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         vm.assume(poolA > 10000);
         vm.assume(poolB > 10000);
 
-        // Creating the pair with poolA:poolB price ratio. No rebase so no reservoir
+        // Creating the pair with poolA:poolB price ratio.
         tokenA.mint(address(this), poolA);
         tokenB.mint(address(this), poolB);
         IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
@@ -482,13 +484,14 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         vm.assume(rebaseNumerator > rebaseDenominator);
         vm.assume(poolB < (type(uint112).max / rebaseNumerator) * rebaseDenominator);
 
-        // Ensuring amountADesired is between 0.01% and 100% of the reservoir, and that it doesn't cause overflow
+        // Ensuring amountBDesired is between 0.01% and 100% of the reservoir, and that it doesn't cause overflow, and enough liquidity is minted
         uint256 reservoirBInTermsOfA = (uint256(poolA) * (rebaseNumerator - rebaseDenominator)) / rebaseDenominator;
         vm.assume(amountADesired > reservoirBInTermsOfA / 10000);
         vm.assume(amountADesired < reservoirBInTermsOfA);
         vm.assume(amountADesired < type(uint112).max / poolB);
+        vm.assume(10000 * 2 * uint256(amountADesired) > 2 * uint256(poolA) + reservoirBInTermsOfA);
 
-        // Creating the pair with poolA:poolB price ratio. No rebase so no reservoir
+        // Creating the pair with poolA:poolB price ratio.
         tokenA.mint(address(this), poolA);
         tokenB.mint(address(this), poolB);
         IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
@@ -546,7 +549,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         vm.assume(poolToken > 10000);
         vm.assume(poolETH > 10000);
 
-        // Creating the pair with poolToken:poolB price ratio
+        // Creating the pair with poolToken:poolETH price ratio
         tokenA.mint(address(this), poolToken);
         vm.deal(address(this), poolETH);
         weth.deposit{value: poolETH}();
@@ -669,5 +672,267 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         // Asserting that remaining tokens are returned to the caller
         assertEq(tokenA.balanceOf(address(this)), amountTokenDesired - amountToken);
         assertEq(address(this).balance, amountETHSent - amountETH, "Test contract should be refuned the remaining ETH");
+    }
+
+    function test_addLiquidityETHWithReservoir_pairExistsButMissingReservoir(
+        uint112 poolToken,
+        uint112 poolETH,
+        uint112 amountTokenDesired,
+        uint112 amountETHSent
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolToken > 10000);
+        vm.assume(poolETH > 10000);
+
+        // Creating the pair with poolToken:poolETH price ratio. No rebase so no reservoir
+        tokenA.mint(address(this), poolToken);
+        vm.deal(address(this), poolETH);
+        weth.deposit{value: poolETH}();
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
+        tokenA.transfer(address(pair), poolToken);
+        weth.transfer(address(pair), poolETH);
+        pair.mint(address(this));
+
+        vm.deal(address(this), amountETHSent);
+        vm.expectRevert(IButtonwoodRouterErrors.NoReservoir.selector);
+        buttonwoodRouter.addLiquidityETHWithReservoir{value: amountETHSent}(
+            address(tokenA), amountTokenDesired, 0, 0, userA, block.timestamp + 1
+        );
+    }
+
+    function test_addLiquidityETHWithReservoir_usingReservoirTokenWithInsufficientAmount(
+        uint112 poolToken,
+        uint112 poolETH,
+        uint112 amountETHSent
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolToken > 10000);
+        vm.assume(poolETH > 10000);
+
+        // Making sure amountETHSent is positive
+        vm.assume(amountETHSent > 0);
+
+        // Creating the pair with poolToken:poolETH price ratio.
+        tokenA.mint(address(this), poolToken);
+        vm.deal(address(this), poolETH);
+        weth.deposit{value: poolETH}();
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
+        tokenA.transfer(address(pair), poolToken);
+        weth.transfer(address(pair), poolETH);
+        pair.mint(address(this));
+
+        // Rebasing tokenA 10% up to create a tokenA reservoir
+        tokenA.applyMultiplier(11, 10);
+
+        // Syncing the pair to update the pools and reservoir
+        pair.sync();
+
+        // Calculating a matching amount of tokenA to amountETHSent and ensuring it's under `amountTokenMin`
+        uint256 matchingTokenAmount = (uint256(amountETHSent) * poolToken) / poolETH;
+        uint256 amountTokenMin = matchingTokenAmount + 1;
+
+        vm.deal(address(this), amountETHSent);
+        vm.expectRevert(IButtonwoodRouterErrors.InsufficientAAmount.selector);
+        buttonwoodRouter.addLiquidityETHWithReservoir{value: amountETHSent}(
+            address(tokenA), 0, amountTokenMin, 0, userA, block.timestamp + 1
+        );
+    }
+
+    function test_addLiquidityETHWithReservoir_usingReservoirTokenWithInsufficientReservoir(
+        uint112 poolToken,
+        uint112 poolETH
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolToken > 10000);
+        vm.assume(poolETH > 10000);
+
+        // Creating the pair with poolToken:poolETH price ratio.
+        tokenA.mint(address(this), poolToken);
+        vm.deal(address(this), poolETH);
+        weth.deposit{value: poolETH}();
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
+        tokenA.transfer(address(pair), poolToken);
+        weth.transfer(address(pair), poolETH);
+        pair.mint(address(this));
+
+        // Rebasing tokenA 10% up to create a tokenA reservoir
+        tokenA.applyMultiplier(11, 10);
+
+        // Syncing the pair to update the pools and reservoir
+        pair.sync();
+
+        // Calculating amountETHSent to be 2x more than the corresponding size of the reservoir
+        // TokenA rebased up 10%, so 10% of poolETH matches the tokenA reservoir. 20% is poolETH / 5.
+        uint256 amountETHSent = poolETH / 5; // / 10 + 100000;
+
+        vm.deal(address(this), amountETHSent);
+        vm.expectRevert(IButtonwoodRouterErrors.InsufficientAReservoir.selector);
+        buttonwoodRouter.addLiquidityETHWithReservoir{value: amountETHSent}(
+            address(tokenA), 0, 0, 0, userA, block.timestamp + 1
+        );
+    }
+
+    function test_addLiquidityETHWithReservoir_usingReservoirTokenWithSufficientAmount(
+        uint112 poolToken,
+        uint112 poolETH,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator,
+        uint112 amountETHSent
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolToken > 10000);
+        vm.assume(poolETH > 10000);
+
+        // Ensuring it's a positive rebase that isn't too big
+        vm.assume(rebaseDenominator > 0);
+        vm.assume(rebaseNumerator > rebaseDenominator);
+        vm.assume(poolToken < (type(uint112).max / rebaseNumerator) * rebaseDenominator);
+
+        // Ensuring amountETHSent is between 0.01% and 100% of the reservoir, and that it doesn't cause overflow, and enough liquidity is minted
+        uint256 reservoirTokenInTermsOfETH = (uint256(poolETH) * (rebaseNumerator - rebaseDenominator)) / rebaseDenominator;
+        vm.assume(amountETHSent > reservoirTokenInTermsOfETH / 10000);
+        vm.assume(amountETHSent < reservoirTokenInTermsOfETH);
+        vm.assume(amountETHSent < type(uint112).max / poolToken);
+        vm.assume(10000 * amountETHSent > 2 * uint256(poolETH) + reservoirTokenInTermsOfETH);
+
+        // Creating the pair with poolToken:poolETH price ratio.
+        tokenA.mint(address(this), poolToken);
+        vm.deal(address(this), poolETH);
+        weth.deposit{value: poolETH}();
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
+        tokenA.transfer(address(pair), poolToken);
+        weth.transfer(address(pair), poolETH);
+        pair.mint(address(this));
+
+        // Rebasing tokenA positively up to create a tokenA reservoir
+        tokenA.applyMultiplier(rebaseNumerator, rebaseDenominator);
+
+        // Syncing the pair to update the pools and reservoir
+        pair.sync();
+
+        vm.deal(address(this), amountETHSent);
+        buttonwoodRouter.addLiquidityETHWithReservoir{value: amountETHSent}(
+            address(tokenA), 0, 0, 0, userA, block.timestamp + 1
+        );
+    }
+
+    function test_addLiquidityETHWithReservoir_usingReservoirETHWithInsufficientAmount(
+        uint112 poolToken,
+        uint112 poolETH,
+        uint112 amountTokenDesired
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolToken > 10000);
+        vm.assume(poolETH > 10000);
+
+        // Making sure amountTokenDesired is positive
+        vm.assume(amountTokenDesired > 0);
+
+        // Creating the pair with poolToken:poolETH price ratio.
+        tokenA.mint(address(this), poolToken);
+        vm.deal(address(this), poolETH);
+        weth.deposit{value: poolETH}();
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
+        tokenA.transfer(address(pair), poolToken);
+        weth.transfer(address(pair), poolETH);
+        pair.mint(address(this));
+
+        // Rebasing tokenA down 10% up to create an ETH reservoir (ETH can't rebase)
+        tokenA.applyMultiplier(10, 11);
+
+        // Syncing the pair to update the pools and reservoir
+        pair.sync();
+
+        // Fetching new pool balances to avoid rounding errors in the test
+        // When you rebase down, you lose precision, so we refetch pool balances. Rebasing up doesn't have this problem.
+        (uint256 newPoolToken, uint256 newPoolETH) = ButtonswapLibrary.getPools(address(buttonswapFactory), address(tokenA), address(weth));
+
+        // Calculating a matching amount of ETH to amountTokenDesired and ensuring it's under `amountETHMin`
+        uint256 matchingETHAmount = (amountTokenDesired * newPoolETH) / newPoolToken;
+        uint256 amountETHMin = matchingETHAmount + 1;
+
+        vm.expectRevert(IButtonwoodRouterErrors.InsufficientBAmount.selector);
+        buttonwoodRouter.addLiquidityETHWithReservoir(
+            address(tokenA), amountTokenDesired, 0, amountETHMin, userA, block.timestamp + 1
+        );
+    }
+
+    function test_addLiquidityETHWithReservoir_usingReservoirETHWithInsufficientReservoir(
+        uint112 poolToken,
+        uint112 poolETH
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolToken > 10000);
+        vm.assume(poolETH > 10000);
+
+        // Creating the pair with poolToken:poolETH price ratio.
+        tokenA.mint(address(this), poolToken);
+        vm.deal(address(this), poolETH);
+        weth.deposit{value: poolETH}();
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
+        tokenA.transfer(address(pair), poolToken);
+        weth.transfer(address(pair), poolETH);
+        pair.mint(address(this));
+
+        // Rebasing tokenA 10% down to create an ETH reservoir (ETH can't rebase)
+        tokenA.applyMultiplier(10, 11);
+
+        // Syncing the pair to update the pools and reservoir
+        pair.sync();
+
+        // Calculating amountTokenDesired to be 2x more than the corresponding size of the reservoir
+        // TokenB rebased up 10%, so 10% of poolToken matches the tokenB reservoir. 20% is poolToken / 5.
+        uint256 amountTokenDesired = poolToken / 5; // / 10 + 100000;
+
+        vm.expectRevert(IButtonwoodRouterErrors.InsufficientBReservoir.selector);
+        buttonwoodRouter.addLiquidityETHWithReservoir(
+            address(tokenA), amountTokenDesired, 0, 0, userA, block.timestamp + 1
+        );
+    }
+
+    function test_addLiquidityETHWithReservoir_usingReservoirETHWithSufficientAmount(
+        uint112 poolToken,
+        uint112 poolETH,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator,
+        uint112 amountTokenDesired
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolToken > 10000);
+        vm.assume(poolETH > 10000);
+
+        // Ensuring it's a negative rebase that isn't too small (between 10% and 100%)
+        rebaseDenominator = uint8(bound(rebaseDenominator, 100, type(uint8).max));
+        rebaseNumerator = uint8(bound(rebaseNumerator, (uint256(rebaseDenominator) * 10)/100, rebaseDenominator));
+
+        // Ensuring amountTokenDesired is between 0.01% and 100% of the reservoir, that it doesn't cause overflow, and enough liquidity is minted
+        uint256 reservoirETHInTermsOfA = (uint256(poolToken) * (rebaseDenominator - rebaseNumerator)) / rebaseDenominator;
+        vm.assume(amountTokenDesired > reservoirETHInTermsOfA / 1000);
+        vm.assume(amountTokenDesired < reservoirETHInTermsOfA);
+        vm.assume(amountTokenDesired < type(uint112).max / poolETH);
+        vm.assume(10000 * uint256(amountTokenDesired) > 2 * uint256(poolToken) * rebaseNumerator / rebaseDenominator + reservoirETHInTermsOfA);
+
+        // Creating the pair with poolToken:poolETH price ratio.
+        tokenA.mint(address(this), poolToken);
+        vm.deal(address(this), poolETH);
+        weth.deposit{value: poolETH}();
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
+        tokenA.transfer(address(pair), poolToken);
+        weth.transfer(address(pair), poolETH);
+        pair.mint(address(this));
+
+        // Rebasing tokenA negatively down to create an ETH reservoir (ETH can't rebase)
+        tokenA.applyMultiplier(rebaseNumerator, rebaseDenominator);
+
+        // Syncing the pair to update the pools and reservoir
+        pair.sync();
+
+        // Giving approval for amountTokenDesired tokenA
+        tokenA.mint(address(this), amountTokenDesired);
+        tokenA.approve(address(buttonwoodRouter), amountTokenDesired);
+
+        buttonwoodRouter.addLiquidityETHWithReservoir(
+            address(tokenA), amountTokenDesired, 0, 0, userA, block.timestamp + 1
+        );
     }
 }
