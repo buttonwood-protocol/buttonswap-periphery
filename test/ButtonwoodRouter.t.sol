@@ -789,7 +789,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         vm.assume(poolToken < (type(uint112).max / rebaseNumerator) * rebaseDenominator);
 
         // Ensuring amountETHSent is between 0.01% and 100% of the reservoir, and that it doesn't cause overflow, and enough liquidity is minted
-        uint256 reservoirTokenInTermsOfETH = (uint256(poolETH) * (rebaseNumerator - rebaseDenominator)) / rebaseDenominator;
+        uint256 reservoirTokenInTermsOfETH =
+            (uint256(poolETH) * (rebaseNumerator - rebaseDenominator)) / rebaseDenominator;
         vm.assume(amountETHSent > reservoirTokenInTermsOfETH / 10000);
         vm.assume(amountETHSent < reservoirTokenInTermsOfETH);
         vm.assume(amountETHSent < type(uint112).max / poolToken);
@@ -845,7 +846,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Fetching new pool balances to avoid rounding errors in the test
         // When you rebase down, you lose precision, so we refetch pool balances. Rebasing up doesn't have this problem.
-        (uint256 newPoolToken, uint256 newPoolETH) = ButtonswapLibrary.getPools(address(buttonswapFactory), address(tokenA), address(weth));
+        (uint256 newPoolToken, uint256 newPoolETH) =
+            ButtonswapLibrary.getPools(address(buttonswapFactory), address(tokenA), address(weth));
 
         // Calculating a matching amount of ETH to amountTokenDesired and ensuring it's under `amountETHMin`
         uint256 matchingETHAmount = (amountTokenDesired * newPoolETH) / newPoolToken;
@@ -903,14 +905,18 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Ensuring it's a negative rebase that isn't too small (between 10% and 100%)
         rebaseDenominator = uint8(bound(rebaseDenominator, 100, type(uint8).max));
-        rebaseNumerator = uint8(bound(rebaseNumerator, (uint256(rebaseDenominator) * 10)/100, rebaseDenominator));
+        rebaseNumerator = uint8(bound(rebaseNumerator, (uint256(rebaseDenominator) * 10) / 100, rebaseDenominator));
 
         // Ensuring amountTokenDesired is between 0.01% and 100% of the reservoir, that it doesn't cause overflow, and enough liquidity is minted
-        uint256 reservoirETHInTermsOfA = (uint256(poolToken) * (rebaseDenominator - rebaseNumerator)) / rebaseDenominator;
+        uint256 reservoirETHInTermsOfA =
+            (uint256(poolToken) * (rebaseDenominator - rebaseNumerator)) / rebaseDenominator;
         vm.assume(amountTokenDesired > reservoirETHInTermsOfA / 1000);
         vm.assume(amountTokenDesired < reservoirETHInTermsOfA);
         vm.assume(amountTokenDesired < type(uint112).max / poolETH);
-        vm.assume(10000 * uint256(amountTokenDesired) > 2 * uint256(poolToken) * rebaseNumerator / rebaseDenominator + reservoirETHInTermsOfA);
+        vm.assume(
+            10000 * uint256(amountTokenDesired)
+                > 2 * uint256(poolToken) * rebaseNumerator / rebaseDenominator + reservoirETHInTermsOfA
+        );
 
         // Creating the pair with poolToken:poolETH price ratio.
         tokenA.mint(address(this), poolToken);
