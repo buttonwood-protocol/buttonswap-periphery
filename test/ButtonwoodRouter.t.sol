@@ -954,9 +954,9 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Ensuring liquidity burned doesn't cause overflow, nor remove too little to throw `InsufficientLiquidityBurned()` error
         vm.assume(liquidity < type(uint112).max / poolA);
-        vm.assume(liquidity * poolA > pairLiquidity);
+        vm.assume(liquidity * poolA > pairLiquidity + 1000);
         vm.assume(liquidity < type(uint112).max / poolB);
-        vm.assume(liquidity * poolB > pairLiquidity);
+        vm.assume(liquidity * poolB > pairLiquidity + 1000);
 
         // Creating the pair with poolA:poolB price ratio.
         tokenA.mint(address(this), poolA);
@@ -990,9 +990,9 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Ensuring liquidity burned doesn't cause overflow, nor remove too little to throw `InsufficientLiquidityBurned()` error
         vm.assume(liquidity < type(uint112).max / poolA);
-        vm.assume(liquidity * poolA > pairLiquidity);
+        vm.assume(liquidity * poolA > pairLiquidity + 1000);
         vm.assume(liquidity < type(uint112).max / poolB);
-        vm.assume(liquidity * poolB > pairLiquidity);
+        vm.assume(liquidity * poolB > pairLiquidity + 1000);
 
         // Creating the pair with poolA:poolB price ratio.
         tokenA.mint(address(this), poolA);
@@ -1032,9 +1032,9 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Ensuring liquidity burned doesn't cause overflow, nor remove too little to throw `InsufficientLiquidityBurned()` error
         vm.assume(liquidity < type(uint112).max / poolA);
-        vm.assume(liquidity * poolA > pairLiquidity);
+        vm.assume(liquidity * poolA > pairLiquidity + 1000);
         vm.assume(liquidity < type(uint112).max / poolB);
-        vm.assume(liquidity * poolB > pairLiquidity);
+        vm.assume(liquidity * poolB > pairLiquidity + 1000);
 
         // Calculating amountA and amountB to be removed corresponding to the amount of liquidity burned
         uint256 expectedAmountA = (liquidity * poolA) / (pairLiquidity + 1000);
@@ -1065,7 +1065,9 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         assertEq(amountB, expectedAmountB, "Did not remove expected amount of B");
     }
 
-    function test_removeLiquidityFromReservoir_insufficientAAmount(uint112 poolA, uint112 poolB, uint112 liquidity) public {
+    function test_removeLiquidityFromReservoir_insufficientAAmount(uint112 poolA, uint112 poolB, uint112 liquidity)
+        public
+    {
         // Minting enough for minimum liquidity requirement
         vm.assume(poolA > 10000);
         vm.assume(poolB > 10000);
@@ -1104,7 +1106,9 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         );
     }
 
-    function test_removeLiquidityFromReservoir_insufficientBAmount(uint112 poolA, uint112 poolB, uint112 liquidity) public {
+    function test_removeLiquidityFromReservoir_insufficientBAmount(uint112 poolA, uint112 poolB, uint112 liquidity)
+        public
+    {
         // Minting enough for minimum liquidity requirement
         vm.assume(poolA > 10000);
         vm.assume(poolB > 10000);
@@ -1143,7 +1147,12 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         );
     }
 
-    function test_removeLiquidityFromReservoir_usingReservoirAWithSufficientAmount(uint112 poolA, uint112 poolB, uint112 liquidity, uint256 positiveRebasePercentage) public {
+    function test_removeLiquidityFromReservoir_usingReservoirAWithSufficientAmount(
+        uint112 poolA,
+        uint112 poolB,
+        uint112 liquidity,
+        uint256 positiveRebasePercentage
+    ) public {
         // Minting enough for minimum liquidity requirement
         vm.assume(poolA > 10000);
         vm.assume(poolB > 10000);
@@ -1154,7 +1163,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         vm.assume(liquidity < pairLiquidity);
 
         // Calculating expected amount of tokenA to be removed, and ensuring it doesn't cause errors
-        uint256 expectedAmountA = (liquidity * (uint256(poolA) * (200 + positiveRebasePercentage) / 100)) / (pairLiquidity + 1000);
+        uint256 expectedAmountA =
+            (liquidity * (uint256(poolA) * (200 + positiveRebasePercentage) / 100)) / (pairLiquidity + 1000);
         vm.assume(expectedAmountA > 0);
         vm.assume(expectedAmountA < (poolA * positiveRebasePercentage) / 100);
 
@@ -1183,7 +1193,12 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         assertEq(amountB, 0, "Incorrect amount of tokenB removed");
     }
 
-    function test_removeLiquidityFromReservoir_usingReservoirBWithSufficientAmount(uint112 poolA, uint112 poolB, uint112 liquidity, uint256 positiveRebasePercentage) public {
+    function test_removeLiquidityFromReservoir_usingReservoirBWithSufficientAmount(
+        uint112 poolA,
+        uint112 poolB,
+        uint112 liquidity,
+        uint256 positiveRebasePercentage
+    ) public {
         // Minting enough for minimum liquidity requirement
         vm.assume(poolA > 10000);
         vm.assume(poolB > 10000);
@@ -1194,7 +1209,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         vm.assume(liquidity < pairLiquidity);
 
         // Calculating expected amount of tokenB to be removed, and ensuring it doesn't cause errors
-        uint256 expectedAmountB = (liquidity * (uint256(poolB) * (200 + positiveRebasePercentage) / 100)) / (pairLiquidity + 1000);
+        uint256 expectedAmountB =
+            (liquidity * (uint256(poolB) * (200 + positiveRebasePercentage) / 100)) / (pairLiquidity + 1000);
         vm.assume(expectedAmountB > 0);
         vm.assume(expectedAmountB < (poolB * positiveRebasePercentage) / 100);
 
