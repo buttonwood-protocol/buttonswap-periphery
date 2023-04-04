@@ -150,6 +150,18 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
         uint256 deadline
     ) external returns (uint256 amountA, uint256 amountB);
 
+    /**
+     * @notice Removes liquidity from the reservoir of a pair and transfers the tokens to the recipient.
+     * @param tokenA The address of the first token in the pair.
+     * @param tokenB The address of the second token in the pair.
+     * @param liquidity The amount of liquidity tokens to burn.
+     * @param amountAMin The minimum amount of the first token to withdraw from the pair.
+     * @param amountBMin The minimum amount of the second token to withdraw from the pair.
+     * @param to The address to send the tokens to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     * @return amountA The amount of tokenA actually withdrawn from the pair.
+     * @return amountB The amount of tokenB actually withdrawn from the pair.
+     */
     function removeLiquidityFromReservoir(
         address tokenA,
         address tokenB,

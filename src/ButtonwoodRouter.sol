@@ -255,7 +255,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         }
     }
 
-    // **** REMOVE LIQUIDITY ****
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function removeLiquidityFromReservoir(
         address tokenA,
         address tokenB,

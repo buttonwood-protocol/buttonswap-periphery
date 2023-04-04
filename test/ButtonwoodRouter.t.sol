@@ -943,7 +943,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         );
     }
 
-    function test_remove_liquidity_insufficientAAmount(uint112 poolA, uint112 poolB, uint112 liquidity) public {
+    function test_removeLiquidity_insufficientAAmount(uint112 poolA, uint112 poolB, uint112 liquidity) public {
         // Minting enough for minimum liquidity requirement
         vm.assume(poolA > 10000);
         vm.assume(poolB > 10000);
@@ -979,7 +979,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         );
     }
 
-    function test_remove_liquidity_insufficientBAmount(uint112 poolA, uint112 poolB, uint112 liquidity) public {
+    function test_removeLiquidity_insufficientBAmount(uint112 poolA, uint112 poolB, uint112 liquidity) public {
         // Minting enough for minimum liquidity requirement
         vm.assume(poolA > 10000);
         vm.assume(poolB > 10000);
@@ -1015,7 +1015,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         );
     }
 
-    function test_remove_liquidity_sufficientAmounts(
+    function test_removeLiquidity_sufficientAmounts(
         uint112 poolA,
         uint112 poolB,
         uint112 liquidity,
@@ -1063,5 +1063,163 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         // Ensuring amountA and amountB are as expected
         assertEq(amountA, expectedAmountA, "Did not remove expected amount of A");
         assertEq(amountB, expectedAmountB, "Did not remove expected amount of B");
+    }
+
+    function test_removeLiquidityFromReservoir_insufficientAAmount(uint112 poolA, uint112 poolB, uint112 liquidity) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolA > 10000);
+        vm.assume(poolB > 10000);
+
+        // Calculating amount of burnable liquidity in the pair
+        uint256 pairLiquidity = Babylonian.sqrt(uint256(poolA) * poolB) - 1000;
+        vm.assume(liquidity < pairLiquidity);
+
+        // Calculating expected amount of tokenA to be removed, and ensuring it doesn't cause errors
+        uint256 expectedAmountA = (liquidity * (uint256(poolA) * 21 / 10)) / (pairLiquidity + 1000);
+        vm.assume(expectedAmountA > 0);
+        vm.assume(expectedAmountA < poolA / 10); // reservoirA = 10% of poolA
+
+        // Creating the pair with poolA:poolB price ratio.
+        tokenA.mint(address(this), poolA);
+        tokenB.mint(address(this), poolB);
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
+        tokenA.transfer(address(pair), poolA);
+        tokenB.transfer(address(pair), poolB);
+        pair.mint(address(this));
+
+        // Rebasing tokenA up 10% and creating the tokenA reservoir
+        tokenA.applyMultiplier(11, 10);
+        pair.sync();
+
+        // Calculating amountAMin to be one more than the amount of A that would be removed
+        uint256 amountAMin = expectedAmountA + 1;
+
+        // Giving permission to the pair to burn liquidity
+        pair.approve(address(buttonwoodRouter), liquidity);
+
+        // Expecting to revert with `InsufficientAAmount()` error
+        vm.expectRevert(IButtonwoodRouterErrors.InsufficientAAmount.selector);
+        buttonwoodRouter.removeLiquidityFromReservoir(
+            address(tokenA), address(tokenB), liquidity, amountAMin, 0, userA, block.timestamp + 1
+        );
+    }
+
+    function test_removeLiquidityFromReservoir_insufficientBAmount(uint112 poolA, uint112 poolB, uint112 liquidity) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolA > 10000);
+        vm.assume(poolB > 10000);
+
+        // Calculating amount of burnable liquidity in the pair
+        uint256 pairLiquidity = Babylonian.sqrt(uint256(poolA) * poolB) - 1000;
+        vm.assume(liquidity < pairLiquidity);
+
+        // Calculating expected amount of tokenB to be removed, and ensuring it doesn't cause errors
+        uint256 expectedAmountB = (liquidity * (uint256(poolB) * 21 / 10)) / (pairLiquidity + 1000);
+        vm.assume(expectedAmountB > 0);
+        vm.assume(expectedAmountB < poolB / 10); // reservoirB = 10% of poolB
+
+        // Creating the pair with poolA:poolB price ratio.
+        tokenA.mint(address(this), poolA);
+        tokenB.mint(address(this), poolB);
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
+        tokenA.transfer(address(pair), poolA);
+        tokenB.transfer(address(pair), poolB);
+        pair.mint(address(this));
+
+        // Rebasing tokenB up 10% and creating the tokenA reservoir
+        tokenB.applyMultiplier(11, 10);
+        pair.sync();
+
+        // Calculating amountAMin to be one more than the amount of A that would be removed
+        uint256 amountBMin = expectedAmountB + 1;
+
+        // Giving permission to the pair to burn liquidity
+        pair.approve(address(buttonwoodRouter), liquidity);
+
+        // Expecting to revert with `InsufficientBAmount()` error
+        vm.expectRevert(IButtonwoodRouterErrors.InsufficientBAmount.selector);
+        buttonwoodRouter.removeLiquidityFromReservoir(
+            address(tokenA), address(tokenB), liquidity, 0, amountBMin, userA, block.timestamp + 1
+        );
+    }
+
+    function test_removeLiquidityFromReservoir_usingReservoirAWithSufficientAmount(uint112 poolA, uint112 poolB, uint112 liquidity, uint256 positiveRebasePercentage) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolA > 10000);
+        vm.assume(poolB > 10000);
+        positiveRebasePercentage = bound(positiveRebasePercentage, 1, 100);
+
+        // Calculating amount of burnable liquidity in the pair
+        uint256 pairLiquidity = Babylonian.sqrt(uint256(poolA) * poolB) - 1000;
+        vm.assume(liquidity < pairLiquidity);
+
+        // Calculating expected amount of tokenA to be removed, and ensuring it doesn't cause errors
+        uint256 expectedAmountA = (liquidity * (uint256(poolA) * (200 + positiveRebasePercentage) / 100)) / (pairLiquidity + 1000);
+        vm.assume(expectedAmountA > 0);
+        vm.assume(expectedAmountA < (poolA * positiveRebasePercentage) / 100);
+
+        // Creating the pair with poolA:poolB price ratio.
+        tokenA.mint(address(this), poolA);
+        tokenB.mint(address(this), poolB);
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
+        tokenA.transfer(address(pair), poolA);
+        tokenB.transfer(address(pair), poolB);
+        pair.mint(address(this));
+
+        // Rebasing tokenA up 10% and creating the tokenA reservoir
+        tokenA.applyMultiplier(100 + positiveRebasePercentage, 100);
+        pair.sync();
+
+        // Giving permission to the pair to burn liquidity
+        pair.approve(address(buttonwoodRouter), liquidity);
+
+        // Removing liquidity from the reservoir
+        (uint256 amountA, uint256 amountB) = buttonwoodRouter.removeLiquidityFromReservoir(
+            address(tokenA), address(tokenB), liquidity, 0, 0, userA, block.timestamp + 1
+        );
+
+        // Checking that the correct amount of tokenA was removed and no tokenB was removed
+        assertEq(amountA, expectedAmountA, "Incorrect amount of tokenA removed");
+        assertEq(amountB, 0, "Incorrect amount of tokenB removed");
+    }
+
+    function test_removeLiquidityFromReservoir_usingReservoirBWithSufficientAmount(uint112 poolA, uint112 poolB, uint112 liquidity, uint256 positiveRebasePercentage) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolA > 10000);
+        vm.assume(poolB > 10000);
+        positiveRebasePercentage = bound(positiveRebasePercentage, 1, 100);
+
+        // Calculating amount of burnable liquidity in the pair
+        uint256 pairLiquidity = Babylonian.sqrt(uint256(poolA) * poolB) - 1000;
+        vm.assume(liquidity < pairLiquidity);
+
+        // Calculating expected amount of tokenB to be removed, and ensuring it doesn't cause errors
+        uint256 expectedAmountB = (liquidity * (uint256(poolB) * (200 + positiveRebasePercentage) / 100)) / (pairLiquidity + 1000);
+        vm.assume(expectedAmountB > 0);
+        vm.assume(expectedAmountB < (poolB * positiveRebasePercentage) / 100);
+
+        // Creating the pair with poolA:poolB price ratio.
+        tokenA.mint(address(this), poolA);
+        tokenB.mint(address(this), poolB);
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
+        tokenA.transfer(address(pair), poolA);
+        tokenB.transfer(address(pair), poolB);
+        pair.mint(address(this));
+
+        // Rebasing tokenB up 10% and creating the tokenA reservoir
+        tokenB.applyMultiplier(100 + positiveRebasePercentage, 100);
+        pair.sync();
+
+        // Giving permission to the pair to burn liquidity
+        pair.approve(address(buttonwoodRouter), liquidity);
+
+        // Removing liquidity from the reservoir
+        (uint256 amountA, uint256 amountB) = buttonwoodRouter.removeLiquidityFromReservoir(
+            address(tokenA), address(tokenB), liquidity, 0, 0, userA, block.timestamp + 1
+        );
+
+        // Checking that the correct amount of tokenA was removed and no tokenB was removed
+        assertEq(amountA, 0, "Incorrect amount of tokenA removed");
+        assertEq(amountB, expectedAmountB, "Incorrect amount of tokenB removed");
     }
 }
