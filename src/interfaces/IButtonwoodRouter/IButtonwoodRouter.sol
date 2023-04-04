@@ -86,11 +86,11 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
      * @param token The address of the non-WETH token in the pair.
      * @param amountTokenDesired The maximum amount of the non-ETH token to add to the pair.
      * @param amountTokenMin The minimum amount of the non-ETH token to add to the pair.
-     * @param amountETHMin The minimum amount of WETH to add to the pair.
+     * @param amountETHMin The minimum amount of ETH/WETH to add to the pair.
      * @param to The address to send the liquidity tokens to.
      * @param deadline The time after which this transaction can no longer be executed.
      * @return amountToken The amount of token actually added to the pair.
-     * @return amountETH The amount of WETH actually added to the pair.
+     * @return amountETH The amount of ETH/WETH actually added to the pair.
      * @return liquidity The amount of liquidity tokens minted.
      */
     function addLiquidityETH(
@@ -172,6 +172,18 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
         uint256 deadline
     ) external returns (uint256 amountA, uint256 amountB);
 
+    /**
+     * @notice Similar to `removeLiquidity()` but one of the tokens in ETH wrapped into WETH.
+     * Removes liquidity from a pair, and transfers the tokens to the recipient.
+     * @param token The address of the non-WETH token in the pair.
+     * @param liquidity The amount of liquidity tokens to burn.
+     * @param amountTokenMin The minimum amount of the non-WETH token to withdraw from the pair.
+     * @param amountETHMin The minimum amount of ETH/WETH to withdraw from the pair.
+     * @param to The address to send the tokens to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     * @return amountToken The amount of the non-WETH token actually withdrawn from the pair.
+     * @return amountETH The amount of ETH/WETH actually withdrawn from the pair.
+     */
     function removeLiquidityETH(
         address token,
         uint256 liquidity,

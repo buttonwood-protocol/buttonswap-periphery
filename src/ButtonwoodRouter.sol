@@ -280,6 +280,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         }
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function removeLiquidityETH(
         address token,
         uint256 liquidity,
