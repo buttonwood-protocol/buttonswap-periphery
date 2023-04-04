@@ -487,10 +487,10 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Ensuring amountBDesired is between 0.01% and 100% of the reservoir, and that it doesn't cause overflow, and enough liquidity is minted
         uint256 reservoirBInTermsOfA = (uint256(poolA) * (rebaseNumerator - rebaseDenominator)) / rebaseDenominator;
-        vm.assume(amountADesired > reservoirBInTermsOfA / 10000);
+        vm.assume(amountADesired > reservoirBInTermsOfA / 1000);
         vm.assume(amountADesired < reservoirBInTermsOfA);
         vm.assume(amountADesired < type(uint112).max / poolB);
-        vm.assume(10000 * 2 * uint256(amountADesired) > 2 * uint256(poolA) + reservoirBInTermsOfA);
+        vm.assume(1000 * 2 * uint256(amountADesired) > 2 * uint256(poolA) + reservoirBInTermsOfA);
 
         // Creating the pair with poolA:poolB price ratio.
         tokenA.mint(address(this), poolA);
@@ -1134,7 +1134,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         tokenB.applyMultiplier(11, 10);
         pair.sync();
 
-        // Calculating amountAMin to be one more than the amount of A that would be removed
+        // Calculating amountBMin to be one more than the amount of B that would be removed
         uint256 amountBMin = expectedAmountB + 1;
 
         // Giving permission to the pair to burn liquidity
@@ -1176,7 +1176,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         tokenB.transfer(address(pair), poolB);
         pair.mint(address(this));
 
-        // Rebasing tokenA up 10% and creating the tokenA reservoir
+        // Rebasing tokenA up `positiveRebasePercentage`% and creating the tokenA reservoir
         tokenA.applyMultiplier(100 + positiveRebasePercentage, 100);
         pair.sync();
 
@@ -1222,7 +1222,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         tokenB.transfer(address(pair), poolB);
         pair.mint(address(this));
 
-        // Rebasing tokenB up 10% and creating the tokenA reservoir
+        // Rebasing tokenB up `positiveRebasePercentage`% and creating the tokenB reservoir
         tokenB.applyMultiplier(100 + positiveRebasePercentage, 100);
         pair.sync();
 
@@ -1234,14 +1234,14 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
             address(tokenA), address(tokenB), liquidity, 0, 0, userA, block.timestamp + 1
         );
 
-        // Checking that the correct amount of tokenA was removed and no tokenB was removed
+        // Checking that the correct amount of tokenB was removed and no tokenA was removed
         assertEq(amountA, 0, "Incorrect amount of tokenA removed");
         assertEq(amountB, expectedAmountB, "Incorrect amount of tokenB removed");
     }
 
-    /** removeLiquidityETH() tests */
-
-    function test_removeLiquidityETH_insufficientAAmount(uint112 poolToken, uint112 poolETH, uint112 liquidity) public {
+    function test_removeLiquidityETH_insufficientAAmount(uint112 poolToken, uint112 poolETH, uint112 liquidity)
+        public
+    {
         // Minting enough for minimum liquidity requirement
         vm.assume(poolToken > 10000);
         vm.assume(poolETH > 10000);
@@ -1273,12 +1273,12 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Expecting to revert with `InsufficientAAmount()` error
         vm.expectRevert(IButtonwoodRouterErrors.InsufficientAAmount.selector);
-        buttonwoodRouter.removeLiquidityETH(
-            address(tokenA), liquidity, amountTokenMin, 0, userA, block.timestamp + 1
-        );
+        buttonwoodRouter.removeLiquidityETH(address(tokenA), liquidity, amountTokenMin, 0, userA, block.timestamp + 1);
     }
 
-    function test_removeLiquidityETH_insufficientBAmount(uint112 poolToken, uint112 poolETH, uint112 liquidity) public {
+    function test_removeLiquidityETH_insufficientBAmount(uint112 poolToken, uint112 poolETH, uint112 liquidity)
+        public
+    {
         // Minting enough for minimum liquidity requirement
         vm.assume(poolToken > 10000);
         vm.assume(poolETH > 10000);
@@ -1310,9 +1310,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Expecting to revert with `InsufficientBAmount()` error
         vm.expectRevert(IButtonwoodRouterErrors.InsufficientBAmount.selector);
-        buttonwoodRouter.removeLiquidityETH(
-            address(tokenA), liquidity, 0, amountETHMin, userA, block.timestamp + 1
-        );
+        buttonwoodRouter.removeLiquidityETH(address(tokenA), liquidity, 0, amountETHMin, userA, block.timestamp + 1);
     }
 
     function test_removeLiquidityETH_sufficientAmounts(
@@ -1364,5 +1362,194 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         // Ensuring amountToken and amountETH are as expected
         assertEq(amountToken, expectedAmountToken, "Did not remove expected amount of A");
         assertEq(amountETH, expectedAmountETH, "Did not remove expected amount of B");
+    }
+
+    function test_removeLiquidityETHFromReservoir_insufficientAAmount(
+        uint112 poolToken,
+        uint112 poolETH,
+        uint112 liquidity
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolToken > 10000);
+        vm.assume(poolETH > 10000);
+
+        // Calculating amount of burnable liquidity in the pair
+        uint256 pairLiquidity = Babylonian.sqrt(uint256(poolToken) * poolETH) - 1000;
+        vm.assume(liquidity < pairLiquidity);
+
+        // Calculating expected amount of tokenA to be removed, and ensuring it doesn't cause errors
+        uint256 expectedAmountToken = (liquidity * (uint256(poolToken) * 21 / 10)) / (pairLiquidity + 1000);
+        vm.assume(expectedAmountToken > 0);
+        vm.assume(expectedAmountToken < poolToken / 10); // reservoirA = 10% of poolToken
+
+        // Creating the pair with poolToken:poolETH price ratio.
+        tokenA.mint(address(this), poolToken);
+        vm.deal(address(this), poolETH);
+        weth.deposit{value: poolETH}();
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
+        tokenA.transfer(address(pair), poolToken);
+        weth.transfer(address(pair), poolETH);
+        pair.mint(address(this));
+
+        // Rebasing tokenA up 10% and creating the tokenA reservoir
+        tokenA.applyMultiplier(11, 10);
+        pair.sync();
+
+        // Calculating amountTokenMin to be one more than the amount of A that would be removed
+        uint256 amountTokenMin = expectedAmountToken + 1;
+
+        // Giving permission to the pair to burn liquidity
+        pair.approve(address(buttonwoodRouter), liquidity);
+
+        // Expecting to revert with `InsufficientAAmount()` error
+        vm.expectRevert(IButtonwoodRouterErrors.InsufficientAAmount.selector);
+        buttonwoodRouter.removeLiquidityETHFromReservoir(
+            address(tokenA), liquidity, amountTokenMin, 0, userA, block.timestamp + 1
+        );
+    }
+
+    function test_removeLiquidityETHFromReservoir_insufficientBAmount(
+        uint112 poolToken,
+        uint112 poolETH,
+        uint112 liquidity
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolToken > 10000);
+        vm.assume(poolETH > 10000);
+
+        // Calculating amount of burnable liquidity in the pair
+        uint256 pairLiquidity = Babylonian.sqrt(uint256(poolToken) * poolETH) - 1000;
+        vm.assume(liquidity < pairLiquidity);
+
+        // Calculating expected amount of tokenB to be removed, and ensuring it doesn't cause errors
+        uint256 newPoolToken = (uint256(poolToken) * (100 - 10)) / 100;
+        uint256 newPoolETH = newPoolToken * poolETH / poolToken;
+        uint256 newReservoirETH = poolETH - newPoolETH;
+        uint256 expectedAmountETH = (liquidity * (newReservoirETH + newPoolETH + newPoolETH)) / (pairLiquidity + 1000);
+        vm.assume(expectedAmountETH > 0);
+        vm.assume(expectedAmountETH < poolETH / 10); // reservoirB = 10% of poolETH
+
+        // Creating the pair with poolToken:poolETH price ratio.
+        tokenA.mint(address(this), poolToken);
+        vm.deal(address(this), poolETH);
+        weth.deposit{value: poolETH}();
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
+        tokenA.transfer(address(pair), poolToken);
+        weth.transfer(address(pair), poolETH);
+        pair.mint(address(this));
+
+        // Rebasing tokenA 10% down to create an ETH reservoir (ETH can't rebase)
+        tokenA.applyMultiplier(9, 10);
+        pair.sync();
+
+        // Calculating amountETHMin to be two more than the amount of A that would be removed
+        // +2 instead of +1 because rebasing down causes additional rounding errors the math
+        uint256 amountETHMin = expectedAmountETH + 2;
+
+        // Giving permission to the pair to burn liquidity
+        pair.approve(address(buttonwoodRouter), liquidity);
+
+        // Expecting to revert with `InsufficientBAmount()` error
+        vm.expectRevert(IButtonwoodRouterErrors.InsufficientBAmount.selector);
+        buttonwoodRouter.removeLiquidityETHFromReservoir(
+            address(tokenA), liquidity, 0, amountETHMin, userA, block.timestamp + 1
+        );
+    }
+
+    function test_removeLiquidityETHFromReservoir_usingReservoirAWithSufficientAmount(
+        uint112 poolToken,
+        uint112 poolETH,
+        uint112 liquidity,
+        uint256 positiveRebasePercentage
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolToken > 10000);
+        vm.assume(poolETH > 10000);
+        positiveRebasePercentage = bound(positiveRebasePercentage, 1, 100);
+
+        // Calculating amount of burnable liquidity in the pair
+        uint256 pairLiquidity = Babylonian.sqrt(uint256(poolToken) * poolETH) - 1000;
+        vm.assume(liquidity < pairLiquidity);
+
+        // Calculating expected amount of tokenA to be removed, and ensuring it doesn't cause errors
+        uint256 expectedAmountToken =
+            (liquidity * (uint256(poolToken) * (200 + positiveRebasePercentage) / 100)) / (pairLiquidity + 1000);
+        vm.assume(expectedAmountToken > 0);
+        vm.assume(expectedAmountToken < (poolToken * positiveRebasePercentage) / 100);
+
+        // Creating the pair with poolToken:poolETH price ratio.
+        tokenA.mint(address(this), poolToken);
+        vm.deal(address(this), poolETH);
+        weth.deposit{value: poolETH}();
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
+        tokenA.transfer(address(pair), poolToken);
+        weth.transfer(address(pair), poolETH);
+        pair.mint(address(this));
+
+        // Rebasing tokenA up `positiveRebasePercentage`% and creating the tokenA reservoir
+        tokenA.applyMultiplier(100 + positiveRebasePercentage, 100);
+        pair.sync();
+
+        // Giving permission to the pair to burn liquidity
+        pair.approve(address(buttonwoodRouter), liquidity);
+
+        // Removing liquidity from the reservoir
+        (uint256 amountToken, uint256 amountETH) = buttonwoodRouter.removeLiquidityETHFromReservoir(
+            address(tokenA), liquidity, 0, 0, userA, block.timestamp + 1
+        );
+
+        // Checking that the correct amount of tokenA was removed and no ETH was removed
+        assertEq(amountToken, expectedAmountToken, "Incorrect amount of tokenA removed");
+        assertEq(amountETH, 0, "Incorrect amount of ETH removed");
+    }
+
+    function test_removeLiquidityETHFromReservoir_usingReservoirBWithSufficientAmount(
+        uint112 poolToken,
+        uint112 poolETH,
+        uint112 liquidity,
+        uint256 negativeRebasePercentage
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolToken > 10000);
+        vm.assume(poolETH > 10000);
+        negativeRebasePercentage = bound(negativeRebasePercentage, 1, 99);
+
+        // Calculating amount of burnable liquidity in the pair
+        uint256 pairLiquidity = Babylonian.sqrt(uint256(poolToken) * poolETH) - 1000;
+        vm.assume(liquidity < pairLiquidity);
+
+        // Calculating expected amount of ETH to be removed, and ensuring it doesn't cause errors
+        uint256 newPoolToken = (poolToken * (100 - negativeRebasePercentage)) / 100;
+        uint256 newPoolETH = newPoolToken * poolETH / poolToken;
+        uint256 newReservoirETH = poolETH - newPoolETH;
+        uint256 expectedAmountETH = (liquidity * (newReservoirETH + newPoolETH + newPoolETH)) / (pairLiquidity + 1000);
+
+        vm.assume(expectedAmountETH > 0);
+        vm.assume(expectedAmountETH < (poolETH * negativeRebasePercentage) / 100);
+
+        // Creating the pair with poolToken:poolETH price ratio.
+        tokenA.mint(address(this), poolToken);
+        vm.deal(address(this), poolETH);
+        weth.deposit{value: poolETH}();
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
+        tokenA.transfer(address(pair), poolToken);
+        weth.transfer(address(pair), poolETH);
+        pair.mint(address(this));
+
+        // Rebasing tokenA down `negativeRebasePercentage`% and creating the ETH reservoir (ETH can't rebase)
+        tokenA.applyMultiplier(100 - negativeRebasePercentage, 100);
+        pair.sync();
+
+        // Giving permission to the pair to burn liquidity
+        pair.approve(address(buttonwoodRouter), liquidity);
+
+        // Removing liquidity from the reservoir
+        (uint256 amountToken, uint256 amountETH) = buttonwoodRouter.removeLiquidityETHFromReservoir(
+            address(tokenA), liquidity, 0, 0, userA, block.timestamp + 1
+        );
+
+        // Checking that the correct amount of ETH was removed and no token A was removed
+        assertEq(amountToken, 0, "Incorrect amount of tokenA removed");
+        assertApproxEqAbs(amountETH, expectedAmountETH, 1);
     }
 }

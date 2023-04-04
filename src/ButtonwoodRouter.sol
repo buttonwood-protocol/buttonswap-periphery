@@ -298,6 +298,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         TransferHelper.safeTransferETH(to, amountETH);
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function removeLiquidityETHFromReservoir(
         address token,
         uint256 liquidity,
