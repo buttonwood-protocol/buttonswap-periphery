@@ -319,6 +319,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         }
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function removeLiquidityWithPermit(
         address tokenA,
         address tokenB,
