@@ -1874,4 +1874,194 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         assertEq(amountA, expectedAmountA, "Did not remove expected amount of A");
         assertEq(amountB, expectedAmountB, "Did not remove expected amount of B");
     }
+
+    function test_removeLiquidityETHWithPermit_insufficientAAmount(
+        uint112 poolToken,
+        uint112 poolETH,
+        uint112 liquidity,
+        bool maxPermission
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolToken > 10000);
+        vm.assume(poolETH > 10000);
+
+        // Calculating amount of burnable liquidity in the pair
+        uint256 pairLiquidity = Babylonian.sqrt(uint256(poolToken) * poolETH) - 1000;
+        vm.assume(liquidity < pairLiquidity);
+
+        // Ensuring liquidity burned doesn't cause overflow, nor remove too little to throw `InsufficientLiquidityBurned()` error
+        vm.assume(liquidity < type(uint112).max / poolToken);
+        vm.assume(liquidity * poolToken > pairLiquidity + 1000);
+        vm.assume(liquidity < type(uint112).max / poolETH);
+        vm.assume(liquidity * poolETH > pairLiquidity + 1000);
+
+        // Having userA own the liquidity
+        vm.startPrank(userA);
+        // Creating the pair with poolToken:poolETH price ratio.
+        tokenA.mint(userA, poolToken);
+        vm.deal(userA, poolETH);
+        weth.deposit{value: poolETH}();
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
+        tokenA.transfer(address(pair), poolToken);
+        weth.transfer(address(pair), poolETH);
+        pair.mint(userA);
+        vm.stopPrank();
+
+        // Calculating amountTokenMin to be one more than the amount of A that would be removed
+        uint256 amountTokenMin = (liquidity * poolToken) / (pairLiquidity + 1000) + 1;
+
+        // Generating the v,r,s signature for userA to allow access to the pair
+        (uint8 v, bytes32 r, bytes32 s) =
+            generateUserAPermitSignature(pair, maxPermission ? type(uint256).max : liquidity, block.timestamp + 1);
+
+        // Expecting to revert with `InsufficientAAmount()` error
+        vm.expectRevert(IButtonwoodRouterErrors.InsufficientAAmount.selector);
+        vm.prank(userA);
+        buttonwoodRouter.removeLiquidityETHWithPermit(
+            address(tokenA), liquidity, amountTokenMin, 0, userA, block.timestamp + 1, maxPermission, v, r, s
+        );
+    }
+
+    function test_removeLiquidityETHWithPermit_insufficientBAmount(
+        uint112 poolToken,
+        uint112 poolETH,
+        uint112 liquidity,
+        bool maxPermission
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolToken > 10000);
+        vm.assume(poolETH > 10000);
+
+        // Calculating amount of burnable liquidity in the pair
+        uint256 pairLiquidity = Babylonian.sqrt(uint256(poolToken) * poolETH) - 1000;
+        vm.assume(liquidity < pairLiquidity);
+
+        // Ensuring liquidity burned doesn't cause overflow, nor remove too little to throw `InsufficientLiquidityBurned()` error
+        vm.assume(liquidity < type(uint112).max / poolToken);
+        vm.assume(liquidity * poolToken > pairLiquidity + 1000);
+        vm.assume(liquidity < type(uint112).max / poolETH);
+        vm.assume(liquidity * poolETH > pairLiquidity + 1000);
+
+        // Having userA own the liquidity
+        vm.startPrank(userA);
+        // Creating the pair with poolToken:poolETH price ratio.
+        tokenA.mint(userA, poolToken);
+        vm.deal(userA, poolETH);
+        weth.deposit{value: poolETH}();
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
+        tokenA.transfer(address(pair), poolToken);
+        weth.transfer(address(pair), poolETH);
+        pair.mint(userA);
+        vm.stopPrank();
+
+        // Calculating amountETHMin to be one more than the amount of B that would be removed
+        uint256 amountETHMin = (liquidity * poolETH) / (pairLiquidity + 1000) + 1;
+
+        // Generating the v,r,s signature for userA to allow access to the pair
+        (uint8 v, bytes32 r, bytes32 s) =
+            generateUserAPermitSignature(pair, maxPermission ? type(uint256).max : liquidity, block.timestamp + 1);
+
+        // Expecting to revert with `InsufficientBAmount()` error
+        vm.expectRevert(IButtonwoodRouterErrors.InsufficientBAmount.selector);
+        vm.prank(userA);
+        buttonwoodRouter.removeLiquidityETHWithPermit(
+            address(tokenA), liquidity, 0, amountETHMin, userA, block.timestamp + 1, maxPermission, v, r, s
+        );
+    }
+
+    function test_removeLiquidityETHWithPermit_maxPermissionAndSufficientAmounts(
+        uint112 poolToken,
+        uint112 poolETH,
+        uint112 liquidity
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolToken > 10000);
+        vm.assume(poolETH > 10000);
+
+        // Calculating amount of liquidity in the pair
+        uint256 pairLiquidity = Babylonian.sqrt(uint256(poolToken) * poolETH) - 1000;
+        vm.assume(liquidity < pairLiquidity);
+
+        // Ensuring liquidity burned doesn't cause overflow, nor remove too little to throw `InsufficientLiquidityBurned()` error
+        vm.assume(liquidity < type(uint112).max / poolToken);
+        vm.assume(liquidity * poolToken > pairLiquidity + 1000);
+        vm.assume(liquidity < type(uint112).max / poolETH);
+        vm.assume(liquidity * poolETH > pairLiquidity + 1000);
+
+        // Calculating amountToken and amountETH to be removed corresponding to the amount of liquidity burned
+        uint256 expectedAmountToken = (liquidity * poolToken) / (pairLiquidity + 1000);
+        uint256 expectedAmountETH = (liquidity * poolETH) / (pairLiquidity + 1000);
+
+        // Having userA own the liquidity
+        vm.startPrank(userA);
+        // Creating the pair with poolToken:poolETH price ratio.
+        tokenA.mint(userA, poolToken);
+        vm.deal(userA, poolETH);
+        weth.deposit{value: poolETH}();
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
+        tokenA.transfer(address(pair), poolToken);
+        weth.transfer(address(pair), poolETH);
+        pair.mint(userA);
+        vm.stopPrank();
+
+        // Generating the v,r,s signature for userA to allow access to the pair
+        (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, type(uint256).max, block.timestamp + 1);
+
+        vm.prank(userA);
+        (uint256 amountToken, uint256 amountETH) = buttonwoodRouter.removeLiquidityETHWithPermit(
+            address(tokenA), liquidity, 0, 0, userA, block.timestamp + 1, true, v, r, s
+        );
+
+        // Ensuring amountToken and amountETH are as expected
+        assertEq(amountToken, expectedAmountToken, "Did not remove expected amount of A");
+        assertEq(amountETH, expectedAmountETH, "Did not remove expected amount of B");
+    }
+
+    function test_removeLiquidityETHWithPermit_specificPermissionAndSufficientAmounts(
+        uint112 poolToken,
+        uint112 poolETH,
+        uint112 liquidity
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        vm.assume(poolToken > 10000);
+        vm.assume(poolETH > 10000);
+
+        // Calculating amount of liquidity in the pair
+        uint256 pairLiquidity = Babylonian.sqrt(uint256(poolToken) * poolETH) - 1000;
+        vm.assume(liquidity < pairLiquidity);
+
+        // Ensuring liquidity burned doesn't cause overflow, nor remove too little to throw `InsufficientLiquidityBurned()` error
+        vm.assume(liquidity < type(uint112).max / poolToken);
+        vm.assume(liquidity * poolToken > pairLiquidity + 1000);
+        vm.assume(liquidity < type(uint112).max / poolETH);
+        vm.assume(liquidity * poolETH > pairLiquidity + 1000);
+
+        // Calculating amountToken and amountETH to be removed corresponding to the amount of liquidity burned
+        uint256 expectedAmountToken = (liquidity * poolToken) / (pairLiquidity + 1000);
+        uint256 expectedAmountETH = (liquidity * poolETH) / (pairLiquidity + 1000);
+
+        // Having userA own the liquidity
+        vm.startPrank(userA);
+        // Creating the pair with poolToken:poolETH price ratio.
+        tokenA.mint(userA, poolToken);
+        vm.deal(userA, poolETH);
+        weth.deposit{value: poolETH}();
+        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
+        tokenA.transfer(address(pair), poolToken);
+        weth.transfer(address(pair), poolETH);
+        pair.mint(userA);
+        vm.stopPrank();
+
+        // Generating the v,r,s signature for userA to allow access to the pair
+        (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, liquidity, block.timestamp + 1);
+
+        vm.prank(userA);
+        (uint256 amountToken, uint256 amountETH) = buttonwoodRouter.removeLiquidityETHWithPermit(
+            address(tokenA), liquidity, 0, 0, userA, block.timestamp + 1, false, v, r, s
+        );
+
+        // Ensuring amountToken and amountETH are as expected
+        assertEq(amountToken, expectedAmountToken, "Did not remove expected amount of A");
+        assertEq(amountETH, expectedAmountETH, "Did not remove expected amount of B");
+    }
 }
