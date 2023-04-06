@@ -230,6 +230,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     // **** REMOVE LIQUIDITY ****
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function removeLiquidity(
         address tokenA,
         address tokenB,
@@ -252,7 +255,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         }
     }
 
-    // **** REMOVE LIQUIDITY ****
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function removeLiquidityFromReservoir(
         address tokenA,
         address tokenB,
@@ -275,6 +280,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         }
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function removeLiquidityETH(
         address token,
         uint256 liquidity,
@@ -290,6 +298,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         TransferHelper.safeTransferETH(to, amountETH);
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function removeLiquidityETHFromReservoir(
         address token,
         uint256 liquidity,
@@ -308,6 +319,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         }
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function removeLiquidityWithPermit(
         address tokenA,
         address tokenB,

@@ -86,11 +86,11 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
      * @param token The address of the non-WETH token in the pair.
      * @param amountTokenDesired The maximum amount of the non-ETH token to add to the pair.
      * @param amountTokenMin The minimum amount of the non-ETH token to add to the pair.
-     * @param amountETHMin The minimum amount of WETH to add to the pair.
+     * @param amountETHMin The minimum amount of ETH/WETH to add to the pair.
      * @param to The address to send the liquidity tokens to.
      * @param deadline The time after which this transaction can no longer be executed.
      * @return amountToken The amount of token actually added to the pair.
-     * @return amountETH The amount of WETH actually added to the pair.
+     * @return amountETH The amount of ETH/WETH actually added to the pair.
      * @return liquidity The amount of liquidity tokens minted.
      */
     function addLiquidityETH(
@@ -128,6 +128,18 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
         uint256 deadline
     ) external payable returns (uint256 amountToken, uint256 amountETH, uint256 liquidity);
 
+    /**
+     * @notice Removes liquidity from a pair, and transfers the tokens to the recipient.
+     * @param tokenA The address of the first token in the pair.
+     * @param tokenB The address of the second token in the pair.
+     * @param liquidity The amount of liquidity tokens to burn.
+     * @param amountAMin The minimum amount of the first token to withdraw from the pair.
+     * @param amountBMin The minimum amount of the second token to withdraw from the pair.
+     * @param to The address to send the tokens to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     * @return amountA The amount of tokenA actually withdrawn from the pair.
+     * @return amountB The amount of tokenB actually withdrawn from the pair.
+     */
     function removeLiquidity(
         address tokenA,
         address tokenB,
@@ -138,6 +150,18 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
         uint256 deadline
     ) external returns (uint256 amountA, uint256 amountB);
 
+    /**
+     * @notice Removes liquidity from the reservoir of a pair and transfers the tokens to the recipient.
+     * @param tokenA The address of the first token in the pair.
+     * @param tokenB The address of the second token in the pair.
+     * @param liquidity The amount of liquidity tokens to burn.
+     * @param amountAMin The minimum amount of the first token to withdraw from the pair.
+     * @param amountBMin The minimum amount of the second token to withdraw from the pair.
+     * @param to The address to send the tokens to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     * @return amountA The amount of tokenA actually withdrawn from the pair.
+     * @return amountB The amount of tokenB actually withdrawn from the pair.
+     */
     function removeLiquidityFromReservoir(
         address tokenA,
         address tokenB,
@@ -148,6 +172,18 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
         uint256 deadline
     ) external returns (uint256 amountA, uint256 amountB);
 
+    /**
+     * @notice Similar to `removeLiquidity()` but one of the tokens is ETH wrapped into WETH.
+     * Removes liquidity from a pair, and transfers the tokens to the recipient.
+     * @param token The address of the non-WETH token in the pair.
+     * @param liquidity The amount of liquidity tokens to burn.
+     * @param amountTokenMin The minimum amount of the non-WETH token to withdraw from the pair.
+     * @param amountETHMin The minimum amount of ETH/WETH to withdraw from the pair.
+     * @param to The address to send the tokens to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     * @return amountToken The amount of the non-WETH token actually withdrawn from the pair.
+     * @return amountETH The amount of ETH/WETH actually withdrawn from the pair.
+     */
     function removeLiquidityETH(
         address token,
         uint256 liquidity,
@@ -157,6 +193,18 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
         uint256 deadline
     ) external returns (uint256 amountToken, uint256 amountETH);
 
+    /**
+     * @notice Similar to `removeLiquidityFromReservoir()` but one of the tokens is ETH wrapped into WETH.
+     * Removes liquidity from the reservoir of a pair and transfers the tokens to the recipient.
+     * @param token The address of the non-WETH token in the pair.
+     * @param liquidity The amount of liquidity tokens to burn.
+     * @param amountTokenMin The minimum amount of the non-WETH token to withdraw from the pair.
+     * @param amountETHMin The minimum amount of ETH/WETH to withdraw from the pair.
+     * @param to The address to send the tokens to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     * @return amountToken The amount of the non-WETH token actually withdrawn from the pair.
+     * @return amountETH The amount of ETH/WETH actually withdrawn from the pair.
+     */
     function removeLiquidityETHFromReservoir(
         address token,
         uint256 liquidity,
@@ -166,6 +214,23 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
         uint256 deadline
     ) external returns (uint256 amountToken, uint256 amountETH);
 
+    /**
+     * @notice Similar to `removeLiquidity()` but utilizes the Permit signatures to reduce gas consumption.
+     * Removes liquidity from a pair, and transfers the tokens to the recipient.
+     * @param tokenA The address of the first token in the pair.
+     * @param tokenB The address of the second token in the pair.
+     * @param liquidity The amount of liquidity tokens to burn.
+     * @param amountAMin The minimum amount of the first token to withdraw from the pair.
+     * @param amountBMin The minimum amount of the second token to withdraw from the pair.
+     * @param to The address to send the tokens to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     * @param approveMax Whether the signature is for the max uint256 or liquidity value
+     * @param v Part of the signature
+     * @param r Part of the signature
+     * @param s Part of the signature
+     * @return amountA The amount of tokenA actually withdrawn from the pair.
+     * @return amountB The amount of tokenB actually withdrawn from the pair.
+     */
     function removeLiquidityWithPermit(
         address tokenA,
         address tokenB,
@@ -180,6 +245,22 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
         bytes32 s
     ) external returns (uint256 amountA, uint256 amountB);
 
+    /**
+     * @notice Similar to `removeLiquidityWETH()` but utilizes the Permit signatures to reduce gas consumption.
+     * Removes liquidity from a pair where one of the tokens is ETH wrapped into WETH, and transfers the tokens to the recipient.
+     * @param token The address of the non-WETH token in the pair.
+     * @param liquidity The amount of liquidity tokens to burn.
+     * @param amountTokenMin The minimum amount of the non-WETH token to withdraw from the pair.
+     * @param amountETHMin The minimum amount of ETH/WETH to withdraw from the pair.
+     * @param to The address to send the tokens to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     * @param approveMax Whether the signature is for the max uint256 or liquidity value
+     * @param v Part of the signature
+     * @param r Part of the signature
+     * @param s Part of the signature
+     * @return amountToken The amount of the non-WETH token actually withdrawn from the pair.
+     * @return amountETH The amount of ETH/WETH actually withdrawn from the pair.
+     */
     function removeLiquidityETHWithPermit(
         address token,
         uint256 liquidity,
