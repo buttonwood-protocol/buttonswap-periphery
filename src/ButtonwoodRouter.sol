@@ -141,6 +141,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         liquidity = IButtonswapPair(pair).mint(to);
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function addLiquidityWithReservoir(
         address tokenA,
         address tokenB,
@@ -163,6 +166,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         liquidity = IButtonswapPair(pair).mintWithReservoir(to);
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function addLiquidityETH(
         address token,
         uint256 amountTokenDesired,
@@ -191,6 +197,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         }
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function addLiquidityETHWithReservoir(
         address token,
         uint256 amountTokenDesired,
