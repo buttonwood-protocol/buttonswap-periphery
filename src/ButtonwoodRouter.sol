@@ -480,6 +480,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         _swap(amounts, path, to);
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function swapTokensForExactETH(
         uint256 amountOut,
         uint256 amountInMax,
