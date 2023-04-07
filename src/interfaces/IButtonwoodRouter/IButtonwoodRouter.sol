@@ -306,6 +306,14 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
+    /**
+     * @notice Similar to `swapExactTokensForTokens()` the first token is ETH wrapped into WETH.
+     * Given an ordered array of tokens, performs consecutive swaps from a specific amount of the first token to the last token in the array.
+     * @param amountOutMin The minimum amount of the last token to receive from the swap.
+     * @param path An array of token addresses [tokenA, tokenB, tokenC, ...] representing the path the input token takes to get to the output token
+     * @param to The address to send the output token to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     */
     function swapExactETHForTokens(uint256 amountOutMin, address[] calldata path, address to, uint256 deadline)
         external
         payable

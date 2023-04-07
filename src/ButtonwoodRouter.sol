@@ -454,6 +454,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         _swap(amounts, path, to);
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function swapExactETHForTokens(uint256 amountOutMin, address[] calldata path, address to, uint256 deadline)
         external
         payable
