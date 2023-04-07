@@ -378,7 +378,7 @@ contract ButtonswapLibraryTest is Test {
         ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
     }
 
-    function test_getAmountsOut_validPath(uint256 amountIn, uint256[] memory seedPoolOutAmounts) public {
+    function test_getAmountsOut_validPath(uint256 amountIn, uint256[] calldata seedPoolOutAmounts) public {
         // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
         amountIn = bound(amountIn, 1000, 10000);
 
@@ -466,7 +466,7 @@ contract ButtonswapLibraryTest is Test {
         ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
     }
 
-    function test_getAmountsIn_validPath(uint256 amountOut, uint256[] memory seedPoolOutAmounts) public {
+    function test_getAmountsIn_validPath(uint256 amountOut, uint256[] calldata seedPoolOutAmounts) public {
         // Ensuring that amountOut is bounded to avoid errors/overflows/underflows
         amountOut = bound(amountOut, 900, 1000); // 1000 * (1.1^10) < minimum pool out amount
 
@@ -509,7 +509,7 @@ contract ButtonswapLibraryTest is Test {
     }
 
     // Testing getAmountsOut vs getAmountsIn for random paths of length < 10 where price-steps are bounded [0.9, 1.1]
-    function test_getAmountsOut_vsAmountsIn(uint256 amountIn, uint256[] memory seedPoolOutAmounts) public {
+    function test_getAmountsOut_vsAmountsIn(uint256 amountIn, uint256[] calldata seedPoolOutAmounts) public {
         // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
         amountIn = bound(amountIn, 1000, 10000);
 

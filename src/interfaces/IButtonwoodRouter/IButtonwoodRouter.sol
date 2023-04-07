@@ -274,6 +274,14 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
         bytes32 s
     ) external returns (uint256 amountToken, uint256 amountETH);
 
+    /**
+     * @notice Given an ordered array of tokens, performs consecutive swaps from the first token to the last token in the array.
+     * @param amountIn The amount of the first token to swap.
+     * @param amountOutMin The minimum amount of the last token to receive from the swap.
+     * @param path An array of token addresses [tokenA, tokenB, tokenC, ...] representing the path the input token takes to get to the output token
+     * @param to The address to send the output token to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     */
     function swapExactTokensForTokens(
         uint256 amountIn,
         uint256 amountOutMin,

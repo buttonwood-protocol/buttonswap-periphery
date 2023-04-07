@@ -395,7 +395,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     // **** SWAP ****
-    // requires the initial amount to have already been sent to the first pair
+    /**
+    * @dev requires the initial amount to have already been sent to the first pair
+    */
     function _swap(uint256[] memory amounts, address[] memory path, address _to) internal virtual {
         for (uint256 i; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
@@ -410,6 +412,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         }
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function swapExactTokensForTokens(
         uint256 amountIn,
         uint256 amountOutMin,
