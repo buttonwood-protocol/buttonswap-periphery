@@ -532,6 +532,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function swapETHForExactTokens(uint256 amountOut, address[] calldata path, address to, uint256 deadline)
         external
         payable

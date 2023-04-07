@@ -2812,4 +2812,177 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         // Checking that callee received the expected amount of the final token
         assertEq(address(this).balance, amounts[amounts.length - 1], "Did not receive expected amount of ETH");
     }
+
+    function test_swapETHForExactTokens_firstTokenIsNonWeth(
+        uint256 amountOut,
+        uint256 amountETHSent,
+        uint256[] calldata seedPoolOutAmounts
+    ) public {
+        // Ensuring that amountOut is bounded to avoid errors/overflows/underflows
+        amountOut = bound(amountOut, 900, 1000); // 1000 * (1.1^10) < minimum pool out amount
+
+        // Setting path length to be between 2 and 10
+        vm.assume(seedPoolOutAmounts.length >= 2);
+        uint256 pathLength = bound(seedPoolOutAmounts.length, 2, 11);
+        uint256[] memory poolOutAmounts = new uint256[](pathLength);
+        for (uint256 idx = 0; idx < pathLength; idx++) {
+            poolOutAmounts[idx] = seedPoolOutAmounts[idx];
+        }
+
+        // Assuming the poolIn=10000, calculating poolOut amounts to avoid math overflow/underflow
+        for (uint256 idx = 1; idx < poolOutAmounts.length; idx++) {
+            // The pair-conversion rate will be bounded [0.9 , 10]
+            poolOutAmounts[idx] = bound(poolOutAmounts[idx], 9000, 100000);
+        }
+
+        // Creating all the tokens for the path (first token is not WETH)
+        address[] memory path = new address[](poolOutAmounts.length);
+        for (uint256 idx; idx < path.length; idx++) {
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            path[idx] = address(token);
+        }
+
+        // Create the pairs and calculate expected amounts
+        for (uint256 idx = path.length - 1; idx > 0; idx--) {
+            address pair = buttonswapFactory.createPair(path[idx], path[idx - 1]);
+            MockRebasingERC20(path[idx]).mint(address(this), poolOutAmounts[idx]);
+            MockRebasingERC20(path[idx]).transfer(pair, poolOutAmounts[idx]);
+            MockRebasingERC20(path[idx - 1]).mint(address(this), 10000);
+            MockRebasingERC20(path[idx - 1]).transfer(pair, 10000);
+            IButtonswapPair(pair).mint(address(this));
+        }
+
+        // Expecting to revert with `InvalidPath()` error
+        vm.deal(address(this), amountETHSent);
+        vm.expectRevert(IButtonwoodRouterErrors.InvalidPath.selector);
+        buttonwoodRouter.swapETHForExactTokens(amountOut, path, address(this), block.timestamp + 1);
+    }
+
+    function test_swapETHForExactTokens_excessiveInputAmount(
+        uint256 amountOut,
+        uint256 amountETHSent,
+        uint256[] calldata seedPoolOutAmounts
+    ) public {
+        // Ensuring that amountOut is bounded to avoid errors/overflows/underflows
+        amountOut = bound(amountOut, 900, 1000); // 1000 * (1.1^10) < minimum pool out amount
+
+        // Setting path length to be between 2 and 10
+        vm.assume(seedPoolOutAmounts.length >= 2);
+        uint256 pathLength = bound(seedPoolOutAmounts.length, 2, 11);
+        uint256[] memory poolOutAmounts = new uint256[](pathLength);
+        for (uint256 idx = 0; idx < pathLength; idx++) {
+            poolOutAmounts[idx] = seedPoolOutAmounts[idx];
+        }
+
+        // Assuming the poolIn=10000, calculating poolOut amounts to avoid math overflow/underflow
+        for (uint256 idx = 1; idx < poolOutAmounts.length; idx++) {
+            // The pair-conversion rate will be bounded [0.9 , 10]
+            poolOutAmounts[idx] = bound(poolOutAmounts[idx], 9000, 100000);
+        }
+
+        // Creating all the tokens for the path (first token is WETH)
+        address[] memory path = new address[](poolOutAmounts.length);
+        path[0] = address(weth);
+        for (uint256 idx = 1; idx < path.length; idx++) {
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            path[idx] = address(token);
+        }
+
+        // Create the pairs and calculate expected amounts
+        for (uint256 idx = path.length - 1; idx > 0; idx--) {
+            address pair = buttonswapFactory.createPair(path[idx], path[idx - 1]);
+            MockRebasingERC20(path[idx]).mint(address(this), poolOutAmounts[idx]);
+            MockRebasingERC20(path[idx]).transfer(pair, poolOutAmounts[idx]);
+            if (idx == 1) {
+                // First token is WETH, so needs to be minted differently
+                vm.deal(address(this), 10000);
+                weth.deposit{value: 10000}();
+                weth.transfer(pair, 10000);
+            } else {
+                MockRebasingERC20(path[idx - 1]).mint(address(this), 10000);
+                MockRebasingERC20(path[idx - 1]).transfer(pair, 10000);
+            }
+            IButtonswapPair(pair).mint(address(this));
+        }
+
+        uint256[] memory amounts = ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
+
+        // Ensuring that the input is always greater than amountETHSent (not sending enough ETH)
+        amountETHSent = bound(amountETHSent, 0, amounts[0] - 1);
+
+        // Expecting to revert with `ExcessiveInputAmount()` error
+        vm.expectRevert(IButtonwoodRouterErrors.ExcessiveInputAmount.selector);
+        buttonwoodRouter.swapETHForExactTokens(amountOut, path, address(this), block.timestamp + 1);
+    }
+
+    function test_swapETHForExactTokens_nonExcessiveInputAmount(
+        uint256 amountOut,
+        uint256 amountETHSent,
+        uint256[] calldata seedPoolOutAmounts
+    ) public {
+        // Ensuring that amountOut is bounded to avoid errors/overflows/underflows
+        amountOut = bound(amountOut, 900, 1000); // 1000 * (1.1^10) < minimum pool out amount
+
+        // Setting path length to be between 2 and 10
+        vm.assume(seedPoolOutAmounts.length >= 2);
+        uint256 pathLength = bound(seedPoolOutAmounts.length, 2, 10);
+        uint256[] memory poolOutAmounts = new uint256[](pathLength);
+        for (uint256 idx = 0; idx < pathLength; idx++) {
+            poolOutAmounts[idx] = seedPoolOutAmounts[idx];
+        }
+
+        // Assuming the poolIn=10000, calculating poolOut amounts to avoid math overflow/underflow
+        for (uint256 idx = 1; idx < poolOutAmounts.length; idx++) {
+            // The pair-conversion rate will be bounded [0.9 , 10]
+            poolOutAmounts[idx] = bound(poolOutAmounts[idx], 9000, 100000);
+        }
+
+        // Creating all the tokens for the path (first token is WETH)
+        address[] memory path = new address[](poolOutAmounts.length);
+        path[0] = address(weth);
+        for (uint256 idx = 1; idx < path.length; idx++) {
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            path[idx] = address(token);
+        }
+
+        // Create the pairs and calculate expected amounts
+        for (uint256 idx = path.length - 1; idx > 0; idx--) {
+            address pair = buttonswapFactory.createPair(path[idx], path[idx - 1]);
+            MockRebasingERC20(path[idx]).mint(address(this), poolOutAmounts[idx]);
+            MockRebasingERC20(path[idx]).transfer(pair, poolOutAmounts[idx]);
+            if (idx == 1) {
+                // First token is WETH, so needs to be minted differently
+                vm.deal(address(this), 10000);
+                weth.deposit{value: 10000}();
+                weth.transfer(pair, 10000);
+            } else {
+                MockRebasingERC20(path[idx - 1]).mint(address(this), 10000);
+                MockRebasingERC20(path[idx - 1]).transfer(pair, 10000);
+            }
+            IButtonswapPair(pair).mint(address(this));
+        }
+
+        uint256[] memory expectedAmounts = ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
+
+        // Ensuring that the amountETHSent is always greater than the input (but also don't want to trigger minting error)
+        amountETHSent = bound(amountETHSent, expectedAmounts[0], type(uint112).max);
+
+        vm.deal(address(this), amountETHSent);
+        (uint256[] memory amounts) = buttonwoodRouter.swapETHForExactTokens{value: amountETHSent}(
+            amountOut, path, address(this), block.timestamp + 1
+        );
+
+        // Checking that the amounts in the trade are as expected
+        assertEq(amounts, expectedAmounts, "Amounts in the trade are not as expected");
+
+        // Checking that correct amount of the first token was sent
+        assertEq(address(this).balance, amountETHSent - expectedAmounts[0], "Sent more tokens than expected");
+
+        // Checking that correct amount of the last token was received
+        assertEq(
+            MockRebasingERC20(path[path.length - 1]).balanceOf(address(this)),
+            amountOut,
+            "Received less tokens than expected"
+        );
+    }
 }
