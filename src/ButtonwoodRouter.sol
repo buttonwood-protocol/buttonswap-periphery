@@ -506,6 +506,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function swapExactTokensForETH(
         uint256 amountIn,
         uint256 amountOutMin,
