@@ -395,7 +395,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     // **** SWAP ****
-    // requires the initial amount to have already been sent to the first pair
+    /**
+     * @dev requires the initial amount to have already been sent to the first pair
+     */
     function _swap(uint256[] memory amounts, address[] memory path, address _to) internal virtual {
         for (uint256 i; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
@@ -410,6 +412,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         }
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function swapExactTokensForTokens(
         uint256 amountIn,
         uint256 amountOutMin,
@@ -428,6 +433,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         _swap(amounts, path, to);
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function swapTokensForExactTokens(
         uint256 amountOut,
         uint256 amountInMax,
@@ -446,6 +454,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         _swap(amounts, path, to);
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function swapExactETHForTokens(uint256 amountOutMin, address[] calldata path, address to, uint256 deadline)
         external
         payable
@@ -469,6 +480,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         _swap(amounts, path, to);
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function swapTokensForExactETH(
         uint256 amountOut,
         uint256 amountInMax,
@@ -492,6 +506,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function swapExactTokensForETH(
         uint256 amountIn,
         uint256 amountOutMin,
@@ -515,6 +532,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function swapETHForExactTokens(uint256 amountOut, address[] calldata path, address to, uint256 deadline)
         external
         payable

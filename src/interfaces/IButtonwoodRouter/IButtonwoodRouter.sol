@@ -274,6 +274,14 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
         bytes32 s
     ) external returns (uint256 amountToken, uint256 amountETH);
 
+    /**
+     * @notice Given an ordered array of tokens, performs consecutive swaps from a specific amount of the first token to the last token in the array.
+     * @param amountIn The amount of the first token to swap.
+     * @param amountOutMin The minimum amount of the last token to receive from the swap.
+     * @param path An array of token addresses [tokenA, tokenB, tokenC, ...] representing the path the input token takes to get to the output token
+     * @param to The address to send the output token to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     */
     function swapExactTokensForTokens(
         uint256 amountIn,
         uint256 amountOutMin,
@@ -282,6 +290,14 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
+    /**
+     * @notice Given an ordered array of tokens, performs consecutive swaps from the first token to a specific amount of the last token in the array.
+     * @param amountOut The amount of the last token to receive from the swap.
+     * @param amountInMax The maximum amount of the first token to swap.
+     * @param path An array of token addresses [tokenA, tokenB, tokenC, ...] representing the path the input token takes to get to the output token
+     * @param to The address to send the output token to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     */
     function swapTokensForExactTokens(
         uint256 amountOut,
         uint256 amountInMax,
@@ -290,11 +306,28 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
+    /**
+     * @notice Similar to `swapExactTokensForTokens()` the first token is ETH wrapped into WETH.
+     * Given an ordered array of tokens, performs consecutive swaps from a specific amount of the first token to the last token in the array.
+     * @param amountOutMin The minimum amount of the last token to receive from the swap.
+     * @param path An array of token addresses [tokenA, tokenB, tokenC, ...] representing the path the input token takes to get to the output token
+     * @param to The address to send the output token to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     */
     function swapExactETHForTokens(uint256 amountOutMin, address[] calldata path, address to, uint256 deadline)
         external
         payable
         returns (uint256[] memory amounts);
 
+    /**
+     * @notice Similar to `swapTokensForExactTokens()` the last token is ETH wrapped into WETH.
+     * Given an ordered array of tokens, performs consecutive swaps from the first token to a specific amount of the last token in the array.
+     * @param amountOut The amount of ETH to receive from the swap.
+     * @param amountInMax The maximum amount of the first token to swap.
+     * @param path An array of token addresses [tokenA, tokenB, tokenC, ...] representing the path the input token takes to get to the output token
+     * @param to The address to send the output token to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     */
     function swapTokensForExactETH(
         uint256 amountOut,
         uint256 amountInMax,
@@ -303,6 +336,15 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
+    /**
+     * @notice Similar to `swapExactTokensForTokens()` but the last token is ETH wrapped into WETH.
+     * Given an ordered array of tokens, performs consecutive swaps from a specific amount of the first token to the last token in the array.
+     * @param amountIn The amount of the first token to swap.
+     * @param amountOutMin The minimum amount of the last token to receive from the swap.
+     * @param path An array of token addresses [tokenA, tokenB, tokenC, ...] representing the path the input token takes to get to the output token
+     * @param to The address to send the output token to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     */
     function swapExactTokensForETH(
         uint256 amountIn,
         uint256 amountOutMin,
@@ -311,6 +353,14 @@ interface IButtonwoodRouter is IButtonwoodRouterErrors {
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
+    /**
+     * @notice Similar to `swapTokensForExactTokens()` but the first token is ETH wrapped into WETH.
+     * Given an ordered array of tokens, performs consecutive swaps from the first token to a specific amount of the last token in the array.
+     * @param amountOut The amount of the last token to receive from the swap.
+     * @param path An array of token addresses [tokenA, tokenB, tokenC, ...] representing the path the input token takes to get to the output token
+     * @param to The address to send the output token to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     */
     function swapETHForExactTokens(uint256 amountOut, address[] calldata path, address to, uint256 deadline)
         external
         payable
