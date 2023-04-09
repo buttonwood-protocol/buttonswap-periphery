@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {IButtonwoodRouterErrors} from "../src/interfaces/IButtonwoodRouter/IButtonwoodRouterErrors.sol";
 import {ButtonwoodRouter} from "../src/ButtonwoodRouter.sol";
 import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
@@ -2984,5 +2984,103 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
             amountOut,
             "Received less tokens than expected"
         );
+    }
+
+    function test_quote(uint256 amountA, uint256 poolA, uint256 poolB) public {
+        try buttonwoodRouter.quote(amountA, poolA, poolB) returns (uint256 amountB) {
+            assertEq(
+                amountB, ButtonswapLibrary.quote(amountA, poolA, poolB), "Call succeeds but output is not as expected"
+            );
+        } catch (bytes memory reason) {
+            // Fails with the same error as the library call
+            vm.expectRevert(reason);
+            ButtonswapLibrary.quote(amountA, poolA, poolB);
+        }
+    }
+
+    function test_getAmountOut(uint256 amountIn, uint256 poolIn, uint256 poolOut) public {
+        try buttonwoodRouter.getAmountOut(amountIn, poolIn, poolOut) returns (uint256 amountOut) {
+            assertEq(
+                amountOut,
+                ButtonswapLibrary.getAmountOut(amountIn, poolIn, poolOut),
+                "Call succeeds but output is not as expected"
+            );
+        } catch (bytes memory reason) {
+            // Fails with the same error as the library call
+            vm.expectRevert(reason);
+            ButtonswapLibrary.getAmountOut(amountIn, poolIn, poolOut);
+        }
+    }
+
+    function test_getAmountIn(uint256 amountOut, uint256 poolIn, uint256 poolOut) public {
+        try buttonwoodRouter.getAmountIn(amountOut, poolIn, poolOut) returns (uint256 amountIn) {
+            assertEq(
+                amountIn,
+                ButtonswapLibrary.getAmountIn(amountOut, poolIn, poolOut),
+                "Call succeeds but output is not as expected"
+            );
+        } catch (bytes memory reason) {
+            // Fails with the same error as the library call
+            vm.expectRevert(reason);
+            ButtonswapLibrary.getAmountIn(amountOut, poolIn, poolOut);
+        }
+    }
+
+    function test_getAmountsOut(uint256 amountIn, address[] memory path) public {
+        try buttonwoodRouter.getAmountsOut(amountIn, path) returns (uint256[] memory amounts) {
+            assertEq(
+                amounts,
+                ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path),
+                "Call succeeds but output is not as expected"
+            );
+        } catch (bytes memory reason) {
+            if (reason.length == 0) {
+                // Skip these cases as they are not caught by vm.expectRevert
+                // Tested in: `testFail_getAmountsOut`
+            } else {
+                // Fails with the same error as the library call
+                vm.expectRevert(reason);
+                ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
+            }
+        }
+    }
+
+    // Using a testFail to capture EvmErrors that are not caught by vm.expectRevert
+    function testFail_getAmountsOut(uint256 amountIn, address[] memory path) public view {
+        try buttonwoodRouter.getAmountsOut(amountIn, path) {
+            revert("Skip valid calls");
+        } catch {
+            // If the call fails, the library call should also fail
+            ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
+        }
+    }
+
+    function test_getAmountsIn(uint256 amountOut, address[] calldata path) public {
+        try buttonwoodRouter.getAmountsIn(amountOut, path) returns (uint256[] memory amounts) {
+            assertEq(
+                amounts,
+                ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path),
+                "Call succeeds but output is not as expected"
+            );
+        } catch (bytes memory reason) {
+            if (reason.length == 0) {
+                // Skip these cases as they are not caught by vm.expectRevert
+                // Tested in: `testFail_getAmountsIn`
+            } else {
+                // Fails with the same error as the library call
+                vm.expectRevert(reason);
+                ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
+            }
+        }
+    }
+
+    // Using a testFail to capture EvmErrors that are not caught by vm.expectRevert
+    function testFail_getAmountsIn(uint256 amountOut, address[] calldata path) public view {
+        try buttonwoodRouter.getAmountsIn(amountOut, path) {
+            revert("Skip valid calls");
+        } catch {
+            // If the call fails, the library call should also fail
+            ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
+        }
     }
 }
