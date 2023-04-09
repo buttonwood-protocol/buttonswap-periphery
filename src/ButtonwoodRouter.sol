@@ -659,36 +659,49 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     // **** LIBRARY FUNCTIONS ****
-    function quote(uint256 amountA, uint256 reserveA, uint256 reserveB)
+
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
+    function quote(uint256 amountA, uint256 poolA, uint256 poolB)
         public
         pure
         virtual
         override
         returns (uint256 amountB)
     {
-        return ButtonswapLibrary.quote(amountA, reserveA, reserveB);
+        return ButtonswapLibrary.quote(amountA, poolA, poolB);
     }
 
-    function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
+    function getAmountOut(uint256 amountIn, uint256 poolIn, uint256 poolOut)
         public
         pure
         virtual
         override
         returns (uint256 amountOut)
     {
-        return ButtonswapLibrary.getAmountOut(amountIn, reserveIn, reserveOut);
+        return ButtonswapLibrary.getAmountOut(amountIn, poolIn, poolOut);
     }
 
-    function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut)
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
+    function getAmountIn(uint256 amountOut, uint256 poolIn, uint256 poolOut)
         public
         pure
         virtual
         override
         returns (uint256 amountIn)
     {
-        return ButtonswapLibrary.getAmountIn(amountOut, reserveIn, reserveOut);
+        return ButtonswapLibrary.getAmountIn(amountOut, poolIn, poolOut);
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function getAmountsOut(uint256 amountIn, address[] memory path)
         public
         view
@@ -699,6 +712,9 @@ contract ButtonwoodRouter is IButtonwoodRouter {
         return ButtonswapLibrary.getAmountsOut(factory, amountIn, path);
     }
 
+    /**
+     * @inheritdoc IButtonwoodRouter
+     */
     function getAmountsIn(uint256 amountOut, address[] memory path)
         public
         view
