@@ -2,8 +2,8 @@
 pragma solidity ^0.8.13;
 
 import {Test} from "forge-std/Test.sol";
-import {IButtonwoodRouterErrors} from "../src/interfaces/IButtonwoodRouter/IButtonwoodRouterErrors.sol";
-import {ButtonwoodRouter} from "../src/ButtonwoodRouter.sol";
+import {IButtonswapRouterErrors} from "../src/interfaces/IButtonswapRouter/IButtonswapRouterErrors.sol";
+import {ButtonswapRouter} from "../src/ButtonswapRouter.sol";
 import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
 import {MockRebasingERC20} from "mock-contracts/MockRebasingERC20.sol";
 import {ButtonswapFactory} from "buttonswap-core/ButtonswapFactory.sol";
@@ -12,7 +12,7 @@ import {MockWeth} from "./mocks/MockWeth.sol";
 import {ButtonswapLibrary} from "../src/libraries/ButtonswapLibrary.sol";
 import {Babylonian} from "../src/libraries/Babylonian.sol";
 
-contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
+contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
     address public userA;
     uint256 public userAPrivateKey;
     //    address public userB = 0x000000000000000000000000000000000000000b;
@@ -24,7 +24,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
     IWETH public weth;
     ButtonswapFactory public buttonswapFactory;
 
-    ButtonwoodRouter public buttonwoodRouter;
+    ButtonswapRouter public buttonswapRouter;
 
     // Utility function for testing functions that use Permit
     function generateUserAPermitSignature(IButtonswapPair pair, uint256 liquidity, uint256 deadline)
@@ -36,7 +36,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
             abi.encodePacked(
                 "\x19\x01",
                 pair.DOMAIN_SEPARATOR(),
-                keccak256(abi.encode(pair.PERMIT_TYPEHASH(), userA, address(buttonwoodRouter), liquidity, 0, deadline))
+                keccak256(abi.encode(pair.PERMIT_TYPEHASH(), userA, address(buttonswapRouter), liquidity, 0, deadline))
             )
         );
         return vm.sign(userAPrivateKey, permitDigest);
@@ -51,25 +51,25 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
         weth = new MockWeth();
         buttonswapFactory = new ButtonswapFactory(userA);
-        buttonwoodRouter = new ButtonwoodRouter(address(buttonswapFactory), address(weth));
+        buttonswapRouter = new ButtonswapRouter(address(buttonswapFactory), address(weth));
     }
 
     function test_WETH() public {
-        assertEq(buttonwoodRouter.WETH(), address(weth));
+        assertEq(buttonswapRouter.WETH(), address(weth));
     }
 
     function test_factory() public {
-        assertEq(buttonwoodRouter.factory(), address(buttonswapFactory));
+        assertEq(buttonswapRouter.factory(), address(buttonswapFactory));
     }
 
     function test_constructor() public {
-        assertEq(buttonwoodRouter.WETH(), address(weth));
-        assertEq(buttonwoodRouter.factory(), address(buttonswapFactory));
+        assertEq(buttonswapRouter.WETH(), address(weth));
+        assertEq(buttonswapRouter.factory(), address(buttonswapFactory));
     }
 
     function test_receive_rejectNonWETHSender(uint256 ethAmount) public {
         // Sending ETH, ignoring data in return value
-        (bool sent,) = payable(address(buttonwoodRouter)).call{value: ethAmount}("");
+        (bool sent,) = payable(address(buttonswapRouter)).call{value: ethAmount}("");
         assertTrue(!sent, "Expected call to fail");
     }
 
@@ -77,7 +77,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         vm.deal(address(weth), ethAmount);
         vm.prank(address(weth));
         // Sending ETH, ignoring data in return value
-        (bool sent,) = payable(address(buttonwoodRouter)).call{value: ethAmount}("");
+        (bool sent,) = payable(address(buttonswapRouter)).call{value: ethAmount}("");
         assertTrue(sent, "Expected call to succeed");
     }
 
@@ -88,8 +88,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         tokenA.mint(address(this), amountADesired);
         tokenB.mint(address(this), amountBDesired);
-        tokenA.approve(address(buttonwoodRouter), amountADesired);
-        tokenB.approve(address(buttonwoodRouter), amountBDesired);
+        tokenA.approve(address(buttonswapRouter), amountADesired);
+        tokenB.approve(address(buttonswapRouter), amountBDesired);
 
         // Validating no pairs exist before call
         assertEq(buttonswapFactory.allPairsLength(), 0);
@@ -98,7 +98,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         vm.expectCall(
             address(buttonswapFactory), abi.encodeCall(ButtonswapFactory.createPair, (address(tokenA), address(tokenB)))
         );
-        buttonwoodRouter.addLiquidity(
+        buttonswapRouter.addLiquidity(
             address(tokenA), address(tokenB), amountADesired, amountBDesired, 0, 0, userA, block.timestamp + 1
         );
 
@@ -132,8 +132,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         vm.assume(matchingBAmount <= amountBDesired);
         vm.assume(matchingBAmount < amountBMin);
 
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientBAmount.selector);
-        buttonwoodRouter.addLiquidity(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientBAmount.selector);
+        buttonswapRouter.addLiquidity(
             address(tokenA), address(tokenB), amountADesired, amountBDesired, 0, amountBMin, userA, block.timestamp + 1
         );
     }
@@ -169,8 +169,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         vm.assume(matchingAAmount <= amountADesired);
         vm.assume(matchingAAmount < amountAMin);
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientAAmount.selector);
-        buttonwoodRouter.addLiquidity(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientAAmount.selector);
+        buttonswapRouter.addLiquidity(
             address(tokenA), address(tokenB), amountADesired, amountBDesired, amountAMin, 0, userA, block.timestamp + 1
         );
     }
@@ -199,8 +199,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         vm.assume(amountBDesired < type(uint112).max - poolB);
 
         // Approving the router to spend the tokens
-        tokenA.approve(address(buttonwoodRouter), amountADesired);
-        tokenB.approve(address(buttonwoodRouter), amountBDesired);
+        tokenA.approve(address(buttonswapRouter), amountADesired);
+        tokenB.approve(address(buttonswapRouter), amountBDesired);
 
         // Creating the pair with poolA:poolB price ratio
         tokenA.mint(address(this), poolA);
@@ -221,11 +221,11 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         // Approving the router to take at most amountADesired A tokens and at most amountBDesired B tokens
         tokenA.mint(address(this), amountADesired);
         tokenB.mint(address(this), amountBDesired);
-        tokenA.approve(address(buttonwoodRouter), amountADesired);
-        tokenB.approve(address(buttonwoodRouter), amountBDesired);
+        tokenA.approve(address(buttonswapRouter), amountADesired);
+        tokenB.approve(address(buttonswapRouter), amountBDesired);
 
         // Adding liquidity should succeed now. Not concerned with liquidity value
-        (uint256 amountA, uint256 amountB,) = buttonwoodRouter.addLiquidity(
+        (uint256 amountA, uint256 amountB,) = buttonswapRouter.addLiquidity(
             address(tokenA),
             address(tokenB),
             amountADesired,
@@ -254,12 +254,12 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         tokenA.mint(address(this), amountADesired);
         tokenB.mint(address(this), amountBDesired);
-        tokenA.approve(address(buttonwoodRouter), amountADesired);
-        tokenB.approve(address(buttonwoodRouter), amountBDesired);
+        tokenA.approve(address(buttonswapRouter), amountADesired);
+        tokenB.approve(address(buttonswapRouter), amountBDesired);
 
         // Expect NoReservoir error to be thrown
-        vm.expectRevert(IButtonwoodRouterErrors.NoReservoir.selector);
-        buttonwoodRouter.addLiquidityWithReservoir(
+        vm.expectRevert(IButtonswapRouterErrors.NoReservoir.selector);
+        buttonswapRouter.addLiquidityWithReservoir(
             address(tokenA), address(tokenB), amountADesired, amountBDesired, 0, 0, userA, block.timestamp + 1
         );
     }
@@ -277,8 +277,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         // Creating the pair without any liquidity
         IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
 
-        vm.expectRevert(IButtonwoodRouterErrors.NotInitialized.selector);
-        buttonwoodRouter.addLiquidityWithReservoir(
+        vm.expectRevert(IButtonswapRouterErrors.NotInitialized.selector);
+        buttonswapRouter.addLiquidityWithReservoir(
             address(tokenA), address(tokenB), amountADesired, amountBDesired, 0, 0, userA, block.timestamp + 1
         );
     }
@@ -301,8 +301,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         tokenB.transfer(address(pair), poolB);
         pair.mint(address(this));
 
-        vm.expectRevert(IButtonwoodRouterErrors.NoReservoir.selector);
-        buttonwoodRouter.addLiquidityWithReservoir(
+        vm.expectRevert(IButtonswapRouterErrors.NoReservoir.selector);
+        buttonswapRouter.addLiquidityWithReservoir(
             address(tokenA), address(tokenB), amountADesired, amountBDesired, 0, 0, userA, block.timestamp + 1
         );
     }
@@ -337,8 +337,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         uint256 matchingAAmount = (uint256(amountBDesired) * poolA) / poolB;
         uint256 amountAMin = matchingAAmount + 1;
 
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientAAmount.selector);
-        buttonwoodRouter.addLiquidityWithReservoir(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientAAmount.selector);
+        buttonswapRouter.addLiquidityWithReservoir(
             address(tokenA), address(tokenB), 0, amountBDesired, amountAMin, 0, userA, block.timestamp + 1
         );
     }
@@ -368,8 +368,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         // TokenA rebased up 10%, so 10% of poolB matches the tokenA reservoir. 20% is poolB / 5.
         uint256 amountBDesired = poolB / 5; // / 10 + 100000;
 
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientAReservoir.selector);
-        buttonwoodRouter.addLiquidityWithReservoir(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientAReservoir.selector);
+        buttonswapRouter.addLiquidityWithReservoir(
             address(tokenA), address(tokenB), 0, amountBDesired, 0, 0, userA, block.timestamp + 1
         );
     }
@@ -413,9 +413,9 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Giving approval for amountBDesired tokenB
         tokenB.mint(address(this), amountBDesired);
-        tokenB.approve(address(buttonwoodRouter), amountBDesired);
+        tokenB.approve(address(buttonswapRouter), amountBDesired);
 
-        buttonwoodRouter.addLiquidityWithReservoir(
+        buttonswapRouter.addLiquidityWithReservoir(
             address(tokenA), address(tokenB), 0, amountBDesired, 0, 0, userA, block.timestamp + 1
         );
     }
@@ -450,8 +450,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         uint256 matchingBAmount = (uint256(amountADesired) * poolB) / poolA;
         uint256 amountBMin = matchingBAmount + 1;
 
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientBAmount.selector);
-        buttonwoodRouter.addLiquidityWithReservoir(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientBAmount.selector);
+        buttonswapRouter.addLiquidityWithReservoir(
             address(tokenA), address(tokenB), amountADesired, 0, 0, amountBMin, userA, block.timestamp + 1
         );
     }
@@ -481,8 +481,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         // TokenB rebased up 10%, so 10% of poolA matches the tokenB reservoir. 20% is poolA / 5.
         uint256 amountADesired = poolA / 5; // / 10 + 100000;
 
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientBReservoir.selector);
-        buttonwoodRouter.addLiquidityWithReservoir(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientBReservoir.selector);
+        buttonswapRouter.addLiquidityWithReservoir(
             address(tokenA), address(tokenB), amountADesired, 0, 0, 0, userA, block.timestamp + 1
         );
     }
@@ -526,9 +526,9 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Giving approval for amountADesired tokenA
         tokenA.mint(address(this), amountADesired);
-        tokenA.approve(address(buttonwoodRouter), amountADesired);
+        tokenA.approve(address(buttonswapRouter), amountADesired);
 
-        buttonwoodRouter.addLiquidityWithReservoir(
+        buttonswapRouter.addLiquidityWithReservoir(
             address(tokenA), address(tokenB), amountADesired, 0, 0, 0, userA, block.timestamp + 1
         );
     }
@@ -539,7 +539,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         vm.assume(amountETHSent > 10000);
 
         tokenA.mint(address(this), amountTokenDesired);
-        tokenA.approve(address(buttonwoodRouter), amountTokenDesired);
+        tokenA.approve(address(buttonswapRouter), amountTokenDesired);
         vm.deal(address(this), amountETHSent);
 
         // Validating no pairs exist before call
@@ -549,7 +549,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         vm.expectCall(
             address(buttonswapFactory), abi.encodeCall(ButtonswapFactory.createPair, (address(tokenA), address(weth)))
         );
-        buttonwoodRouter.addLiquidityETH{value: amountETHSent}(
+        buttonswapRouter.addLiquidityETH{value: amountETHSent}(
             address(tokenA), amountTokenDesired, 0, 0, userA, block.timestamp + 1
         );
 
@@ -585,8 +585,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         vm.assume(matchingETHAmount < amountETHMin);
 
         vm.deal(address(this), amountETHSent);
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientBAmount.selector);
-        buttonwoodRouter.addLiquidityETH{value: amountETHSent}(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientBAmount.selector);
+        buttonswapRouter.addLiquidityETH{value: amountETHSent}(
             address(tokenA), amountTokenDesired, 0, amountETHMin, userA, block.timestamp + 1
         );
     }
@@ -625,8 +625,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         vm.assume(matchingTokenAmount < amountTokenMin);
 
         vm.deal(address(this), amountETHSent);
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientAAmount.selector);
-        buttonwoodRouter.addLiquidityETH{value: amountETHSent}(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientAAmount.selector);
+        buttonswapRouter.addLiquidityETH{value: amountETHSent}(
             address(tokenA), amountTokenDesired, amountTokenMin, 0, userA, block.timestamp + 1
         );
     }
@@ -654,8 +654,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         vm.assume(amountETHSent < type(uint112).max - poolETH);
 
         // Approving the router to spend the tokens
-        tokenA.approve(address(buttonwoodRouter), amountTokenDesired);
-        tokenB.approve(address(buttonwoodRouter), amountETHSent);
+        tokenA.approve(address(buttonswapRouter), amountTokenDesired);
+        tokenB.approve(address(buttonswapRouter), amountETHSent);
 
         // Creating the pair with poolToken:poolETH price ratio
         tokenA.mint(address(this), poolToken);
@@ -676,11 +676,11 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Approving the router to take at most amountTokenDesired A tokens and at most amountETHSent B tokens
         tokenA.mint(address(this), amountTokenDesired);
-        tokenA.approve(address(buttonwoodRouter), amountTokenDesired);
+        tokenA.approve(address(buttonswapRouter), amountTokenDesired);
         vm.deal(address(this), amountETHSent);
 
         // Adding liquidity should succeed now. Not concerned with liquidity value
-        (uint256 amountToken, uint256 amountETH,) = buttonwoodRouter.addLiquidityETH{value: amountETHSent}(
+        (uint256 amountToken, uint256 amountETH,) = buttonswapRouter.addLiquidityETH{value: amountETHSent}(
             address(tokenA), amountTokenDesired, amountTokenMin, amountETHMin, userA, block.timestamp + 1
         );
 
@@ -713,8 +713,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         pair.mint(address(this));
 
         vm.deal(address(this), amountETHSent);
-        vm.expectRevert(IButtonwoodRouterErrors.NoReservoir.selector);
-        buttonwoodRouter.addLiquidityETHWithReservoir{value: amountETHSent}(
+        vm.expectRevert(IButtonswapRouterErrors.NoReservoir.selector);
+        buttonswapRouter.addLiquidityETHWithReservoir{value: amountETHSent}(
             address(tokenA), amountTokenDesired, 0, 0, userA, block.timestamp + 1
         );
     }
@@ -751,8 +751,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         uint256 amountTokenMin = matchingTokenAmount + 1;
 
         vm.deal(address(this), amountETHSent);
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientAAmount.selector);
-        buttonwoodRouter.addLiquidityETHWithReservoir{value: amountETHSent}(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientAAmount.selector);
+        buttonswapRouter.addLiquidityETHWithReservoir{value: amountETHSent}(
             address(tokenA), 0, amountTokenMin, 0, userA, block.timestamp + 1
         );
     }
@@ -785,8 +785,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         uint256 amountETHSent = poolETH / 5; // / 10 + 100000;
 
         vm.deal(address(this), amountETHSent);
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientAReservoir.selector);
-        buttonwoodRouter.addLiquidityETHWithReservoir{value: amountETHSent}(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientAReservoir.selector);
+        buttonswapRouter.addLiquidityETHWithReservoir{value: amountETHSent}(
             address(tokenA), 0, 0, 0, userA, block.timestamp + 1
         );
     }
@@ -831,7 +831,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         pair.sync();
 
         vm.deal(address(this), amountETHSent);
-        buttonwoodRouter.addLiquidityETHWithReservoir{value: amountETHSent}(
+        buttonswapRouter.addLiquidityETHWithReservoir{value: amountETHSent}(
             address(tokenA), 0, 0, 0, userA, block.timestamp + 1
         );
     }
@@ -872,8 +872,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         uint256 matchingETHAmount = (amountTokenDesired * newPoolETH) / newPoolToken;
         uint256 amountETHMin = matchingETHAmount + 1;
 
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientBAmount.selector);
-        buttonwoodRouter.addLiquidityETHWithReservoir(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientBAmount.selector);
+        buttonswapRouter.addLiquidityETHWithReservoir(
             address(tokenA), amountTokenDesired, 0, amountETHMin, userA, block.timestamp + 1
         );
     }
@@ -905,8 +905,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         // TokenB rebased up 10%, so 10% of poolToken matches the tokenB reservoir. 20% is poolToken / 5.
         uint256 amountTokenDesired = poolToken / 5; // / 10 + 100000;
 
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientBReservoir.selector);
-        buttonwoodRouter.addLiquidityETHWithReservoir(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientBReservoir.selector);
+        buttonswapRouter.addLiquidityETHWithReservoir(
             address(tokenA), amountTokenDesired, 0, 0, userA, block.timestamp + 1
         );
     }
@@ -954,9 +954,9 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Giving approval for amountTokenDesired tokenA
         tokenA.mint(address(this), amountTokenDesired);
-        tokenA.approve(address(buttonwoodRouter), amountTokenDesired);
+        tokenA.approve(address(buttonswapRouter), amountTokenDesired);
 
-        buttonwoodRouter.addLiquidityETHWithReservoir(
+        buttonswapRouter.addLiquidityETHWithReservoir(
             address(tokenA), amountTokenDesired, 0, 0, userA, block.timestamp + 1
         );
     }
@@ -988,11 +988,11 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         uint256 amountAMin = (liquidity * poolA) / (pairLiquidity + 1000) + 1;
 
         // Giving permission to the pair to burn liquidity
-        pair.approve(address(buttonwoodRouter), liquidity);
+        pair.approve(address(buttonswapRouter), liquidity);
 
         // Expecting to revert with `InsufficientAAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientAAmount.selector);
-        buttonwoodRouter.removeLiquidity(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientAAmount.selector);
+        buttonswapRouter.removeLiquidity(
             address(tokenA), address(tokenB), liquidity, amountAMin, 0, userA, block.timestamp + 1
         );
     }
@@ -1024,11 +1024,11 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         uint256 amountBMin = (liquidity * poolB) / (pairLiquidity + 1000) + 1;
 
         // Giving permission to the pair to burn liquidity
-        pair.approve(address(buttonwoodRouter), liquidity);
+        pair.approve(address(buttonswapRouter), liquidity);
 
         // Expecting to revert with `InsufficientBAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientBAmount.selector);
-        buttonwoodRouter.removeLiquidity(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientBAmount.selector);
+        buttonswapRouter.removeLiquidity(
             address(tokenA), address(tokenB), liquidity, 0, amountBMin, userA, block.timestamp + 1
         );
     }
@@ -1072,9 +1072,9 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         pair.mint(address(this));
 
         // Giving permission to the pair to burn liquidity
-        pair.approve(address(buttonwoodRouter), liquidity);
+        pair.approve(address(buttonswapRouter), liquidity);
 
-        (uint256 amountA, uint256 amountB) = buttonwoodRouter.removeLiquidity(
+        (uint256 amountA, uint256 amountB) = buttonswapRouter.removeLiquidity(
             address(tokenA), address(tokenB), liquidity, amountAMin, amountBMin, userA, block.timestamp + 1
         );
 
@@ -1115,11 +1115,11 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         uint256 amountAMin = expectedAmountA + 1;
 
         // Giving permission to the pair to burn liquidity
-        pair.approve(address(buttonwoodRouter), liquidity);
+        pair.approve(address(buttonswapRouter), liquidity);
 
         // Expecting to revert with `InsufficientAAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientAAmount.selector);
-        buttonwoodRouter.removeLiquidityFromReservoir(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientAAmount.selector);
+        buttonswapRouter.removeLiquidityFromReservoir(
             address(tokenA), address(tokenB), liquidity, amountAMin, 0, userA, block.timestamp + 1
         );
     }
@@ -1156,11 +1156,11 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         uint256 amountBMin = expectedAmountB + 1;
 
         // Giving permission to the pair to burn liquidity
-        pair.approve(address(buttonwoodRouter), liquidity);
+        pair.approve(address(buttonswapRouter), liquidity);
 
         // Expecting to revert with `InsufficientBAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientBAmount.selector);
-        buttonwoodRouter.removeLiquidityFromReservoir(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientBAmount.selector);
+        buttonswapRouter.removeLiquidityFromReservoir(
             address(tokenA), address(tokenB), liquidity, 0, amountBMin, userA, block.timestamp + 1
         );
     }
@@ -1199,10 +1199,10 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         pair.sync();
 
         // Giving permission to the pair to burn liquidity
-        pair.approve(address(buttonwoodRouter), liquidity);
+        pair.approve(address(buttonswapRouter), liquidity);
 
         // Removing liquidity from the reservoir
-        (uint256 amountA, uint256 amountB) = buttonwoodRouter.removeLiquidityFromReservoir(
+        (uint256 amountA, uint256 amountB) = buttonswapRouter.removeLiquidityFromReservoir(
             address(tokenA), address(tokenB), liquidity, 0, 0, userA, block.timestamp + 1
         );
 
@@ -1245,10 +1245,10 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         pair.sync();
 
         // Giving permission to the pair to burn liquidity
-        pair.approve(address(buttonwoodRouter), liquidity);
+        pair.approve(address(buttonswapRouter), liquidity);
 
         // Removing liquidity from the reservoir
-        (uint256 amountA, uint256 amountB) = buttonwoodRouter.removeLiquidityFromReservoir(
+        (uint256 amountA, uint256 amountB) = buttonswapRouter.removeLiquidityFromReservoir(
             address(tokenA), address(tokenB), liquidity, 0, 0, userA, block.timestamp + 1
         );
 
@@ -1287,11 +1287,11 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         uint256 amountTokenMin = (liquidity * poolToken) / (pairLiquidity + 1000) + 1;
 
         // Giving permission to the pair to burn liquidity
-        pair.approve(address(buttonwoodRouter), liquidity);
+        pair.approve(address(buttonswapRouter), liquidity);
 
         // Expecting to revert with `InsufficientAAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientAAmount.selector);
-        buttonwoodRouter.removeLiquidityETH(address(tokenA), liquidity, amountTokenMin, 0, userA, block.timestamp + 1);
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientAAmount.selector);
+        buttonswapRouter.removeLiquidityETH(address(tokenA), liquidity, amountTokenMin, 0, userA, block.timestamp + 1);
     }
 
     function test_removeLiquidityETH_insufficientBAmount(uint112 poolToken, uint112 poolETH, uint112 liquidity)
@@ -1324,11 +1324,11 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         uint256 amountETHMin = (liquidity * poolETH) / (pairLiquidity + 1000) + 1;
 
         // Giving permission to the pair to burn liquidity
-        pair.approve(address(buttonwoodRouter), liquidity);
+        pair.approve(address(buttonswapRouter), liquidity);
 
         // Expecting to revert with `InsufficientBAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientBAmount.selector);
-        buttonwoodRouter.removeLiquidityETH(address(tokenA), liquidity, 0, amountETHMin, userA, block.timestamp + 1);
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientBAmount.selector);
+        buttonswapRouter.removeLiquidityETH(address(tokenA), liquidity, 0, amountETHMin, userA, block.timestamp + 1);
     }
 
     function test_removeLiquidityETH_sufficientAmounts(
@@ -1371,9 +1371,9 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         pair.mint(address(this));
 
         // Giving permission to the pair to burn liquidity
-        pair.approve(address(buttonwoodRouter), liquidity);
+        pair.approve(address(buttonswapRouter), liquidity);
 
-        (uint256 amountToken, uint256 amountETH) = buttonwoodRouter.removeLiquidityETH(
+        (uint256 amountToken, uint256 amountETH) = buttonswapRouter.removeLiquidityETH(
             address(tokenA), liquidity, amountTokenMin, amountETHMin, userA, block.timestamp + 1
         );
 
@@ -1417,11 +1417,11 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         uint256 amountTokenMin = expectedAmountToken + 1;
 
         // Giving permission to the pair to burn liquidity
-        pair.approve(address(buttonwoodRouter), liquidity);
+        pair.approve(address(buttonswapRouter), liquidity);
 
         // Expecting to revert with `InsufficientAAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientAAmount.selector);
-        buttonwoodRouter.removeLiquidityETHFromReservoir(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientAAmount.selector);
+        buttonswapRouter.removeLiquidityETHFromReservoir(
             address(tokenA), liquidity, amountTokenMin, 0, userA, block.timestamp + 1
         );
     }
@@ -1465,11 +1465,11 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         uint256 amountETHMin = expectedAmountETH + 2;
 
         // Giving permission to the pair to burn liquidity
-        pair.approve(address(buttonwoodRouter), liquidity);
+        pair.approve(address(buttonswapRouter), liquidity);
 
         // Expecting to revert with `InsufficientBAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientBAmount.selector);
-        buttonwoodRouter.removeLiquidityETHFromReservoir(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientBAmount.selector);
+        buttonswapRouter.removeLiquidityETHFromReservoir(
             address(tokenA), liquidity, 0, amountETHMin, userA, block.timestamp + 1
         );
     }
@@ -1509,10 +1509,10 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         pair.sync();
 
         // Giving permission to the pair to burn liquidity
-        pair.approve(address(buttonwoodRouter), liquidity);
+        pair.approve(address(buttonswapRouter), liquidity);
 
         // Removing liquidity from the reservoir
-        (uint256 amountToken, uint256 amountETH) = buttonwoodRouter.removeLiquidityETHFromReservoir(
+        (uint256 amountToken, uint256 amountETH) = buttonswapRouter.removeLiquidityETHFromReservoir(
             address(tokenA), liquidity, 0, 0, userA, block.timestamp + 1
         );
 
@@ -1559,10 +1559,10 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         pair.sync();
 
         // Giving permission to the pair to burn liquidity
-        pair.approve(address(buttonwoodRouter), liquidity);
+        pair.approve(address(buttonswapRouter), liquidity);
 
         // Removing liquidity from the reservoir
-        (uint256 amountToken, uint256 amountETH) = buttonwoodRouter.removeLiquidityETHFromReservoir(
+        (uint256 amountToken, uint256 amountETH) = buttonswapRouter.removeLiquidityETHFromReservoir(
             address(tokenA), liquidity, 0, 0, userA, block.timestamp + 1
         );
 
@@ -1608,9 +1608,9 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, type(uint256).max, block.timestamp + 1);
 
         // Expecting to revert with `InsufficientAAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientAAmount.selector);
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientAAmount.selector);
         vm.prank(userA);
-        buttonwoodRouter.removeLiquidityWithPermit(
+        buttonswapRouter.removeLiquidityWithPermit(
             address(tokenA), address(tokenB), liquidity, amountAMin, 0, userA, block.timestamp + 1, true, v, r, s
         );
     }
@@ -1652,9 +1652,9 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, liquidity, block.timestamp + 1);
 
         // Expecting to revert with `InsufficientAAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientAAmount.selector);
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientAAmount.selector);
         vm.prank(userA);
-        buttonwoodRouter.removeLiquidityWithPermit(
+        buttonswapRouter.removeLiquidityWithPermit(
             address(tokenA), address(tokenB), liquidity, amountAMin, 0, userA, block.timestamp + 1, false, v, r, s
         );
     }
@@ -1696,9 +1696,9 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, type(uint256).max, block.timestamp + 1);
 
         // Expecting to revert with `InsufficientBAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientBAmount.selector);
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientBAmount.selector);
         vm.prank(userA);
-        buttonwoodRouter.removeLiquidityWithPermit(
+        buttonswapRouter.removeLiquidityWithPermit(
             address(tokenA), address(tokenB), liquidity, 0, amountBMin, userA, block.timestamp + 1, true, v, r, s
         );
     }
@@ -1740,9 +1740,9 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, liquidity, block.timestamp + 1);
 
         // Expecting to revert with `InsufficientBAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientBAmount.selector);
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientBAmount.selector);
         vm.prank(userA);
-        buttonwoodRouter.removeLiquidityWithPermit(
+        buttonswapRouter.removeLiquidityWithPermit(
             address(tokenA), address(tokenB), liquidity, 0, amountBMin, userA, block.timestamp + 1, false, v, r, s
         );
     }
@@ -1792,7 +1792,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, type(uint256).max, block.timestamp + 1);
 
         vm.prank(userA);
-        (uint256 amountA, uint256 amountB) = buttonwoodRouter.removeLiquidityWithPermit(
+        (uint256 amountA, uint256 amountB) = buttonswapRouter.removeLiquidityWithPermit(
             address(tokenA),
             address(tokenB),
             liquidity,
@@ -1856,7 +1856,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, liquidity, block.timestamp + 1);
 
         vm.prank(userA);
-        (uint256 amountA, uint256 amountB) = buttonwoodRouter.removeLiquidityWithPermit(
+        (uint256 amountA, uint256 amountB) = buttonswapRouter.removeLiquidityWithPermit(
             address(tokenA),
             address(tokenB),
             liquidity,
@@ -1915,9 +1915,9 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
             generateUserAPermitSignature(pair, maxPermission ? type(uint256).max : liquidity, block.timestamp + 1);
 
         // Expecting to revert with `InsufficientAAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientAAmount.selector);
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientAAmount.selector);
         vm.prank(userA);
-        buttonwoodRouter.removeLiquidityETHWithPermit(
+        buttonswapRouter.removeLiquidityETHWithPermit(
             address(tokenA), liquidity, amountTokenMin, 0, userA, block.timestamp + 1, maxPermission, v, r, s
         );
     }
@@ -1962,9 +1962,9 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
             generateUserAPermitSignature(pair, maxPermission ? type(uint256).max : liquidity, block.timestamp + 1);
 
         // Expecting to revert with `InsufficientBAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientBAmount.selector);
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientBAmount.selector);
         vm.prank(userA);
-        buttonwoodRouter.removeLiquidityETHWithPermit(
+        buttonswapRouter.removeLiquidityETHWithPermit(
             address(tokenA), liquidity, 0, amountETHMin, userA, block.timestamp + 1, maxPermission, v, r, s
         );
     }
@@ -2008,7 +2008,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, type(uint256).max, block.timestamp + 1);
 
         vm.prank(userA);
-        (uint256 amountToken, uint256 amountETH) = buttonwoodRouter.removeLiquidityETHWithPermit(
+        (uint256 amountToken, uint256 amountETH) = buttonswapRouter.removeLiquidityETHWithPermit(
             address(tokenA), liquidity, 0, 0, userA, block.timestamp + 1, true, v, r, s
         );
 
@@ -2056,7 +2056,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, liquidity, block.timestamp + 1);
 
         vm.prank(userA);
-        (uint256 amountToken, uint256 amountETH) = buttonwoodRouter.removeLiquidityETHWithPermit(
+        (uint256 amountToken, uint256 amountETH) = buttonswapRouter.removeLiquidityETHWithPermit(
             address(tokenA), liquidity, 0, 0, userA, block.timestamp + 1, false, v, r, s
         );
 
@@ -2110,8 +2110,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         amountOutMin = bound(amountOutMin, amounts[amounts.length - 1] + 1, type(uint256).max);
 
         // Expecting to revert with `InsufficientOutputAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientOutputAmount.selector);
-        buttonwoodRouter.swapExactTokensForTokens(amountIn, amountOutMin, path, address(this), block.timestamp + 1);
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientOutputAmount.selector);
+        buttonswapRouter.swapExactTokensForTokens(amountIn, amountOutMin, path, address(this), block.timestamp + 1);
     }
 
     function test_swapExactTokensForTokens_sufficientOutputAmount(
@@ -2160,10 +2160,10 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Minting the first token to be approved and swapped
         MockRebasingERC20(path[0]).mint(address(this), amountIn);
-        MockRebasingERC20(path[0]).approve(address(buttonwoodRouter), amountIn);
+        MockRebasingERC20(path[0]).approve(address(buttonswapRouter), amountIn);
 
         (uint256[] memory amounts) =
-            buttonwoodRouter.swapExactTokensForTokens(amountIn, amountOutMin, path, address(this), block.timestamp + 1);
+            buttonswapRouter.swapExactTokensForTokens(amountIn, amountOutMin, path, address(this), block.timestamp + 1);
 
         // Checking that the amounts in the trade are as expected
         assertEq(amounts, expectedAmounts, "Amounts in the trade are not as expected");
@@ -2221,8 +2221,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         amountInMax = bound(amountInMax, 0, amounts[0] - 1);
 
         // Expecting to revert with `ExcessiveInputAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.ExcessiveInputAmount.selector);
-        buttonwoodRouter.swapTokensForExactTokens(amountOut, amountInMax, path, address(this), block.timestamp + 1);
+        vm.expectRevert(IButtonswapRouterErrors.ExcessiveInputAmount.selector);
+        buttonswapRouter.swapTokensForExactTokens(amountOut, amountInMax, path, address(this), block.timestamp + 1);
     }
 
     function test_swapTokensForExactTokens_nonExcessiveInputAmount(
@@ -2271,10 +2271,10 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Minting the first token to be approved and swapped (with the amountInMax)
         MockRebasingERC20(path[0]).mint(address(this), amountInMax);
-        MockRebasingERC20(path[0]).approve(address(buttonwoodRouter), amountInMax);
+        MockRebasingERC20(path[0]).approve(address(buttonswapRouter), amountInMax);
 
         (uint256[] memory amounts) =
-            buttonwoodRouter.swapTokensForExactTokens(amountOut, amountInMax, path, address(this), block.timestamp + 1);
+            buttonswapRouter.swapTokensForExactTokens(amountOut, amountInMax, path, address(this), block.timestamp + 1);
 
         // Checking that the amounts in the trade are as expected
         assertEq(amounts, expectedAmounts, "Amounts in the trade are not as expected");
@@ -2336,8 +2336,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Expecting to revert with `InvalidPath()` error
         vm.deal(address(this), amountETHSent);
-        vm.expectRevert(IButtonwoodRouterErrors.InvalidPath.selector);
-        buttonwoodRouter.swapExactETHForTokens{value: amountETHSent}(
+        vm.expectRevert(IButtonswapRouterErrors.InvalidPath.selector);
+        buttonswapRouter.swapExactETHForTokens{value: amountETHSent}(
             amountOutMin, path, address(this), block.timestamp + 1
         );
     }
@@ -2396,8 +2396,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Expecting to revert with `InsufficientOutputAmount()` error
         vm.deal(address(this), amountETHSent);
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientOutputAmount.selector);
-        buttonwoodRouter.swapExactETHForTokens{value: amountETHSent}(
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientOutputAmount.selector);
+        buttonswapRouter.swapExactETHForTokens{value: amountETHSent}(
             amountOutMin, path, address(this), block.timestamp + 1
         );
     }
@@ -2457,7 +2457,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Performing the swaps with the ETH
         vm.deal(address(this), amountETHSent);
-        (uint256[] memory amounts) = buttonwoodRouter.swapExactETHForTokens{value: amountETHSent}(
+        (uint256[] memory amounts) = buttonswapRouter.swapExactETHForTokens{value: amountETHSent}(
             amountOutMin, path, address(this), block.timestamp + 1
         );
 
@@ -2512,8 +2512,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         }
 
         // Expecting to revert with `InvalidPath()` error
-        vm.expectRevert(IButtonwoodRouterErrors.InvalidPath.selector);
-        buttonwoodRouter.swapTokensForExactETH(amountOut, amountInMax, path, address(this), block.timestamp + 1);
+        vm.expectRevert(IButtonswapRouterErrors.InvalidPath.selector);
+        buttonswapRouter.swapTokensForExactETH(amountOut, amountInMax, path, address(this), block.timestamp + 1);
     }
 
     function test_swapTokensForExactETH_excessiveInputAmount(
@@ -2569,8 +2569,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         amountInMax = bound(amountInMax, 0, amounts[0] - 1);
 
         // Expecting to revert with `ExcessiveInputAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.ExcessiveInputAmount.selector);
-        buttonwoodRouter.swapTokensForExactETH(amountOut, amountInMax, path, address(this), block.timestamp + 1);
+        vm.expectRevert(IButtonswapRouterErrors.ExcessiveInputAmount.selector);
+        buttonswapRouter.swapTokensForExactETH(amountOut, amountInMax, path, address(this), block.timestamp + 1);
     }
 
     function test_swapTokensForExactETH_nonExcessiveInputAmount(
@@ -2627,10 +2627,10 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Minting the first token to be approved and swapped (with the amountInMax)
         MockRebasingERC20(path[0]).mint(address(this), amountInMax);
-        MockRebasingERC20(path[0]).approve(address(buttonwoodRouter), amountInMax);
+        MockRebasingERC20(path[0]).approve(address(buttonswapRouter), amountInMax);
 
         (uint256[] memory amounts) =
-            buttonwoodRouter.swapTokensForExactETH(amountOut, amountInMax, path, address(this), block.timestamp + 1);
+            buttonswapRouter.swapTokensForExactETH(amountOut, amountInMax, path, address(this), block.timestamp + 1);
 
         // Checking that the amounts in the trade are as expected
         assertEq(amounts, expectedAmounts, "Amounts in the trade are not as expected");
@@ -2686,8 +2686,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         }
 
         // Expecting to revert with `InvalidPath()` error
-        vm.expectRevert(IButtonwoodRouterErrors.InvalidPath.selector);
-        buttonwoodRouter.swapExactTokensForETH(amountIn, amountOutMin, path, address(this), block.timestamp + 1);
+        vm.expectRevert(IButtonswapRouterErrors.InvalidPath.selector);
+        buttonswapRouter.swapExactTokensForETH(amountIn, amountOutMin, path, address(this), block.timestamp + 1);
     }
 
     function test_swapExactTokensForETH_insufficientOutputAmount(
@@ -2743,8 +2743,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         amountOutMin = bound(amountOutMin, amounts[amounts.length - 1] + 1, type(uint256).max);
 
         // Expecting to revert with `InsufficientOutputAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.InsufficientOutputAmount.selector);
-        buttonwoodRouter.swapExactTokensForETH(amountIn, amountOutMin, path, address(this), block.timestamp + 1);
+        vm.expectRevert(IButtonswapRouterErrors.InsufficientOutputAmount.selector);
+        buttonswapRouter.swapExactTokensForETH(amountIn, amountOutMin, path, address(this), block.timestamp + 1);
     }
 
     function test_swapExactTokensForETH_sufficientOutputAmount(
@@ -2801,10 +2801,10 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Minting the first token to be approved and swapped
         MockRebasingERC20(path[0]).mint(address(this), amountIn);
-        MockRebasingERC20(path[0]).approve(address(buttonwoodRouter), amountIn);
+        MockRebasingERC20(path[0]).approve(address(buttonswapRouter), amountIn);
 
         (uint256[] memory amounts) =
-            buttonwoodRouter.swapExactTokensForETH(amountIn, amountOutMin, path, address(this), block.timestamp + 1);
+            buttonswapRouter.swapExactTokensForETH(amountIn, amountOutMin, path, address(this), block.timestamp + 1);
 
         // Checking that the amounts in the trade are as expected
         assertEq(amounts, expectedAmounts, "Amounts in the trade are not as expected");
@@ -2854,8 +2854,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
         // Expecting to revert with `InvalidPath()` error
         vm.deal(address(this), amountETHSent);
-        vm.expectRevert(IButtonwoodRouterErrors.InvalidPath.selector);
-        buttonwoodRouter.swapETHForExactTokens(amountOut, path, address(this), block.timestamp + 1);
+        vm.expectRevert(IButtonswapRouterErrors.InvalidPath.selector);
+        buttonswapRouter.swapETHForExactTokens(amountOut, path, address(this), block.timestamp + 1);
     }
 
     function test_swapETHForExactTokens_excessiveInputAmount(
@@ -2911,8 +2911,8 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         amountETHSent = bound(amountETHSent, 0, amounts[0] - 1);
 
         // Expecting to revert with `ExcessiveInputAmount()` error
-        vm.expectRevert(IButtonwoodRouterErrors.ExcessiveInputAmount.selector);
-        buttonwoodRouter.swapETHForExactTokens(amountOut, path, address(this), block.timestamp + 1);
+        vm.expectRevert(IButtonswapRouterErrors.ExcessiveInputAmount.selector);
+        buttonswapRouter.swapETHForExactTokens(amountOut, path, address(this), block.timestamp + 1);
     }
 
     function test_swapETHForExactTokens_nonExcessiveInputAmount(
@@ -2968,7 +2968,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
         amountETHSent = bound(amountETHSent, expectedAmounts[0], type(uint112).max);
 
         vm.deal(address(this), amountETHSent);
-        (uint256[] memory amounts) = buttonwoodRouter.swapETHForExactTokens{value: amountETHSent}(
+        (uint256[] memory amounts) = buttonswapRouter.swapETHForExactTokens{value: amountETHSent}(
             amountOut, path, address(this), block.timestamp + 1
         );
 
@@ -2987,7 +2987,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
     }
 
     function test_quote(uint256 amountA, uint256 poolA, uint256 poolB) public {
-        try buttonwoodRouter.quote(amountA, poolA, poolB) returns (uint256 amountB) {
+        try buttonswapRouter.quote(amountA, poolA, poolB) returns (uint256 amountB) {
             assertEq(
                 amountB, ButtonswapLibrary.quote(amountA, poolA, poolB), "Call succeeds but output is not as expected"
             );
@@ -2999,7 +2999,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
     }
 
     function test_getAmountOut(uint256 amountIn, uint256 poolIn, uint256 poolOut) public {
-        try buttonwoodRouter.getAmountOut(amountIn, poolIn, poolOut) returns (uint256 amountOut) {
+        try buttonswapRouter.getAmountOut(amountIn, poolIn, poolOut) returns (uint256 amountOut) {
             assertEq(
                 amountOut,
                 ButtonswapLibrary.getAmountOut(amountIn, poolIn, poolOut),
@@ -3013,7 +3013,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
     }
 
     function test_getAmountIn(uint256 amountOut, uint256 poolIn, uint256 poolOut) public {
-        try buttonwoodRouter.getAmountIn(amountOut, poolIn, poolOut) returns (uint256 amountIn) {
+        try buttonswapRouter.getAmountIn(amountOut, poolIn, poolOut) returns (uint256 amountIn) {
             assertEq(
                 amountIn,
                 ButtonswapLibrary.getAmountIn(amountOut, poolIn, poolOut),
@@ -3027,7 +3027,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
     }
 
     function test_getAmountsOut(uint256 amountIn, address[] memory path) public {
-        try buttonwoodRouter.getAmountsOut(amountIn, path) returns (uint256[] memory amounts) {
+        try buttonswapRouter.getAmountsOut(amountIn, path) returns (uint256[] memory amounts) {
             assertEq(
                 amounts,
                 ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path),
@@ -3047,7 +3047,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
     // Using a testFail to capture EvmErrors that are not caught by vm.expectRevert
     function testFail_getAmountsOut(uint256 amountIn, address[] memory path) public view {
-        try buttonwoodRouter.getAmountsOut(amountIn, path) {
+        try buttonswapRouter.getAmountsOut(amountIn, path) {
             revert("Skip valid calls");
         } catch {
             // If the call fails, the library call should also fail
@@ -3056,7 +3056,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
     }
 
     function test_getAmountsIn(uint256 amountOut, address[] calldata path) public {
-        try buttonwoodRouter.getAmountsIn(amountOut, path) returns (uint256[] memory amounts) {
+        try buttonswapRouter.getAmountsIn(amountOut, path) returns (uint256[] memory amounts) {
             assertEq(
                 amounts,
                 ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path),
@@ -3076,7 +3076,7 @@ contract ButtonwoodRouterTest is Test, IButtonwoodRouterErrors {
 
     // Using a testFail to capture EvmErrors that are not caught by vm.expectRevert
     function testFail_getAmountsIn(uint256 amountOut, address[] calldata path) public view {
-        try buttonwoodRouter.getAmountsIn(amountOut, path) {
+        try buttonswapRouter.getAmountsIn(amountOut, path) {
             revert("Skip valid calls");
         } catch {
             // If the call fails, the library call should also fail
