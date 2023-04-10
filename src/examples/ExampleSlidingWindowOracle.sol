@@ -4,7 +4,6 @@ import {IButtonswapFactory} from "buttonswap-core/interfaces/IButtonswapFactory/
 import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
 import {UQ112x112} from "buttonswap-core/libraries/UQ112x112.sol";
 
-import "../libraries/SafeMath.sol";
 import {ButtonswapLibrary} from "../libraries/ButtonswapLibrary.sol";
 import "../libraries/ButtonwoodOracleLibrary.sol";
 
@@ -14,7 +13,6 @@ import "../libraries/ButtonwoodOracleLibrary.sol";
 // differs from the simple oracle which must be deployed once per pair.
 contract ExampleSlidingWindowOracle {
     using UQ112x112 for uint224;
-    using SafeMath for uint256;
 
     struct Observation {
         uint256 timestamp;
