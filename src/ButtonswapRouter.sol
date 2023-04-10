@@ -6,13 +6,10 @@ import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButto
 import {TransferHelper} from "./libraries/TransferHelper.sol";
 import {IButtonswapRouter} from "./interfaces/IButtonswapRouter/IButtonswapRouter.sol";
 import {ButtonswapLibrary} from "./libraries/ButtonswapLibrary.sol";
-import {SafeMath} from "./libraries/SafeMath.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {IWETH} from "./interfaces/IWETH.sol";
 
 contract ButtonswapRouter is IButtonswapRouter {
-    using SafeMath for uint256;
-
     /**
      * @inheritdoc IButtonswapRouter
      */
@@ -586,7 +583,7 @@ contract ButtonswapRouter is IButtonswapRouter {
                 (uint256 poolInput, uint256 poolOutput, uint256 reservoirInput) =
                     _getSortedPoolsAndReservoirs(pair, input == token0);
 
-                amountInput = IERC20(input).balanceOf(address(pair)).sub(poolInput).sub(reservoirInput);
+                amountInput = IERC20(input).balanceOf(address(pair)) - poolInput - reservoirInput;
                 amountOutput = ButtonswapLibrary.getAmountOut(amountInput, poolInput, poolOutput);
             }
             (uint256 amount0Out, uint256 amount1Out) =
@@ -608,7 +605,7 @@ contract ButtonswapRouter is IButtonswapRouter {
         TransferHelper.safeTransferFrom(path[0], msg.sender, address(pair), amountIn);
         uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
         _swapSupportingFeeOnTransferTokens(path, to);
-        if (IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) < amountOutMin) {
+        if (IERC20(path[path.length - 1]).balanceOf(to) - balanceBefore < amountOutMin) {
             revert InsufficientOutputAmount();
         }
     }
@@ -630,7 +627,7 @@ contract ButtonswapRouter is IButtonswapRouter {
         assert(IWETH(WETH).transfer(address(pair), amountIn));
         uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
         _swapSupportingFeeOnTransferTokens(path, to);
-        if (IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) < amountOutMin) {
+        if (IERC20(path[path.length - 1]).balanceOf(to) - balanceBefore < amountOutMin) {
             revert InsufficientOutputAmount();
         }
     }

@@ -2,11 +2,7 @@ pragma solidity ^0.8.13;
 
 import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
 
-import "./SafeMath.sol";
-
 library ButtonswapLibrary {
-    using SafeMath for uint256;
-
     /// @notice Identical addresses provided
     error IdenticalAddresses();
     /// @notice Zero address provided
@@ -119,7 +115,7 @@ library ButtonswapLibrary {
         if (poolA == 0 || poolB == 0) {
             revert InsufficientLiquidity();
         }
-        amountB = amountA.mul(poolB) / poolA;
+        amountB = (amountA * poolB) / poolA;
     }
 
     /**
@@ -141,9 +137,9 @@ library ButtonswapLibrary {
         if (poolIn == 0 || poolOut == 0) {
             revert InsufficientLiquidity();
         }
-        uint256 amountInWithFee = amountIn.mul(997);
-        uint256 numerator = amountInWithFee.mul(poolOut);
-        uint256 denominator = poolIn.mul(1000).add(amountInWithFee);
+        uint256 amountInWithFee = amountIn * 997;
+        uint256 numerator = amountInWithFee * poolOut;
+        uint256 denominator = (poolIn * 1000) + amountInWithFee;
         amountOut = numerator / denominator;
     }
 
@@ -161,9 +157,9 @@ library ButtonswapLibrary {
         if (poolIn == 0 || poolOut == 0) {
             revert InsufficientLiquidity();
         }
-        uint256 numerator = poolIn.mul(amountOut).mul(1000);
-        uint256 denominator = poolOut.sub(amountOut).mul(997);
-        amountIn = (numerator / denominator).add(1);
+        uint256 numerator = poolIn * amountOut * 1000;
+        uint256 denominator = (poolOut - amountOut) * 997;
+        amountIn = (numerator / denominator) + 1;
     }
 
     /**

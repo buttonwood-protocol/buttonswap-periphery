@@ -4,14 +4,11 @@ import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButto
 
 import "../interfaces/IERC20.sol";
 import {IButtonswapRouter} from "../interfaces/IButtonswapRouter/IButtonswapRouter.sol";
-import "../libraries/SafeMath.sol";
 import {ButtonswapLibrary} from "../libraries/ButtonswapLibrary.sol";
 import {Babylonian} from "../libraries/Babylonian.sol";
 import {TransferHelper} from "../libraries/TransferHelper.sol";
 
 contract ExampleSwapToPrice {
-    using SafeMath for uint256;
-
     IButtonswapRouter public immutable router;
     address public immutable factory;
 
@@ -27,18 +24,18 @@ contract ExampleSwapToPrice {
         uint256 reserveA,
         uint256 reserveB
     ) public pure returns (bool aToB, uint256 amountIn) {
-        aToB = reserveA.mul(truePriceTokenB) / reserveB < truePriceTokenA;
+        aToB = (reserveA * truePriceTokenB) / reserveB < truePriceTokenA;
 
-        uint256 invariant = reserveA.mul(reserveB);
+        uint256 invariant = reserveA * reserveB;
 
         uint256 leftSide = Babylonian.sqrt(
-            invariant.mul(aToB ? truePriceTokenA : truePriceTokenB).mul(1000)
-                / uint256(aToB ? truePriceTokenB : truePriceTokenA).mul(997)
+            (invariant * (aToB ? truePriceTokenA : truePriceTokenB) * 1000)
+                / (uint256(aToB ? truePriceTokenB : truePriceTokenA) * 997)
         );
-        uint256 rightSide = (aToB ? reserveA.mul(1000) : reserveB.mul(1000)) / 997;
+        uint256 rightSide = (aToB ? (reserveA * 1000) : (reserveB * 1000)) / 997;
 
         // compute the amount that must be sent to move the price to the profit-maximizing price
-        amountIn = leftSide.sub(rightSide);
+        amountIn = leftSide - rightSide;
     }
 
     // swaps an amount of either token such that the trade is profit-maximizing, given an external true price
