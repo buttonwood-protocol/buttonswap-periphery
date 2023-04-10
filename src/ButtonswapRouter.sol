@@ -4,21 +4,21 @@ pragma solidity ^0.8.13;
 import {IButtonswapFactory} from "buttonswap-core/interfaces/IButtonswapFactory/IButtonswapFactory.sol";
 import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
 import {TransferHelper} from "./libraries/TransferHelper.sol";
-import {IButtonwoodRouter} from "./interfaces/IButtonwoodRouter/IButtonwoodRouter.sol";
+import {IButtonswapRouter} from "./interfaces/IButtonswapRouter/IButtonswapRouter.sol";
 import {ButtonswapLibrary} from "./libraries/ButtonswapLibrary.sol";
 import {SafeMath} from "./libraries/SafeMath.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {IWETH} from "./interfaces/IWETH.sol";
 
-contract ButtonwoodRouter is IButtonwoodRouter {
+contract ButtonswapRouter is IButtonswapRouter {
     using SafeMath for uint256;
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     address public immutable override factory;
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     address public immutable override WETH;
 
@@ -122,7 +122,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function addLiquidity(
         address tokenA,
@@ -142,7 +142,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function addLiquidityWithReservoir(
         address tokenA,
@@ -167,7 +167,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function addLiquidityETH(
         address token,
@@ -198,7 +198,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function addLiquidityETHWithReservoir(
         address token,
@@ -231,7 +231,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
 
     // **** REMOVE LIQUIDITY ****
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function removeLiquidity(
         address tokenA,
@@ -256,7 +256,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function removeLiquidityFromReservoir(
         address tokenA,
@@ -281,7 +281,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function removeLiquidityETH(
         address token,
@@ -299,7 +299,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function removeLiquidityETHFromReservoir(
         address token,
@@ -320,7 +320,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function removeLiquidityWithPermit(
         address tokenA,
@@ -413,7 +413,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function swapExactTokensForTokens(
         uint256 amountIn,
@@ -434,7 +434,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function swapTokensForExactTokens(
         uint256 amountOut,
@@ -455,7 +455,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function swapExactETHForTokens(uint256 amountOutMin, address[] calldata path, address to, uint256 deadline)
         external
@@ -481,7 +481,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function swapTokensForExactETH(
         uint256 amountOut,
@@ -507,7 +507,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function swapExactTokensForETH(
         uint256 amountIn,
@@ -533,7 +533,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function swapETHForExactTokens(uint256 amountOut, address[] calldata path, address to, uint256 deadline)
         external
@@ -661,7 +661,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     // **** LIBRARY FUNCTIONS ****
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function quote(uint256 amountA, uint256 poolA, uint256 poolB)
         public
@@ -674,7 +674,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function getAmountOut(uint256 amountIn, uint256 poolIn, uint256 poolOut)
         public
@@ -687,7 +687,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function getAmountIn(uint256 amountOut, uint256 poolIn, uint256 poolOut)
         public
@@ -700,7 +700,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function getAmountsOut(uint256 amountIn, address[] memory path)
         public
@@ -713,7 +713,7 @@ contract ButtonwoodRouter is IButtonwoodRouter {
     }
 
     /**
-     * @inheritdoc IButtonwoodRouter
+     * @inheritdoc IButtonswapRouter
      */
     function getAmountsIn(uint256 amountOut, address[] memory path)
         public

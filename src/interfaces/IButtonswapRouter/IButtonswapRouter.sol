@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "./IButtonwoodRouterErrors.sol";
+import "./IButtonswapRouterErrors.sol";
 
-interface IButtonwoodRouter is IButtonwoodRouterErrors {
+interface IButtonswapRouter is IButtonswapRouterErrors {
     /**
      * @notice Returns the address of the Buttonswap Factory
      * @return factory The address of the Buttonswap Factory

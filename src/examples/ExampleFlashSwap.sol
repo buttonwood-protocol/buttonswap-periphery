@@ -5,7 +5,7 @@ import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButto
 import {ButtonswapLibrary} from "../libraries/ButtonswapLibrary.sol";
 import "../interfaces/V1/IUniswapV1Factory.sol";
 import "../interfaces/V1/IUniswapV1Exchange.sol";
-import {IButtonwoodRouter} from "../interfaces/IButtonwoodRouter/IButtonwoodRouter.sol";
+import {IButtonswapRouter} from "../interfaces/IButtonswapRouter/IButtonswapRouter.sol";
 import "../interfaces/IERC20.sol";
 import "../interfaces/IWETH.sol";
 
@@ -17,7 +17,7 @@ contract ExampleFlashSwap is IButtonswapCallee {
     constructor(address _factory, address _factoryV1, address router) {
         factoryV1 = IUniswapV1Factory(_factoryV1);
         factory = _factory;
-        WETH = IWETH(IButtonwoodRouter(router).WETH());
+        WETH = IWETH(IButtonswapRouter(router).WETH());
     }
 
     // needs to accept ETH from any V1 exchange and WETH. ideally this could be enforced, as in the router,
