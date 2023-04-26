@@ -446,7 +446,7 @@ contract ButtonswapRouter is IButtonswapRouter {
         if (amounts[amounts.length - 1] < amountOutMin) {
             revert InsufficientOutputAmount();
         }
-        IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
+        IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
 
         TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amounts[0]);
         _swap(amounts, path, to);
@@ -489,7 +489,7 @@ contract ButtonswapRouter is IButtonswapRouter {
         if (amounts[amounts.length - 1] < amountOutMin) {
             revert InsufficientOutputAmount();
         }
-        IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
+        IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
 
         IWETH(WETH).deposit{value: amounts[0]}();
         assert(IWETH(WETH).transfer(address(this), amounts[0]));
@@ -513,7 +513,7 @@ contract ButtonswapRouter is IButtonswapRouter {
         if (amounts[0] > amountInMax) {
             revert ExcessiveInputAmount();
         }
-        IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
+        IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
 
         TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amounts[0]);
         _swap(amounts, path, address(this));
@@ -540,7 +540,7 @@ contract ButtonswapRouter is IButtonswapRouter {
         if (amounts[amounts.length - 1] < amountOutMin) {
             revert InsufficientOutputAmount();
         }
-        IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
+        IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
 
         TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amounts[0]);
         _swap(amounts, path, address(this));
@@ -566,7 +566,7 @@ contract ButtonswapRouter is IButtonswapRouter {
         if (amounts[0] > msg.value) {
             revert ExcessiveInputAmount();
         }
-        IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
+        IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
 
         IWETH(WETH).deposit{value: amounts[0]}();
         assert(IWETH(WETH).transfer(address(this), amounts[0]));

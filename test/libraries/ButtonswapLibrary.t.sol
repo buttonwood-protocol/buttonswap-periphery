@@ -31,11 +31,13 @@ contract ButtonswapLibraryTest is Test {
         }
     }
 
-    // Supporting MockRebasingERC20 tokens too
-    function createAndInitializePair(MockRebasingERC20 tokenA, MockRebasingERC20 tokenB, uint256 poolA, uint256 poolB)
-        private
-        returns (ButtonswapPair pair)
-    {
+    // Same utility function as `createAndInitializePair()` but for supporting MockRebasingERC20 tokens too
+    function createAndInitializePairRebasing(
+        MockRebasingERC20 tokenA,
+        MockRebasingERC20 tokenB,
+        uint256 poolA,
+        uint256 poolB
+    ) private returns (ButtonswapPair pair) {
         pair = ButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
         tokenA.mint(address(this), poolA);
         tokenA.approve(address(pair), poolA);
@@ -217,18 +219,15 @@ contract ButtonswapLibraryTest is Test {
 
         // Create the pair with the factory and two tokens
         // First liquidity mint - determines price-ratios between the assets
-        address pair = address(createAndInitializePair(tokenA, tokenB, amountA, amountB));
-
-        (uint256 poolA, uint256 poolB, uint256 reservoirA, uint256 reservoirB) =
-            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+        address pair = address(createAndInitializePairRebasing(tokenA, tokenB, amountA, amountB));
 
         // Rebasing tokenA
         tokenA.applyMultiplier(numerator, denominator);
         vm.assume((uint256(amountA) * numerator) / denominator < type(uint112).max);
 
         // Call the getReservoirs function to get the reservoirs
-        (poolA, poolB, reservoirA, reservoirB) =
-            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+        (uint256 reservoirA, uint256 reservoirB) =
+            ButtonswapLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
 
         // If the rebase is positive, reservoirA should be non-zero and reservoirB should be zero
         if (numerator > denominator) {
