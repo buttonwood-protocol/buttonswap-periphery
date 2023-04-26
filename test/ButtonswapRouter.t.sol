@@ -42,6 +42,37 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         return vm.sign(userAPrivateKey, permitDigest);
     }
 
+    // Utility function for creating and initializing pairs with poolA:poolB price ratio. Does not use ButtonwoodRouter
+    function createAndInitializePair(MockRebasingERC20 tokenA, MockRebasingERC20 tokenB, uint256 poolA, uint256 poolB) private returns (IButtonswapPair pair, uint256 liquidityOut) {
+        pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
+        tokenA.mint(address(this), poolA);
+        tokenA.approve(address(pair), poolA);
+        tokenB.mint(address(this), poolB);
+        tokenB.approve(address(pair), poolB);
+
+        if (pair.token0() == address(tokenA)) {
+            liquidityOut = pair.mint(poolA, poolB, address(this));
+        } else {
+            liquidityOut = pair.mint(poolB, poolA, address(this));
+        }
+    }
+
+    // Utility function for creating and initializing ETH-pairs with poolToken:poolETH price ratio. Does not use ButtonwoodRouter
+    function createAndInitializePairETH(MockRebasingERC20 token, uint256 poolToken, uint256 poolETH) private returns (IButtonswapPair pair, uint256 liquidityOut) {
+        pair = IButtonswapPair(buttonswapFactory.createPair(address(token), address(weth)));
+        token.mint(address(this), poolToken);
+        token.approve(address(pair), poolToken);
+        vm.deal(address(this), poolETH);
+        weth.deposit{value: poolETH}();
+        weth.approve(address(pair), poolETH);
+
+        if (pair.token0() == address(token)) {
+            liquidityOut = pair.mint(poolToken, poolETH, address(this));
+        } else {
+            liquidityOut = pair.mint(poolETH, poolToken, address(this));
+        }
+    }
+
     // Required function for receiving ETH refunds
     receive() external payable {}
 
@@ -118,12 +149,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(poolB > 10000);
 
         // Creating the pair with poolA:poolB price ratio
-        tokenA.mint(address(this), poolA);
-        tokenB.mint(address(this), poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(address(this));
+        createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // The calculated amount of B needed to match `amountADesired` is less than `amountBDesired`
         // but also being less than `amountBMin` triggers the error
@@ -150,12 +176,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(poolB > 10000);
 
         // Creating the pair with poolA:poolB price ratio
-        tokenA.mint(address(this), poolA);
-        tokenB.mint(address(this), poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(address(this));
+        createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // The calculated amount of B needed to match `amountADesired` needs to be greater than `amountBDesired` to calibrate with `amountADesired`
         vm.assume(amountADesired > 0);
@@ -203,12 +224,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         tokenB.approve(address(buttonswapRouter), amountBDesired);
 
         // Creating the pair with poolA:poolB price ratio
-        tokenA.mint(address(this), poolA);
-        tokenB.mint(address(this), poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(address(this));
+        createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // The matching amount of either token must fit within the bounds
         uint256 matchingAAmount = (uint256(amountBDesired) * poolA) / poolB;
@@ -294,12 +310,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(poolB > 10000);
 
         // Creating the pair with poolA:poolB price ratio. No rebase so no reservoir
-        tokenA.mint(address(this), poolA);
-        tokenB.mint(address(this), poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(address(this));
+        createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         vm.expectRevert(IButtonswapRouterErrors.NoReservoir.selector);
         buttonswapRouter.addLiquidityWithReservoir(
@@ -319,19 +330,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         // Making sure amountBDesired is positive
         vm.assume(amountBDesired > 0);
 
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(address(this), poolA);
-        tokenB.mint(address(this), poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(address(this));
+        // Creating the pair with poolA:poolB price ratio
+        createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Rebasing tokenA 10% up to create a tokenA reservoir
         tokenA.applyMultiplier(11, 10);
-
-        // Syncing the pair to update the pools and reservoir
-        pair.sync();
 
         // Calculating a matching amount of tokenA to amountBDesired and ensuring it's under `amountAMin`
         uint256 matchingAAmount = (uint256(amountBDesired) * poolA) / poolB;
@@ -350,19 +353,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(poolA > 10000);
         vm.assume(poolB > 10000);
 
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(address(this), poolA);
-        tokenB.mint(address(this), poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(address(this));
+        // Creating the pair with poolA:poolB price ratio
+        createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Rebasing tokenA 10% up to create a tokenA reservoir
         tokenA.applyMultiplier(11, 10);
-
-        // Syncing the pair to update the pools and reservoir
-        pair.sync();
 
         // Calculating amountBDesired to be 2x more than the corresponding size of the reservoir
         // TokenA rebased up 10%, so 10% of poolB matches the tokenA reservoir. 20% is poolB / 5.
@@ -397,19 +392,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(amountBDesired < type(uint112).max / poolA);
         vm.assume(1000 * 2 * uint256(amountBDesired) > 2 * uint256(poolB) + reservoirAInTermsOfB);
 
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(address(this), poolA);
-        tokenB.mint(address(this), poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(address(this));
+        // Creating the pair with poolA:poolB price ratio
+        createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Rebasing tokenA positively up to create a tokenA reservoir
         tokenA.applyMultiplier(rebaseNumerator, rebaseDenominator);
-
-        // Syncing the pair to update the pools and reservoir
-        pair.sync();
 
         // Giving approval for amountBDesired tokenB
         tokenB.mint(address(this), amountBDesired);
@@ -432,19 +419,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         // Making sure amountADesired is positive
         vm.assume(amountADesired > 0);
 
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(address(this), poolA);
-        tokenB.mint(address(this), poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(address(this));
+        // Creating the pair with poolA:poolB price ratio
+        createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Rebasing tokenB 10% up to create a tokenA reservoir
         tokenB.applyMultiplier(11, 10);
-
-        // Syncing the pair to update the pools and reservoir
-        pair.sync();
 
         // Calculating a matching amount of tokenB to amountADesired and ensuring it's under `amountBMin`
         uint256 matchingBAmount = (uint256(amountADesired) * poolB) / poolA;
@@ -463,19 +442,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(poolA > 10000);
         vm.assume(poolB > 10000);
 
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(address(this), poolA);
-        tokenB.mint(address(this), poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(address(this));
+        // Creating the pair with poolA:poolB price ratio
+        createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Rebasing tokenB 10% up to create a tokenB reservoir
         tokenB.applyMultiplier(11, 10);
-
-        // Syncing the pair to update the pools and reservoir
-        pair.sync();
 
         // Calculating amountADesired to be 2x more than the corresponding size of the reservoir
         // TokenB rebased up 10%, so 10% of poolA matches the tokenB reservoir. 20% is poolA / 5.
@@ -510,19 +481,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(amountADesired < type(uint112).max / poolB);
         vm.assume(1000 * 2 * uint256(amountADesired) > 2 * uint256(poolA) + reservoirBInTermsOfA);
 
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(address(this), poolA);
-        tokenB.mint(address(this), poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(address(this));
+        // Creating the pair with poolA:poolB price ratio
+        createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Rebasing tokenB positively up to create a tokenB reservoir
         tokenB.applyMultiplier(rebaseNumerator, rebaseDenominator);
-
-        // Syncing the pair to update the pools and reservoir
-        pair.sync();
 
         // Giving approval for amountADesired tokenA
         tokenA.mint(address(this), amountADesired);
@@ -569,13 +532,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(poolETH > 10000);
 
         // Creating the pair with poolToken:poolETH price ratio
-        tokenA.mint(address(this), poolToken);
-        vm.deal(address(this), poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(address(this));
+        createAndInitializePairETH(tokenA, poolToken, poolETH);
 
         // The calculated amount of ETH needed to match `amountTokenDesired` is less than `amountETHSent`
         // but also being less than `amountBMin` triggers the error
@@ -603,13 +560,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(poolETH > 10000);
 
         // Creating the pair with poolToken:poolETH price ratio
-        tokenA.mint(address(this), poolToken);
-        vm.deal(address(this), poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(address(this));
+        createAndInitializePairETH(tokenA, poolToken, poolETH);
 
         // The calculated amount of ETH needed to match `amountTokenDesired` needs to be greater than `amountETHSent` to calibrate with `amountTokenDesired`
         vm.assume(amountTokenDesired > 0);
@@ -658,13 +609,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         tokenB.approve(address(buttonswapRouter), amountETHSent);
 
         // Creating the pair with poolToken:poolETH price ratio
-        tokenA.mint(address(this), poolToken);
-        vm.deal(address(this), poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(address(this));
+        createAndInitializePairETH(tokenA, poolToken, poolETH);
 
         // The matching amount of either token must fit within the bounds
         uint256 matchingTokenAmount = (uint256(amountETHSent) * poolToken) / poolETH;
@@ -704,13 +649,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(poolETH > 10000);
 
         // Creating the pair with poolToken:poolETH price ratio. No rebase so no reservoir
-        tokenA.mint(address(this), poolToken);
-        vm.deal(address(this), poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(address(this));
+        createAndInitializePairETH(tokenA, poolToken, poolETH);
 
         vm.deal(address(this), amountETHSent);
         vm.expectRevert(IButtonswapRouterErrors.NoReservoir.selector);
@@ -731,20 +670,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         // Making sure amountETHSent is positive
         vm.assume(amountETHSent > 0);
 
-        // Creating the pair with poolToken:poolETH price ratio.
-        tokenA.mint(address(this), poolToken);
-        vm.deal(address(this), poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(address(this));
+        // Creating the pair with poolToken:poolETH price ratio
+        createAndInitializePairETH(tokenA, poolToken, poolETH);
 
         // Rebasing tokenA 10% up to create a tokenA reservoir
         tokenA.applyMultiplier(11, 10);
-
-        // Syncing the pair to update the pools and reservoir
-        pair.sync();
 
         // Calculating a matching amount of tokenA to amountETHSent and ensuring it's under `amountTokenMin`
         uint256 matchingTokenAmount = (uint256(amountETHSent) * poolToken) / poolETH;
@@ -765,20 +695,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(poolToken > 10000);
         vm.assume(poolETH > 10000);
 
-        // Creating the pair with poolToken:poolETH price ratio.
-        tokenA.mint(address(this), poolToken);
-        vm.deal(address(this), poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(address(this));
+        // Creating the pair with poolToken:poolETH price ratio
+        createAndInitializePairETH(tokenA, poolToken, poolETH);
 
         // Rebasing tokenA 10% up to create a tokenA reservoir
         tokenA.applyMultiplier(11, 10);
-
-        // Syncing the pair to update the pools and reservoir
-        pair.sync();
 
         // Calculating amountETHSent to be 2x more than the corresponding size of the reservoir
         // TokenA rebased up 10%, so 10% of poolETH matches the tokenA reservoir. 20% is poolETH / 5.
@@ -815,20 +736,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(amountETHSent < type(uint112).max / poolToken);
         vm.assume(10000 * amountETHSent > 2 * uint256(poolETH) + reservoirTokenInTermsOfETH);
 
-        // Creating the pair with poolToken:poolETH price ratio.
-        tokenA.mint(address(this), poolToken);
-        vm.deal(address(this), poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(address(this));
+        // Creating the pair with poolToken:poolETH price ratio
+        createAndInitializePairETH(tokenA, poolToken, poolETH);
 
         // Rebasing tokenA positively up to create a tokenA reservoir
         tokenA.applyMultiplier(rebaseNumerator, rebaseDenominator);
-
-        // Syncing the pair to update the pools and reservoir
-        pair.sync();
 
         vm.deal(address(this), amountETHSent);
         buttonswapRouter.addLiquidityETHWithReservoir{value: amountETHSent}(
@@ -848,20 +760,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         // Making sure amountTokenDesired is positive
         vm.assume(amountTokenDesired > 0);
 
-        // Creating the pair with poolToken:poolETH price ratio.
-        tokenA.mint(address(this), poolToken);
-        vm.deal(address(this), poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(address(this));
+        // Creating the pair with poolToken:poolETH price ratio
+        createAndInitializePairETH(tokenA, poolToken, poolETH);
 
         // Rebasing tokenA down 10% up to create an ETH reservoir (ETH can't rebase)
         tokenA.applyMultiplier(10, 11);
-
-        // Syncing the pair to update the pools and reservoir
-        pair.sync();
 
         // Fetching new pool balances to avoid rounding errors in the test
         // When you rebase down, you lose precision, so we refetch pool balances. Rebasing up doesn't have this problem.
@@ -886,20 +789,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(poolToken > 10000);
         vm.assume(poolETH > 10000);
 
-        // Creating the pair with poolToken:poolETH price ratio.
-        tokenA.mint(address(this), poolToken);
-        vm.deal(address(this), poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(address(this));
+        // Creating the pair with poolToken:poolETH price ratio
+        createAndInitializePairETH(tokenA, poolToken, poolETH);
 
         // Rebasing tokenA 10% down to create an ETH reservoir (ETH can't rebase)
         tokenA.applyMultiplier(10, 11);
-
-        // Syncing the pair to update the pools and reservoir
-        pair.sync();
 
         // Calculating amountTokenDesired to be 2x more than the corresponding size of the reservoir
         // TokenB rebased up 10%, so 10% of poolToken matches the tokenB reservoir. 20% is poolToken / 5.
@@ -937,20 +831,10 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
                 > 2 * uint256(poolToken) * rebaseNumerator / rebaseDenominator + reservoirETHInTermsOfA
         );
 
-        // Creating the pair with poolToken:poolETH price ratio.
-        tokenA.mint(address(this), poolToken);
-        vm.deal(address(this), poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(address(this));
-
+        // Creating the pair with poolToken:poolETH price ratio
+        createAndInitializePairETH(tokenA, poolToken, poolETH);
         // Rebasing tokenA negatively down to create an ETH reservoir (ETH can't rebase)
         tokenA.applyMultiplier(rebaseNumerator, rebaseDenominator);
-
-        // Syncing the pair to update the pools and reservoir
-        pair.sync();
 
         // Giving approval for amountTokenDesired tokenA
         tokenA.mint(address(this), amountTokenDesired);
@@ -976,13 +860,8 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(liquidity < type(uint112).max / poolB);
         vm.assume(liquidity * poolB > pairLiquidity + 1000);
 
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(address(this), poolA);
-        tokenB.mint(address(this), poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(address(this));
+        // Creating the pair with poolA:poolB price ratio
+        (IButtonswapPair pair,) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Calculating amountAMin to be one more than the amount of A that would be removed
         uint256 amountAMin = (liquidity * poolA) / (pairLiquidity + 1000) + 1;
@@ -1012,13 +891,8 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(liquidity < type(uint112).max / poolB);
         vm.assume(liquidity * poolB > pairLiquidity + 1000);
 
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(address(this), poolA);
-        tokenB.mint(address(this), poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(address(this));
+        // Creating the pair with poolA:poolB price ratio
+        (IButtonswapPair pair,) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Calculating amountBMin to be one more than the amount of B that would be removed
         uint256 amountBMin = (liquidity * poolB) / (pairLiquidity + 1000) + 1;
@@ -1063,13 +937,8 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         amountAMin = bound(amountAMin, 0, expectedAmountA);
         amountBMin = bound(amountBMin, 0, expectedAmountB);
 
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(address(this), poolA);
-        tokenB.mint(address(this), poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(address(this));
+        // Creating the pair with poolA:poolB price ratio
+        (IButtonswapPair pair,) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Giving permission to the pair to burn liquidity
         pair.approve(address(buttonswapRouter), liquidity);
@@ -1099,17 +968,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(expectedAmountA > 0);
         vm.assume(expectedAmountA < poolA / 10); // reservoirA = 10% of poolA
 
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(address(this), poolA);
-        tokenB.mint(address(this), poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(address(this));
+        // Creating the pair with poolA:poolB price ratio
+        (IButtonswapPair pair,) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Rebasing tokenA up 10% and creating the tokenA reservoir
         tokenA.applyMultiplier(11, 10);
-        pair.sync();
 
         // Calculating amountAMin to be one more than the amount of A that would be removed
         uint256 amountAMin = expectedAmountA + 1;
@@ -1140,17 +1003,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(expectedAmountB > 0);
         vm.assume(expectedAmountB < poolB / 10); // reservoirB = 10% of poolB
 
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(address(this), poolA);
-        tokenB.mint(address(this), poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(address(this));
+        // Creating the pair with poolA:poolB price ratio
+        (IButtonswapPair pair,) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Rebasing tokenB up 10% and creating the tokenA reservoir
         tokenB.applyMultiplier(11, 10);
-        pair.sync();
 
         // Calculating amountBMin to be one more than the amount of B that would be removed
         uint256 amountBMin = expectedAmountB + 1;
@@ -1186,17 +1043,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(expectedAmountA > 0);
         vm.assume(expectedAmountA < (poolA * positiveRebasePercentage) / 100);
 
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(address(this), poolA);
-        tokenB.mint(address(this), poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(address(this));
+        // Creating the pair with poolA:poolB price ratio
+        (IButtonswapPair pair,) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Rebasing tokenA up `positiveRebasePercentage`% and creating the tokenA reservoir
         tokenA.applyMultiplier(100 + positiveRebasePercentage, 100);
-        pair.sync();
 
         // Giving permission to the pair to burn liquidity
         pair.approve(address(buttonswapRouter), liquidity);
@@ -1232,17 +1083,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(expectedAmountB > 0);
         vm.assume(expectedAmountB < (poolB * positiveRebasePercentage) / 100);
 
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(address(this), poolA);
-        tokenB.mint(address(this), poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(address(this));
+        // Creating the pair with poolA:poolB price ratio
+        (IButtonswapPair pair,) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Rebasing tokenB up `positiveRebasePercentage`% and creating the tokenB reservoir
         tokenB.applyMultiplier(100 + positiveRebasePercentage, 100);
-        pair.sync();
 
         // Giving permission to the pair to burn liquidity
         pair.approve(address(buttonswapRouter), liquidity);
@@ -1275,13 +1120,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(liquidity * poolETH > pairLiquidity + 1000);
 
         // Creating the pair with poolToken:poolETH price ratio.
-        tokenA.mint(address(this), poolToken);
-        vm.deal(address(this), poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(address(this));
+        (IButtonswapPair pair,) = createAndInitializePairETH(tokenA, poolToken, poolETH);
 
         // Calculating amountTokenMin to be one more than the amount of A that would be removed
         uint256 amountTokenMin = (liquidity * poolToken) / (pairLiquidity + 1000) + 1;
@@ -1311,14 +1150,8 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(liquidity < type(uint112).max / poolETH);
         vm.assume(liquidity * poolETH > pairLiquidity + 1000);
 
-        // Creating the pair with poolToken:poolETH price ratio.
-        tokenA.mint(address(this), poolToken);
-        vm.deal(address(this), poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(address(this));
+        // Creating the pair with poolToken:poolETH price ratio
+        (IButtonswapPair pair,) = createAndInitializePairETH(tokenA, poolToken, poolETH);
 
         // Calculating amountETHMin to be one more than the amount of B that would be removed
         uint256 amountETHMin = (liquidity * poolETH) / (pairLiquidity + 1000) + 1;
@@ -1361,14 +1194,8 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         amountTokenMin = bound(amountTokenMin, 0, expectedAmountToken);
         amountETHMin = bound(amountETHMin, 0, expectedAmountETH);
 
-        // Creating the pair with poolToken:poolETH price ratio.
-        tokenA.mint(address(this), poolToken);
-        vm.deal(address(this), poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(address(this));
+        // Creating the pair with poolToken:poolETH price ratio
+        (IButtonswapPair pair,) = createAndInitializePairETH(tokenA, poolToken, poolETH);
 
         // Giving permission to the pair to burn liquidity
         pair.approve(address(buttonswapRouter), liquidity);
@@ -1400,18 +1227,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(expectedAmountToken > 0);
         vm.assume(expectedAmountToken < poolToken / 10); // reservoirA = 10% of poolToken
 
-        // Creating the pair with poolToken:poolETH price ratio.
-        tokenA.mint(address(this), poolToken);
-        vm.deal(address(this), poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(address(this));
+        // Creating the pair with poolToken:poolETH price ratio
+        (IButtonswapPair pair,) = createAndInitializePairETH(tokenA, poolToken, poolETH);
 
         // Rebasing tokenA up 10% and creating the tokenA reservoir
         tokenA.applyMultiplier(11, 10);
-        pair.sync();
 
         // Calculating amountTokenMin to be one more than the amount of A that would be removed
         uint256 amountTokenMin = expectedAmountToken + 1;
@@ -1447,18 +1267,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(expectedAmountETH > 0);
         vm.assume(expectedAmountETH < poolETH / 10); // reservoirB = 10% of poolETH
 
-        // Creating the pair with poolToken:poolETH price ratio.
-        tokenA.mint(address(this), poolToken);
-        vm.deal(address(this), poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(address(this));
+        // Creating the pair with poolToken:poolETH price ratio
+        (IButtonswapPair pair,) = createAndInitializePairETH(tokenA, poolToken, poolETH);
 
         // Rebasing tokenA 10% down to create an ETH reservoir (ETH can't rebase)
         tokenA.applyMultiplier(9, 10);
-        pair.sync();
 
         // Calculating amountETHMin to be two more than the amount of A that would be removed
         // +2 instead of +1 because rebasing down causes additional rounding errors the math
@@ -1495,18 +1308,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(expectedAmountToken > 0);
         vm.assume(expectedAmountToken < (poolToken * positiveRebasePercentage) / 100);
 
-        // Creating the pair with poolToken:poolETH price ratio.
-        tokenA.mint(address(this), poolToken);
-        vm.deal(address(this), poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(address(this));
+        // Creating the pair with poolToken:poolETH price ratio
+        (IButtonswapPair pair,) = createAndInitializePairETH(tokenA, poolToken, poolETH);
 
         // Rebasing tokenA up `positiveRebasePercentage`% and creating the tokenA reservoir
         tokenA.applyMultiplier(100 + positiveRebasePercentage, 100);
-        pair.sync();
 
         // Giving permission to the pair to burn liquidity
         pair.approve(address(buttonswapRouter), liquidity);
@@ -1545,18 +1351,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(expectedAmountETH > 0);
         vm.assume(expectedAmountETH < (poolETH * negativeRebasePercentage) / 100);
 
-        // Creating the pair with poolToken:poolETH price ratio.
-        tokenA.mint(address(this), poolToken);
-        vm.deal(address(this), poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(address(this));
+        // Creating the pair with poolToken:poolETH price ratio
+        (IButtonswapPair pair,) = createAndInitializePairETH(tokenA, poolToken, poolETH);
 
         // Rebasing tokenA down `negativeRebasePercentage`% and creating the ETH reservoir (ETH can't rebase)
         tokenA.applyMultiplier(100 - negativeRebasePercentage, 100);
-        pair.sync();
 
         // Giving permission to the pair to burn liquidity
         pair.approve(address(buttonswapRouter), liquidity);
@@ -1590,16 +1389,10 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(liquidity < type(uint112).max / poolB);
         vm.assume(liquidity * poolB > pairLiquidity + 1000);
 
+        // Creating the pair with poolA:poolB price ratio
+        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
         // Having userA own the liquidity
-        vm.startPrank(userA);
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(userA, poolA);
-        tokenB.mint(userA, poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(userA);
-        vm.stopPrank();
+        pair.transfer(userA, liquidityOut);
 
         // Calculating amountAMin to be one more than the amount of A that would be removed
         uint256 amountAMin = (liquidity * poolA) / (pairLiquidity + 1000) + 1;
@@ -1634,16 +1427,10 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(liquidity < type(uint112).max / poolB);
         vm.assume(liquidity * poolB > pairLiquidity + 1000);
 
+        // Creating the pair with poolA:poolB price ratio
+        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
         // Having userA own the liquidity
-        vm.startPrank(userA);
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(userA, poolA);
-        tokenB.mint(userA, poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(userA);
-        vm.stopPrank();
+        pair.transfer(userA, liquidityOut);
 
         // Calculating amountAMin to be one more than the amount of A that would be removed
         uint256 amountAMin = (liquidity * poolA) / (pairLiquidity + 1000) + 1;
@@ -1678,16 +1465,10 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(liquidity < type(uint112).max / poolB);
         vm.assume(liquidity * poolB > pairLiquidity + 1000);
 
+        // Creating the pair with poolA:poolB price ratio
+        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
         // Having userA own the liquidity
-        vm.startPrank(userA);
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(userA, poolA);
-        tokenB.mint(userA, poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(userA);
-        vm.stopPrank();
+        pair.transfer(userA, liquidityOut);
 
         // Calculating amountBMin to be one more than the amount of B that would be removed
         uint256 amountBMin = (liquidity * poolB) / (pairLiquidity + 1000) + 1;
@@ -1722,16 +1503,10 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(liquidity < type(uint112).max / poolB);
         vm.assume(liquidity * poolB > pairLiquidity + 1000);
 
+        // Creating the pair with poolA:poolB price ratio
+        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
         // Having userA own the liquidity
-        vm.startPrank(userA);
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(userA, poolA);
-        tokenB.mint(userA, poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(userA);
-        vm.stopPrank();
+        pair.transfer(userA, liquidityOut);
 
         // Calculating amountBMin to be one more than the amount of B that would be removed
         uint256 amountBMin = (liquidity * poolB) / (pairLiquidity + 1000) + 1;
@@ -1777,16 +1552,10 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         amountAMin = bound(amountAMin, 0, expectedAmountA);
         amountBMin = bound(amountBMin, 0, expectedAmountB);
 
+        // Creating the pair with poolA:poolB price ratio
+        (IButtonswapPair pair,) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
         // Having userA own the liquidity
-        vm.startPrank(userA);
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(userA, poolA);
-        tokenB.mint(userA, poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(userA);
-        vm.stopPrank();
+        pair.transfer(userA, liquidity);
 
         // Generating the v,r,s signature for userA to allow access to the pair
         (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, type(uint256).max, block.timestamp + 1);
@@ -1841,16 +1610,12 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         amountAMin = bound(amountAMin, 0, expectedAmountA);
         amountBMin = bound(amountBMin, 0, expectedAmountB);
 
+        // Creating the pair with poolA:poolB price ratio
+        IButtonswapPair pair;
+        // Reusing pairLiquidity to store the amount of liquidityOut (to avoid ir-compilation)
+        (pair, pairLiquidity) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
         // Having userA own the liquidity
-        vm.startPrank(userA);
-        // Creating the pair with poolA:poolB price ratio.
-        tokenA.mint(userA, poolA);
-        tokenB.mint(userA, poolB);
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
-        tokenA.transfer(address(pair), poolA);
-        tokenB.transfer(address(pair), poolB);
-        pair.mint(userA);
-        vm.stopPrank();
+        pair.transfer(userA, pairLiquidity);
 
         // Generating the v,r,s signature for userA to allow access to the pair
         (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, liquidity, block.timestamp + 1);
@@ -1895,17 +1660,10 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(liquidity < type(uint112).max / poolETH);
         vm.assume(liquidity * poolETH > pairLiquidity + 1000);
 
+        // Creating the pair with poolToken:poolETH price ratio
+        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePairETH(tokenA, poolToken, poolETH);
         // Having userA own the liquidity
-        vm.startPrank(userA);
-        // Creating the pair with poolToken:poolETH price ratio.
-        tokenA.mint(userA, poolToken);
-        vm.deal(userA, poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(userA);
-        vm.stopPrank();
+        pair.transfer(userA, liquidityOut);
 
         // Calculating amountTokenMin to be one more than the amount of A that would be removed
         uint256 amountTokenMin = (liquidity * poolToken) / (pairLiquidity + 1000) + 1;
@@ -1942,17 +1700,10 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(liquidity < type(uint112).max / poolETH);
         vm.assume(liquidity * poolETH > pairLiquidity + 1000);
 
+        // Creating the pair with poolToken:poolETH price ratio
+        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePairETH(tokenA, poolToken, poolETH);
         // Having userA own the liquidity
-        vm.startPrank(userA);
-        // Creating the pair with poolToken:poolETH price ratio.
-        tokenA.mint(userA, poolToken);
-        vm.deal(userA, poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(userA);
-        vm.stopPrank();
+        pair.transfer(userA, liquidityOut);
 
         // Calculating amountETHMin to be one more than the amount of B that would be removed
         uint256 amountETHMin = (liquidity * poolETH) / (pairLiquidity + 1000) + 1;
@@ -1992,17 +1743,10 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         uint256 expectedAmountToken = (liquidity * poolToken) / (pairLiquidity + 1000);
         uint256 expectedAmountETH = (liquidity * poolETH) / (pairLiquidity + 1000);
 
+        // Creating the pair with poolToken:poolETH price ratio
+        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePairETH(tokenA, poolToken, poolETH);
         // Having userA own the liquidity
-        vm.startPrank(userA);
-        // Creating the pair with poolToken:poolETH price ratio.
-        tokenA.mint(userA, poolToken);
-        vm.deal(userA, poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(userA);
-        vm.stopPrank();
+        pair.transfer(userA, liquidityOut);
 
         // Generating the v,r,s signature for userA to allow access to the pair
         (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, type(uint256).max, block.timestamp + 1);
@@ -2040,17 +1784,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         uint256 expectedAmountToken = (liquidity * poolToken) / (pairLiquidity + 1000);
         uint256 expectedAmountETH = (liquidity * poolETH) / (pairLiquidity + 1000);
 
+        // Creating the pair with poolToken:poolETH price ratio
+        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePairETH(tokenA, poolToken, poolETH);
         // Having userA own the liquidity
-        vm.startPrank(userA);
-        // Creating the pair with poolToken:poolETH price ratio.
-        tokenA.mint(userA, poolToken);
-        vm.deal(userA, poolETH);
-        weth.deposit{value: poolETH}();
-        IButtonswapPair pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(weth)));
-        tokenA.transfer(address(pair), poolToken);
-        weth.transfer(address(pair), poolETH);
-        pair.mint(userA);
-        vm.stopPrank();
+        pair.transfer(userA, liquidityOut);
+
 
         // Generating the v,r,s signature for userA to allow access to the pair
         (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, liquidity, block.timestamp + 1);
@@ -2096,12 +1834,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and populating the pools
         for (uint256 idx; idx < path.length - 1; idx++) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx + 1]);
-            MockRebasingERC20(path[idx]).mint(address(this), 10000);
-            MockRebasingERC20(path[idx]).transfer(pair, 10000);
-            MockRebasingERC20(path[idx + 1]).mint(address(this), poolOutAmounts[idx + 1]);
-            MockRebasingERC20(path[idx + 1]).transfer(pair, poolOutAmounts[idx + 1]);
-            IButtonswapPair(pair).mint(address(this));
+            createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]);
         }
 
         uint256[] memory amounts = ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
@@ -2145,12 +1878,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and populating the pools
         for (uint256 idx; idx < path.length - 1; idx++) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx + 1]);
-            MockRebasingERC20(path[idx]).mint(address(this), 10000);
-            MockRebasingERC20(path[idx]).transfer(pair, 10000);
-            MockRebasingERC20(path[idx + 1]).mint(address(this), poolOutAmounts[idx + 1]);
-            MockRebasingERC20(path[idx + 1]).transfer(pair, poolOutAmounts[idx + 1]);
-            IButtonswapPair(pair).mint(address(this));
+            createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]);
         }
 
         uint256[] memory expectedAmounts = ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
@@ -2207,12 +1935,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and calculate expected amounts
         for (uint256 idx = path.length - 1; idx > 0; idx--) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx - 1]);
-            MockRebasingERC20(path[idx]).mint(address(this), poolOutAmounts[idx]);
-            MockRebasingERC20(path[idx]).transfer(pair, poolOutAmounts[idx]);
-            MockRebasingERC20(path[idx - 1]).mint(address(this), 10000);
-            MockRebasingERC20(path[idx - 1]).transfer(pair, 10000);
-            IButtonswapPair(pair).mint(address(this));
+            createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000);
         }
 
         uint256[] memory amounts = ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
@@ -2256,12 +1979,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and calculate expected amounts
         for (uint256 idx = path.length - 1; idx > 0; idx--) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx - 1]);
-            MockRebasingERC20(path[idx]).mint(address(this), poolOutAmounts[idx]);
-            MockRebasingERC20(path[idx]).transfer(pair, poolOutAmounts[idx]);
-            MockRebasingERC20(path[idx - 1]).mint(address(this), 10000);
-            MockRebasingERC20(path[idx - 1]).transfer(pair, 10000);
-            IButtonswapPair(pair).mint(address(this));
+            createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000);
         }
 
         uint256[] memory expectedAmounts = ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
@@ -2326,12 +2044,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and populating the pools
         for (uint256 idx; idx < path.length - 1; idx++) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx + 1]);
-            MockRebasingERC20(path[idx]).mint(address(this), 10000);
-            MockRebasingERC20(path[idx]).transfer(pair, 10000);
-            MockRebasingERC20(path[idx + 1]).mint(address(this), poolOutAmounts[idx + 1]);
-            MockRebasingERC20(path[idx + 1]).transfer(pair, poolOutAmounts[idx + 1]);
-            IButtonswapPair(pair).mint(address(this));
+            createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]);
         }
 
         // Expecting to revert with `InvalidPath()` error
@@ -2374,19 +2087,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and populating the pools
         for (uint256 idx; idx < path.length - 1; idx++) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx + 1]);
             if (idx == 0) {
-                // First token is WETH
-                vm.deal(address(this), 10000);
-                weth.deposit{value: 10000}();
-                weth.transfer(pair, 10000);
+                createAndInitializePairETH(MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]);
             } else {
-                MockRebasingERC20(path[idx]).mint(address(this), 10000);
-                MockRebasingERC20(path[idx]).transfer(pair, 10000);
+                createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx]);
             }
-            MockRebasingERC20(path[idx + 1]).mint(address(this), poolOutAmounts[idx + 1]);
-            MockRebasingERC20(path[idx + 1]).transfer(pair, poolOutAmounts[idx + 1]);
-            IButtonswapPair(pair).mint(address(this));
         }
 
         uint256[] memory amounts = ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountETHSent, path);
@@ -2434,19 +2139,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and populating the pools
         for (uint256 idx; idx < path.length - 1; idx++) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx + 1]);
             if (idx == 0) {
-                // First token is WETH
-                vm.deal(address(this), 10000);
-                weth.deposit{value: 10000}();
-                weth.transfer(pair, 10000);
+                createAndInitializePairETH(MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]);
             } else {
-                MockRebasingERC20(path[idx]).mint(address(this), 10000);
-                MockRebasingERC20(path[idx]).transfer(pair, 10000);
+                createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx]);
             }
-            MockRebasingERC20(path[idx + 1]).mint(address(this), poolOutAmounts[idx + 1]);
-            MockRebasingERC20(path[idx + 1]).transfer(pair, poolOutAmounts[idx + 1]);
-            IButtonswapPair(pair).mint(address(this));
         }
 
         uint256[] memory expectedAmounts =
@@ -2503,12 +2200,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and calculate expected amounts
         for (uint256 idx = path.length - 1; idx > 0; idx--) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx - 1]);
-            MockRebasingERC20(path[idx]).mint(address(this), poolOutAmounts[idx]);
-            MockRebasingERC20(path[idx]).transfer(pair, poolOutAmounts[idx]);
-            MockRebasingERC20(path[idx - 1]).mint(address(this), 10000);
-            MockRebasingERC20(path[idx - 1]).transfer(pair, 10000);
-            IButtonswapPair(pair).mint(address(this));
+            createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000);
         }
 
         // Expecting to revert with `InvalidPath()` error
@@ -2548,19 +2240,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and calculate expected amounts
         for (uint256 idx = path.length - 1; idx > 0; idx--) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx - 1]);
             if (idx == path.length - 1) {
-                // Last token is WETH so needs to be handled differently
-                vm.deal(address(this), poolOutAmounts[idx]);
-                weth.deposit{value: poolOutAmounts[idx]}();
-                weth.transfer(pair, poolOutAmounts[idx]);
+                createAndInitializePairETH(MockRebasingERC20(path[idx - 1]), 10000, poolOutAmounts[idx]);
             } else {
-                MockRebasingERC20(path[idx]).mint(address(this), poolOutAmounts[idx]);
-                MockRebasingERC20(path[idx]).transfer(pair, poolOutAmounts[idx]);
+                createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000);
             }
-            MockRebasingERC20(path[idx - 1]).mint(address(this), 10000);
-            MockRebasingERC20(path[idx - 1]).transfer(pair, 10000);
-            IButtonswapPair(pair).mint(address(this));
         }
 
         uint256[] memory amounts = ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
@@ -2605,19 +2289,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and calculate expected amounts
         for (uint256 idx = path.length - 1; idx > 0; idx--) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx - 1]);
             if (idx == path.length - 1) {
-                // Last token is WETH so needs to be handled differently
-                vm.deal(address(this), poolOutAmounts[idx]);
-                weth.deposit{value: poolOutAmounts[idx]}();
-                weth.transfer(pair, poolOutAmounts[idx]);
+                createAndInitializePairETH(MockRebasingERC20(path[idx - 1]), 10000, poolOutAmounts[idx]);
             } else {
-                MockRebasingERC20(path[idx]).mint(address(this), poolOutAmounts[idx]);
-                MockRebasingERC20(path[idx]).transfer(pair, poolOutAmounts[idx]);
+                createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000);
             }
-            MockRebasingERC20(path[idx - 1]).mint(address(this), 10000);
-            MockRebasingERC20(path[idx - 1]).transfer(pair, 10000);
-            IButtonswapPair(pair).mint(address(this));
         }
 
         uint256[] memory expectedAmounts = ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
@@ -2677,12 +2353,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and populating the pools
         for (uint256 idx; idx < path.length - 1; idx++) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx + 1]);
-            MockRebasingERC20(path[idx]).mint(address(this), 10000);
-            MockRebasingERC20(path[idx]).transfer(pair, 10000);
-            MockRebasingERC20(path[idx + 1]).mint(address(this), poolOutAmounts[idx + 1]);
-            MockRebasingERC20(path[idx + 1]).transfer(pair, poolOutAmounts[idx + 1]);
-            IButtonswapPair(pair).mint(address(this));
+            createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]);
         }
 
         // Expecting to revert with `InvalidPath()` error
@@ -2722,19 +2393,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and populating the pools
         for (uint256 idx; idx < path.length - 1; idx++) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx + 1]);
-            MockRebasingERC20(path[idx]).mint(address(this), 10000);
-            MockRebasingERC20(path[idx]).transfer(pair, 10000);
             if (idx == path.length - 2) {
-                // The last token is WETH, so needs to be minted differently
-                vm.deal(address(this), poolOutAmounts[idx + 1]);
-                weth.deposit{value: poolOutAmounts[idx + 1]}();
-                weth.transfer(pair, poolOutAmounts[idx + 1]);
+                createAndInitializePairETH(MockRebasingERC20(path[idx]), 10000, poolOutAmounts[idx + 1]);
             } else {
-                MockRebasingERC20(path[idx + 1]).mint(address(this), poolOutAmounts[idx + 1]);
-                MockRebasingERC20(path[idx + 1]).transfer(pair, poolOutAmounts[idx + 1]);
+                createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]);
             }
-            IButtonswapPair(pair).mint(address(this));
         }
 
         uint256[] memory amounts = ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
@@ -2779,19 +2442,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and populating the pools
         for (uint256 idx; idx < path.length - 1; idx++) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx + 1]);
-            MockRebasingERC20(path[idx]).mint(address(this), 10000);
-            MockRebasingERC20(path[idx]).transfer(pair, 10000);
             if (idx == path.length - 2) {
-                // The last token is WETH, so needs to be minted differently
-                vm.deal(address(this), poolOutAmounts[idx + 1]);
-                weth.deposit{value: poolOutAmounts[idx + 1]}();
-                weth.transfer(pair, poolOutAmounts[idx + 1]);
+                createAndInitializePairETH(MockRebasingERC20(path[idx]), 10000, poolOutAmounts[idx + 1]);
             } else {
-                MockRebasingERC20(path[idx + 1]).mint(address(this), poolOutAmounts[idx + 1]);
-                MockRebasingERC20(path[idx + 1]).transfer(pair, poolOutAmounts[idx + 1]);
+                createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]);
             }
-            IButtonswapPair(pair).mint(address(this));
         }
 
         uint256[] memory expectedAmounts = ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
@@ -2844,12 +2499,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and calculate expected amounts
         for (uint256 idx = path.length - 1; idx > 0; idx--) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx - 1]);
-            MockRebasingERC20(path[idx]).mint(address(this), poolOutAmounts[idx]);
-            MockRebasingERC20(path[idx]).transfer(pair, poolOutAmounts[idx]);
-            MockRebasingERC20(path[idx - 1]).mint(address(this), 10000);
-            MockRebasingERC20(path[idx - 1]).transfer(pair, 10000);
-            IButtonswapPair(pair).mint(address(this));
+            createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000);
         }
 
         // Expecting to revert with `InvalidPath()` error
@@ -2890,19 +2540,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and calculate expected amounts
         for (uint256 idx = path.length - 1; idx > 0; idx--) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx - 1]);
-            MockRebasingERC20(path[idx]).mint(address(this), poolOutAmounts[idx]);
-            MockRebasingERC20(path[idx]).transfer(pair, poolOutAmounts[idx]);
             if (idx == 1) {
-                // First token is WETH, so needs to be minted differently
-                vm.deal(address(this), 10000);
-                weth.deposit{value: 10000}();
-                weth.transfer(pair, 10000);
+                createAndInitializePairETH(MockRebasingERC20(path[idx]), poolOutAmounts[idx], 10000);
             } else {
-                MockRebasingERC20(path[idx - 1]).mint(address(this), 10000);
-                MockRebasingERC20(path[idx - 1]).transfer(pair, 10000);
+                createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000);
             }
-            IButtonswapPair(pair).mint(address(this));
         }
 
         uint256[] memory amounts = ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
@@ -2947,19 +2589,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and calculate expected amounts
         for (uint256 idx = path.length - 1; idx > 0; idx--) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx - 1]);
-            MockRebasingERC20(path[idx]).mint(address(this), poolOutAmounts[idx]);
-            MockRebasingERC20(path[idx]).transfer(pair, poolOutAmounts[idx]);
             if (idx == 1) {
-                // First token is WETH, so needs to be minted differently
-                vm.deal(address(this), 10000);
-                weth.deposit{value: 10000}();
-                weth.transfer(pair, 10000);
+                createAndInitializePairETH(MockRebasingERC20(path[idx]), poolOutAmounts[idx], 10000);
             } else {
-                MockRebasingERC20(path[idx - 1]).mint(address(this), 10000);
-                MockRebasingERC20(path[idx - 1]).transfer(pair, 10000);
+                createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000);
             }
-            IButtonswapPair(pair).mint(address(this));
         }
 
         uint256[] memory expectedAmounts = ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);

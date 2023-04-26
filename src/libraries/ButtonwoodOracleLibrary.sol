@@ -23,7 +23,7 @@ library ButtonwoodOracleLibrary {
         price1Cumulative = IButtonswapPair(pair).price1CumulativeLast();
 
         // if time has elapsed since the last update on the pair, mock the accumulated price values
-        (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast) = IButtonswapPair(pair).getPools();
+        (uint112 pool0, uint112 pool1,,, uint32 blockTimestampLast) = IButtonswapPair(pair).getLiquidityBalances();
         if (blockTimestampLast != blockTimestamp) {
             // subtraction overflow is desired
             uint32 timeElapsed;
@@ -33,9 +33,9 @@ library ButtonwoodOracleLibrary {
             // addition overflow is desired
             unchecked {
                 // counterfactual
-                price0Cumulative += uint256(UQ112x112.encode(reserve1).uqdiv(reserve0)) * timeElapsed;
+                price0Cumulative += uint256(UQ112x112.encode(pool1).uqdiv(pool0)) * timeElapsed;
                 // counterfactual
-                price1Cumulative += uint256(UQ112x112.encode(reserve0).uqdiv(reserve1)) * timeElapsed;
+                price1Cumulative += uint256(UQ112x112.encode(pool0).uqdiv(pool1)) * timeElapsed;
             }
         }
     }
