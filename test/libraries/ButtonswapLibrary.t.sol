@@ -14,7 +14,10 @@ contract ButtonswapLibraryTest is Test {
     ButtonswapFactory public buttonswapFactory;
 
     // Utility function for creating and initializing pairs with poolA:poolB price ratio. Does not use ButtonwoodRouter
-    function createAndInitializePair(MockERC20 tokenA, MockERC20 tokenB, uint256 poolA, uint256 poolB) private returns (ButtonswapPair pair) {
+    function createAndInitializePair(MockERC20 tokenA, MockERC20 tokenB, uint256 poolA, uint256 poolB)
+        private
+        returns (ButtonswapPair pair)
+    {
         pair = ButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
         tokenA.mint(address(this), poolA);
         tokenA.approve(address(pair), poolA);
@@ -29,7 +32,10 @@ contract ButtonswapLibraryTest is Test {
     }
 
     // Supporting MockRebasingERC20 tokens too
-    function createAndInitializePair(MockRebasingERC20 tokenA, MockRebasingERC20 tokenB, uint256 poolA, uint256 poolB) private returns (ButtonswapPair pair) {
+    function createAndInitializePair(MockRebasingERC20 tokenA, MockRebasingERC20 tokenB, uint256 poolA, uint256 poolB)
+        private
+        returns (ButtonswapPair pair)
+    {
         pair = ButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
         tokenA.mint(address(this), poolA);
         tokenA.approve(address(pair), poolA);
@@ -214,7 +220,7 @@ contract ButtonswapLibraryTest is Test {
         address pair = address(createAndInitializePair(tokenA, tokenB, amountA, amountB));
 
         (uint256 poolA, uint256 poolB, uint256 reservoirA, uint256 reservoirB) =
-        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
 
         // Rebasing tokenA
         tokenA.applyMultiplier(numerator, denominator);

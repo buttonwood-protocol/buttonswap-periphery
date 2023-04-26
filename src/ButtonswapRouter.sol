@@ -84,7 +84,8 @@ contract ButtonswapRouter is IButtonswapRouter {
         if (IButtonswapFactory(factory).getPair(tokenA, tokenB) == address(0)) {
             revert NoReservoir();
         }
-        (uint256 poolA, uint256 poolB, uint256 reservoirA, uint256 reservoirB) = ButtonswapLibrary.getLiquidityBalances(factory, tokenA, tokenB);
+        (uint256 poolA, uint256 poolB, uint256 reservoirA, uint256 reservoirB) =
+            ButtonswapLibrary.getLiquidityBalances(factory, tokenA, tokenB);
         // the first liquidity addition should happen through _addLiquidity
         // can't initialize by matching with a reservoir
         if (poolA == 0 || poolB == 0) {
@@ -199,9 +200,10 @@ contract ButtonswapRouter is IButtonswapRouter {
         IWETH(WETH).deposit{value: amountETH}();
         TransferHelper.safeApprove(WETH, pair, amountETH);
 
-        (address token0, ) = ButtonswapLibrary.sortTokens(token, WETH);
-        liquidity = (token == token0) ? IButtonswapPair(pair).mint(amountToken, amountETH,to)
-        : IButtonswapPair(pair).mint(amountETH, amountToken, to);
+        (address token0,) = ButtonswapLibrary.sortTokens(token, WETH);
+        liquidity = (token == token0)
+            ? IButtonswapPair(pair).mint(amountToken, amountETH, to)
+            : IButtonswapPair(pair).mint(amountETH, amountToken, to);
 
         // refund dust eth, if any
         if (msg.value > amountETH) {
@@ -283,7 +285,7 @@ contract ButtonswapRouter is IButtonswapRouter {
     ) public virtual override ensure(deadline) returns (uint256 amountA, uint256 amountB) {
         address pair = ButtonswapLibrary.pairFor(factory, tokenA, tokenB);
         IButtonswapPair(pair).transferFrom(msg.sender, address(this), liquidity); // send liquidity to router
-        (uint256 amount0, uint256 amount1) = IButtonswapPair(pair).burnFromReservoir(liquidity,to);
+        (uint256 amount0, uint256 amount1) = IButtonswapPair(pair).burnFromReservoir(liquidity, to);
         (address token0,) = ButtonswapLibrary.sortTokens(tokenA, tokenB);
         (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
         if (amountA < amountAMin) {
@@ -374,40 +376,40 @@ contract ButtonswapRouter is IButtonswapRouter {
     }
 
     //ToDo: Add back in later
-//    // **** REMOVE LIQUIDITY (supporting fee-on-transfer tokens) ****
-//    function removeLiquidityETHSupportingFeeOnTransferTokens(
-//        address token,
-//        uint256 liquidity,
-//        uint256 amountTokenMin,
-//        uint256 amountETHMin,
-//        address to,
-//        uint256 deadline
-//    ) public virtual override ensure(deadline) returns (uint256 amountETH) {
-//        (, amountETH) = removeLiquidity(token, WETH, liquidity, amountTokenMin, amountETHMin, address(this), deadline);
-//        TransferHelper.safeTransfer(token, to, IERC20(token).balanceOf(address(this)));
-//        IWETH(WETH).withdraw(amountETH);
-//        TransferHelper.safeTransferETH(to, amountETH);
-//    }
-//
-//    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
-//        address token,
-//        uint256 liquidity,
-//        uint256 amountTokenMin,
-//        uint256 amountETHMin,
-//        address to,
-//        uint256 deadline,
-//        bool approveMax,
-//        uint8 v,
-//        bytes32 r,
-//        bytes32 s
-//    ) external virtual override returns (uint256 amountETH) {
-//        address pair = ButtonswapLibrary.pairFor(factory, token, WETH);
-//        uint256 value = approveMax ? type(uint256).max : liquidity;
-//        IButtonswapPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
-//        amountETH = removeLiquidityETHSupportingFeeOnTransferTokens(
-//            token, liquidity, amountTokenMin, amountETHMin, to, deadline
-//        );
-//    }
+    //    // **** REMOVE LIQUIDITY (supporting fee-on-transfer tokens) ****
+    //    function removeLiquidityETHSupportingFeeOnTransferTokens(
+    //        address token,
+    //        uint256 liquidity,
+    //        uint256 amountTokenMin,
+    //        uint256 amountETHMin,
+    //        address to,
+    //        uint256 deadline
+    //    ) public virtual override ensure(deadline) returns (uint256 amountETH) {
+    //        (, amountETH) = removeLiquidity(token, WETH, liquidity, amountTokenMin, amountETHMin, address(this), deadline);
+    //        TransferHelper.safeTransfer(token, to, IERC20(token).balanceOf(address(this)));
+    //        IWETH(WETH).withdraw(amountETH);
+    //        TransferHelper.safeTransferETH(to, amountETH);
+    //    }
+    //
+    //    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
+    //        address token,
+    //        uint256 liquidity,
+    //        uint256 amountTokenMin,
+    //        uint256 amountETHMin,
+    //        address to,
+    //        uint256 deadline,
+    //        bool approveMax,
+    //        uint8 v,
+    //        bytes32 r,
+    //        bytes32 s
+    //    ) external virtual override returns (uint256 amountETH) {
+    //        address pair = ButtonswapLibrary.pairFor(factory, token, WETH);
+    //        uint256 value = approveMax ? type(uint256).max : liquidity;
+    //        IButtonswapPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
+    //        amountETH = removeLiquidityETHSupportingFeeOnTransferTokens(
+    //            token, liquidity, amountTokenMin, amountETHMin, to, deadline
+    //        );
+    //    }
 
     // **** SWAP ****
     /**
@@ -419,8 +421,7 @@ contract ButtonswapRouter is IButtonswapRouter {
             (address token0,) = ButtonswapLibrary.sortTokens(input, output);
             uint256 amountIn = amounts[i];
             uint256 amountOut = amounts[i + 1];
-            (uint256 amount0In, uint256 amount1In) =
-            input == token0 ? (amountIn,uint256(0)) : (uint256(0),amountIn);
+            (uint256 amount0In, uint256 amount1In) = input == token0 ? (amountIn, uint256(0)) : (uint256(0), amountIn);
             (uint256 amount0Out, uint256 amount1Out) =
                 input == token0 ? (uint256(0), amountOut) : (amountOut, uint256(0));
 
@@ -465,7 +466,7 @@ contract ButtonswapRouter is IButtonswapRouter {
         if (amounts[0] > amountInMax) {
             revert ExcessiveInputAmount();
         }
-//        IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
+        //        IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
         TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amounts[0]);
         _swap(amounts, path, to);
     }
@@ -580,97 +581,97 @@ contract ButtonswapRouter is IButtonswapRouter {
         view
         returns (uint256 poolInput, uint256 poolOutput, uint256 reservoirInput)
     {
-        (uint256 pool0, uint256 pool1,uint256 reservoir0, uint256 reservoir1,) = pair.getLiquidityBalances();
+        (uint256 pool0, uint256 pool1, uint256 reservoir0, uint256 reservoir1,) = pair.getLiquidityBalances();
         return inputIsFirst ? (pool0, pool1, reservoir0) : (pool1, pool0, reservoir1);
     }
 
     // ToDo: Put this back in after fixing all the other bugs. This requires IR :/
-//    // **** SWAP (supporting fee-on-transfer tokens) ****
-//    // requires the initial amount to have already been sent to the first pair
-//    function _swapSupportingFeeOnTransferTokens(address[] memory path, address _to) internal virtual {
-//        for (uint256 i; i < path.length - 1; i++) {
-//            (address input, address output) = (path[i], path[i + 1]);
-//            (address token0,) = ButtonswapLibrary.sortTokens(input, output);
-//            IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, input, output));
-//
-//            uint256 amountInput;
-//            uint256 amountOutput;
-//            {
-//                // scope to avoid stack too deep errors
-//                (uint256 poolInput, uint256 poolOutput, uint256 reservoirInput) =
-//                    _getSortedPoolsAndReservoirs(pair, input == token0);
-//
-//                amountInput = IERC20(input).balanceOf(address(pair)) - poolInput - reservoirInput;
-//                amountOutput = ButtonswapLibrary.getAmountOut(amountInput, poolInput, poolOutput);
-//            }
-//            (uint256 amount0In, uint256 amount1In) =
-//            input == token0 ? (amountInput, uint256(0)) : (uint256(0), amountInput);
-//
-//            (uint256 amount0Out, uint256 amount1Out) =
-//                input == token0 ? (uint256(0), amountOutput) : (amountOutput, uint256(0));
-//            address to = i < path.length - 2 ? ButtonswapLibrary.pairFor(factory, output, path[i + 2]) : _to;
-//            pair.swap(amount0In, amount1In, amount0Out, amount1Out, to, new bytes(0));
-//        }
-//    }
-//
-//    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
-//        uint256 amountIn,
-//        uint256 amountOutMin,
-//        address[] calldata path,
-//        address to,
-//        uint256 deadline
-//    ) external virtual override ensure(deadline) {
-//        IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
-//        TransferHelper.safeTransferFrom(path[0], msg.sender, address(pair), amountIn);
-//        uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
-//        _swapSupportingFeeOnTransferTokens(path, to);
-//        if (IERC20(path[path.length - 1]).balanceOf(to) - balanceBefore < amountOutMin) {
-//            revert InsufficientOutputAmount();
-//        }
-//    }
-//
-//    function swapExactETHForTokensSupportingFeeOnTransferTokens(
-//        uint256 amountOutMin,
-//        address[] calldata path,
-//        address to,
-//        uint256 deadline
-//    ) external payable virtual override ensure(deadline) {
-//        if (path[0] != WETH) {
-//            revert InvalidPath();
-//        }
-//        uint256 amountIn = msg.value;
-//        IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
-//
-//        IWETH(WETH).deposit{value: amountIn}();
-//        assert(IWETH(WETH).transfer(address(pair), amountIn));
-//        uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
-//        _swapSupportingFeeOnTransferTokens(path, to);
-//        if (IERC20(path[path.length - 1]).balanceOf(to) - balanceBefore < amountOutMin) {
-//            revert InsufficientOutputAmount();
-//        }
-//    }
-//
-//    function swapExactTokensForETHSupportingFeeOnTransferTokens(
-//        uint256 amountIn,
-//        uint256 amountOutMin,
-//        address[] calldata path,
-//        address to,
-//        uint256 deadline
-//    ) external virtual override ensure(deadline) {
-//        if (path[path.length - 1] != WETH) {
-//            revert InvalidPath();
-//        }
-//        IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
-//
-//        TransferHelper.safeTransferFrom(path[0], msg.sender, address(pair), amountIn);
-//        _swapSupportingFeeOnTransferTokens(path, address(this));
-//        uint256 amountOut = IERC20(WETH).balanceOf(address(this));
-//        if (amountOut < amountOutMin) {
-//            revert InsufficientOutputAmount();
-//        }
-//        IWETH(WETH).withdraw(amountOut);
-//        TransferHelper.safeTransferETH(to, amountOut);
-//    }
+    //    // **** SWAP (supporting fee-on-transfer tokens) ****
+    //    // requires the initial amount to have already been sent to the first pair
+    //    function _swapSupportingFeeOnTransferTokens(address[] memory path, address _to) internal virtual {
+    //        for (uint256 i; i < path.length - 1; i++) {
+    //            (address input, address output) = (path[i], path[i + 1]);
+    //            (address token0,) = ButtonswapLibrary.sortTokens(input, output);
+    //            IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, input, output));
+    //
+    //            uint256 amountInput;
+    //            uint256 amountOutput;
+    //            {
+    //                // scope to avoid stack too deep errors
+    //                (uint256 poolInput, uint256 poolOutput, uint256 reservoirInput) =
+    //                    _getSortedPoolsAndReservoirs(pair, input == token0);
+    //
+    //                amountInput = IERC20(input).balanceOf(address(pair)) - poolInput - reservoirInput;
+    //                amountOutput = ButtonswapLibrary.getAmountOut(amountInput, poolInput, poolOutput);
+    //            }
+    //            (uint256 amount0In, uint256 amount1In) =
+    //            input == token0 ? (amountInput, uint256(0)) : (uint256(0), amountInput);
+    //
+    //            (uint256 amount0Out, uint256 amount1Out) =
+    //                input == token0 ? (uint256(0), amountOutput) : (amountOutput, uint256(0));
+    //            address to = i < path.length - 2 ? ButtonswapLibrary.pairFor(factory, output, path[i + 2]) : _to;
+    //            pair.swap(amount0In, amount1In, amount0Out, amount1Out, to, new bytes(0));
+    //        }
+    //    }
+    //
+    //    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
+    //        uint256 amountIn,
+    //        uint256 amountOutMin,
+    //        address[] calldata path,
+    //        address to,
+    //        uint256 deadline
+    //    ) external virtual override ensure(deadline) {
+    //        IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
+    //        TransferHelper.safeTransferFrom(path[0], msg.sender, address(pair), amountIn);
+    //        uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
+    //        _swapSupportingFeeOnTransferTokens(path, to);
+    //        if (IERC20(path[path.length - 1]).balanceOf(to) - balanceBefore < amountOutMin) {
+    //            revert InsufficientOutputAmount();
+    //        }
+    //    }
+    //
+    //    function swapExactETHForTokensSupportingFeeOnTransferTokens(
+    //        uint256 amountOutMin,
+    //        address[] calldata path,
+    //        address to,
+    //        uint256 deadline
+    //    ) external payable virtual override ensure(deadline) {
+    //        if (path[0] != WETH) {
+    //            revert InvalidPath();
+    //        }
+    //        uint256 amountIn = msg.value;
+    //        IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
+    //
+    //        IWETH(WETH).deposit{value: amountIn}();
+    //        assert(IWETH(WETH).transfer(address(pair), amountIn));
+    //        uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
+    //        _swapSupportingFeeOnTransferTokens(path, to);
+    //        if (IERC20(path[path.length - 1]).balanceOf(to) - balanceBefore < amountOutMin) {
+    //            revert InsufficientOutputAmount();
+    //        }
+    //    }
+    //
+    //    function swapExactTokensForETHSupportingFeeOnTransferTokens(
+    //        uint256 amountIn,
+    //        uint256 amountOutMin,
+    //        address[] calldata path,
+    //        address to,
+    //        uint256 deadline
+    //    ) external virtual override ensure(deadline) {
+    //        if (path[path.length - 1] != WETH) {
+    //            revert InvalidPath();
+    //        }
+    //        IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
+    //
+    //        TransferHelper.safeTransferFrom(path[0], msg.sender, address(pair), amountIn);
+    //        _swapSupportingFeeOnTransferTokens(path, address(this));
+    //        uint256 amountOut = IERC20(WETH).balanceOf(address(this));
+    //        if (amountOut < amountOutMin) {
+    //            revert InsufficientOutputAmount();
+    //        }
+    //        IWETH(WETH).withdraw(amountOut);
+    //        TransferHelper.safeTransferETH(to, amountOut);
+    //    }
 
     // **** LIBRARY FUNCTIONS ****
 

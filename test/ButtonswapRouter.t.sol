@@ -43,7 +43,10 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
     }
 
     // Utility function for creating and initializing pairs with poolA:poolB price ratio. Does not use ButtonwoodRouter
-    function createAndInitializePair(MockRebasingERC20 tokenA, MockRebasingERC20 tokenB, uint256 poolA, uint256 poolB) private returns (IButtonswapPair pair, uint256 liquidityOut) {
+    function createAndInitializePair(MockRebasingERC20 tokenA, MockRebasingERC20 tokenB, uint256 poolA, uint256 poolB)
+        private
+        returns (IButtonswapPair pair, uint256 liquidityOut)
+    {
         pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
         tokenA.mint(address(this), poolA);
         tokenA.approve(address(pair), poolA);
@@ -58,7 +61,10 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
     }
 
     // Utility function for creating and initializing ETH-pairs with poolToken:poolETH price ratio. Does not use ButtonwoodRouter
-    function createAndInitializePairETH(MockRebasingERC20 token, uint256 poolToken, uint256 poolETH) private returns (IButtonswapPair pair, uint256 liquidityOut) {
+    function createAndInitializePairETH(MockRebasingERC20 token, uint256 poolToken, uint256 poolETH)
+        private
+        returns (IButtonswapPair pair, uint256 liquidityOut)
+    {
         pair = IButtonswapPair(buttonswapFactory.createPair(address(token), address(weth)));
         token.mint(address(this), poolToken);
         token.approve(address(pair), poolToken);
@@ -1789,7 +1795,6 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         // Having userA own the liquidity
         pair.transfer(userA, liquidityOut);
 
-
         // Generating the v,r,s signature for userA to allow access to the pair
         (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, liquidity, block.timestamp + 1);
 
@@ -1834,7 +1839,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and populating the pools
         for (uint256 idx; idx < path.length - 1; idx++) {
-            createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]);
+            createAndInitializePair(
+                MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]
+            );
         }
 
         uint256[] memory amounts = ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
@@ -1878,7 +1885,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and populating the pools
         for (uint256 idx; idx < path.length - 1; idx++) {
-            createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]);
+            createAndInitializePair(
+                MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]
+            );
         }
 
         uint256[] memory expectedAmounts = ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
@@ -1935,7 +1944,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and calculate expected amounts
         for (uint256 idx = path.length - 1; idx > 0; idx--) {
-            createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000);
+            createAndInitializePair(
+                MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000
+            );
         }
 
         uint256[] memory amounts = ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
@@ -1979,7 +1990,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and calculate expected amounts
         for (uint256 idx = path.length - 1; idx > 0; idx--) {
-            createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000);
+            createAndInitializePair(
+                MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000
+            );
         }
 
         uint256[] memory expectedAmounts = ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
@@ -2044,7 +2057,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and populating the pools
         for (uint256 idx; idx < path.length - 1; idx++) {
-            createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]);
+            createAndInitializePair(
+                MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]
+            );
         }
 
         // Expecting to revert with `InvalidPath()` error
@@ -2090,7 +2105,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
             if (idx == 0) {
                 createAndInitializePairETH(MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]);
             } else {
-                createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx]);
+                createAndInitializePair(
+                    MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx]
+                );
             }
         }
 
@@ -2142,7 +2159,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
             if (idx == 0) {
                 createAndInitializePairETH(MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]);
             } else {
-                createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx]);
+                createAndInitializePair(
+                    MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx]
+                );
             }
         }
 
@@ -2200,7 +2219,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and calculate expected amounts
         for (uint256 idx = path.length - 1; idx > 0; idx--) {
-            createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000);
+            createAndInitializePair(
+                MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000
+            );
         }
 
         // Expecting to revert with `InvalidPath()` error
@@ -2243,7 +2264,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
             if (idx == path.length - 1) {
                 createAndInitializePairETH(MockRebasingERC20(path[idx - 1]), 10000, poolOutAmounts[idx]);
             } else {
-                createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000);
+                createAndInitializePair(
+                    MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000
+                );
             }
         }
 
@@ -2292,7 +2315,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
             if (idx == path.length - 1) {
                 createAndInitializePairETH(MockRebasingERC20(path[idx - 1]), 10000, poolOutAmounts[idx]);
             } else {
-                createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000);
+                createAndInitializePair(
+                    MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000
+                );
             }
         }
 
@@ -2353,7 +2378,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and populating the pools
         for (uint256 idx; idx < path.length - 1; idx++) {
-            createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]);
+            createAndInitializePair(
+                MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]
+            );
         }
 
         // Expecting to revert with `InvalidPath()` error
@@ -2396,7 +2423,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
             if (idx == path.length - 2) {
                 createAndInitializePairETH(MockRebasingERC20(path[idx]), 10000, poolOutAmounts[idx + 1]);
             } else {
-                createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]);
+                createAndInitializePair(
+                    MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]
+                );
             }
         }
 
@@ -2445,7 +2474,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
             if (idx == path.length - 2) {
                 createAndInitializePairETH(MockRebasingERC20(path[idx]), 10000, poolOutAmounts[idx + 1]);
             } else {
-                createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]);
+                createAndInitializePair(
+                    MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]
+                );
             }
         }
 
@@ -2499,7 +2530,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Create the pairs and calculate expected amounts
         for (uint256 idx = path.length - 1; idx > 0; idx--) {
-            createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000);
+            createAndInitializePair(
+                MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000
+            );
         }
 
         // Expecting to revert with `InvalidPath()` error
@@ -2543,7 +2576,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
             if (idx == 1) {
                 createAndInitializePairETH(MockRebasingERC20(path[idx]), poolOutAmounts[idx], 10000);
             } else {
-                createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000);
+                createAndInitializePair(
+                    MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000
+                );
             }
         }
 
@@ -2592,7 +2627,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
             if (idx == 1) {
                 createAndInitializePairETH(MockRebasingERC20(path[idx]), poolOutAmounts[idx], 10000);
             } else {
-                createAndInitializePair(MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000);
+                createAndInitializePair(
+                    MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000
+                );
             }
         }
 
