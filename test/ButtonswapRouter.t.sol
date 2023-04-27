@@ -48,12 +48,12 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         returns (IButtonswapPair pair, uint256 liquidityOut)
     {
         pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA1), address(tokenB1)));
-        tokenA.mint(address(this), poolA);
-        tokenA.approve(address(pair), poolA);
-        tokenB.mint(address(this), poolB);
-        tokenB.approve(address(pair), poolB);
+        tokenA1.mint(address(this), poolA);
+        tokenA1.approve(address(pair), poolA);
+        tokenB1.mint(address(this), poolB);
+        tokenB1.approve(address(pair), poolB);
 
-        if (pair.token0() == address(tokenA)) {
+        if (pair.token0() == address(tokenA1)) {
             liquidityOut = pair.mint(poolA, poolB, address(this));
         } else {
             liquidityOut = pair.mint(poolB, poolA, address(this));
