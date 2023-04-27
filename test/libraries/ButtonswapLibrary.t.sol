@@ -117,6 +117,84 @@ contract ButtonswapLibraryTest is Test {
         assertEq(pair, factoryPair);
     }
 
+    function testFail_getLiquidityBalances_missingPair(bytes32 saltA, bytes32 saltB) public {
+        // Creating the two tokens
+        // Salts are used to fuzz unique addresses in arbitrary order
+        MockERC20 tokenA = new MockERC20{salt: saltA}("Token A", "TKN_A");
+        MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B");
+
+        // Call getReservoirs() without having created the pair
+        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+    }
+
+    function test_getLiquidityBalances_emptyPair(bytes32 saltA, bytes32 saltB) public {
+        // Creating the two tokens
+        // Salts are used to fuzz unique addresses in arbitrary order
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+
+        // Create the pair with the factory and two tokens
+        buttonswapFactory.createPair(address(tokenA), address(tokenB));
+
+        // Call the getReservoirs function to get the reservoirs
+        (uint256 poolA, uint256 poolB, uint256 reservoirA, uint256 reservoirB) =
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+
+        // Assert that the liquidity balance amounts are empty
+        assertEq(poolA, 0);
+        assertEq(poolB, 0);
+        assertEq(reservoirA, 0);
+        assertEq(reservoirB, 0);
+    }
+
+    function test_getLiquidityBalances_nonEmptyPair(
+        bytes32 saltA,
+        bytes32 saltB,
+        uint112 amountA,
+        uint112 amountB,
+        uint112 numerator,
+        uint112 denominator
+    ) public {
+        // Ensuring that amountA and amountB are enough to mint minimum liquidity
+        vm.assume(amountA > 1000);
+        vm.assume(amountB > 1000);
+
+        // Ensuring the rebase is valid and denominator is non-zero
+        numerator = uint112(bound(numerator, 1, 1000));
+        denominator = uint112(bound(denominator, 1, 1000));
+
+        // Creating the two tokens
+        // Salts are used to fuzz unique addresses in arbitrary order
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+
+        // Create the pair with the factory and two tokens
+        // First liquidity mint - determines price-ratios between the assets
+        address pair = address(createAndInitializePairRebasing(tokenA, tokenB, amountA, amountB));
+
+        // Rebasing tokenA
+        tokenA.applyMultiplier(numerator, denominator);
+        vm.assume((uint256(amountA) * numerator) / denominator < type(uint112).max);
+
+        // Call the getReservoirs function to get the reservoirs
+        (uint256 poolA, uint256 poolB, uint256 reservoirA, uint256 reservoirB) =
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+
+        // If the rebase is positive, reservoirA should be non-zero and reservoirB should be zero
+        if (numerator > denominator) {
+            assertEq(poolA, amountA); // PoolA should be unchanged
+            assertEq(poolB, amountB); // PoolB should be unchanged
+            assertApproxEqAbs(reservoirA, tokenA.balanceOf(pair) - amountA, 10); // ReservoirA created by surplus
+            assertEq(reservoirB, 0); // ReservoirB untouched
+        } else {
+            // If the rebase is negative, reservoirA should be zero and reservoirB should be non-zero
+            assertEq(poolA, tokenA.balanceOf(pair)); // PoolA decreased in size but holds entire amount
+            assertApproxEqAbs(poolB, (tokenA.balanceOf(pair) * amountB) / amountA, amountA); // PoolB decreased in size
+            assertEq(reservoirA, 0); // ReservoirA untouched
+            assertApproxEqAbs(reservoirB, amountB - (tokenA.balanceOf(pair) * amountB) / amountA, 1); // ReservoirB created by deficit
+        }
+    }
+
     function testFail_getPools_missingPair(bytes32 saltA, bytes32 saltB) public {
         // Creating the two tokens
         // Salts are used to fuzz unique addresses in arbitrary order
@@ -140,7 +218,7 @@ contract ButtonswapLibraryTest is Test {
         (uint256 poolA, uint256 poolB) =
             ButtonswapLibrary.getPools(address(buttonswapFactory), address(tokenA), address(tokenB));
 
-        // Assert that the pool amounts equal the token amounts minted
+        // Assert that the pool amounts are empty
         assertEq(poolA, 0);
         assertEq(poolB, 0);
     }
@@ -191,7 +269,7 @@ contract ButtonswapLibraryTest is Test {
         (uint256 reservoirA, uint256 reservoirB) =
             ButtonswapLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
 
-        // Assert that the pool amounts equal the token amounts minted
+        // Assert that the reservoir amounts are empty
         assertEq(reservoirA, 0);
         assertEq(reservoirB, 0);
     }

@@ -43,11 +43,11 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
     }
 
     // Utility function for creating and initializing pairs with poolA:poolB price ratio. Does not use ButtonwoodRouter
-    function createAndInitializePair(MockRebasingERC20 tokenA, MockRebasingERC20 tokenB, uint256 poolA, uint256 poolB)
+    function createAndInitializePair(MockRebasingERC20 tokenA1, MockRebasingERC20 tokenB1, uint256 poolA, uint256 poolB)
         private
         returns (IButtonswapPair pair, uint256 liquidityOut)
     {
-        pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
+        pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA1), address(tokenB1)));
         tokenA.mint(address(this), poolA);
         tokenA.approve(address(pair), poolA);
         tokenB.mint(address(this), poolB);
