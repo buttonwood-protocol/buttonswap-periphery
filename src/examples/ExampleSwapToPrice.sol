@@ -59,8 +59,8 @@ contract ExampleSwapToPrice {
         bool aToB;
         uint256 amountIn;
         {
-            (uint256 reserveA, uint256 reserveB) = ButtonswapLibrary.getPools(factory, tokenA, tokenB);
-            (aToB, amountIn) = computeProfitMaximizingTrade(truePriceTokenA, truePriceTokenB, reserveA, reserveB);
+            (uint256 poolA, uint256 poolB) = ButtonswapLibrary.getPools(factory, tokenA, tokenB);
+            (aToB, amountIn) = computeProfitMaximizingTrade(truePriceTokenA, truePriceTokenB, poolA, poolB);
         }
 
         // spend up to the allowance of the token in

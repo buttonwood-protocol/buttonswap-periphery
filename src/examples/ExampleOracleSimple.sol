@@ -30,10 +30,10 @@ contract ExampleOracleSimple {
         token1 = _pair.token1();
         price0CumulativeLast = _pair.price0CumulativeLast(); // fetch the current accumulated price value (1 / 0)
         price1CumulativeLast = _pair.price1CumulativeLast(); // fetch the current accumulated price value (0 / 1)
-        uint112 reserve0;
-        uint112 reserve1;
-        (reserve0, reserve1, blockTimestampLast) = _pair.getPools();
-        require(reserve0 != 0 && reserve1 != 0, "ExampleOracleSimple: NO_RESERVES"); // ensure that there's liquidity in the pair
+        uint112 pool0;
+        uint112 pool1;
+        (pool0, pool1,,, blockTimestampLast) = _pair.getLiquidityBalances();
+        require(pool0 != 0 && pool1 != 0, "ExampleOracleSimple: NO_RESERVES"); // ensure that there's liquidity in the pair
     }
 
     function update() external {

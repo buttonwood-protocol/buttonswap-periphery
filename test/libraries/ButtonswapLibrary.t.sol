@@ -13,6 +13,44 @@ contract ButtonswapLibraryTest is Test {
 
     ButtonswapFactory public buttonswapFactory;
 
+    // Utility function for creating and initializing pairs with poolA:poolB price ratio. Does not use ButtonwoodRouter
+    function createAndInitializePair(MockERC20 tokenA, MockERC20 tokenB, uint256 poolA, uint256 poolB)
+        private
+        returns (ButtonswapPair pair)
+    {
+        pair = ButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
+        tokenA.mint(address(this), poolA);
+        tokenA.approve(address(pair), poolA);
+        tokenB.mint(address(this), poolB);
+        tokenB.approve(address(pair), poolB);
+
+        if (pair.token0() == address(tokenA)) {
+            pair.mint(poolA, poolB, address(this));
+        } else {
+            pair.mint(poolB, poolA, address(this));
+        }
+    }
+
+    // Same utility function as `createAndInitializePair()` but for supporting MockRebasingERC20 tokens too
+    function createAndInitializePairRebasing(
+        MockRebasingERC20 tokenA,
+        MockRebasingERC20 tokenB,
+        uint256 poolA,
+        uint256 poolB
+    ) private returns (ButtonswapPair pair) {
+        pair = ButtonswapPair(buttonswapFactory.createPair(address(tokenA), address(tokenB)));
+        tokenA.mint(address(this), poolA);
+        tokenA.approve(address(pair), poolA);
+        tokenB.mint(address(this), poolB);
+        tokenB.approve(address(pair), poolB);
+
+        if (pair.token0() == address(tokenA)) {
+            pair.mint(poolA, poolB, address(this));
+        } else {
+            pair.mint(poolB, poolA, address(this));
+        }
+    }
+
     function setUp() public {
         buttonswapFactory = new ButtonswapFactory(address(this));
     }
@@ -79,6 +117,84 @@ contract ButtonswapLibraryTest is Test {
         assertEq(pair, factoryPair);
     }
 
+    function testFail_getLiquidityBalances_missingPair(bytes32 saltA, bytes32 saltB) public {
+        // Creating the two tokens
+        // Salts are used to fuzz unique addresses in arbitrary order
+        MockERC20 tokenA = new MockERC20{salt: saltA}("Token A", "TKN_A");
+        MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B");
+
+        // Call getReservoirs() without having created the pair
+        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+    }
+
+    function test_getLiquidityBalances_emptyPair(bytes32 saltA, bytes32 saltB) public {
+        // Creating the two tokens
+        // Salts are used to fuzz unique addresses in arbitrary order
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+
+        // Create the pair with the factory and two tokens
+        buttonswapFactory.createPair(address(tokenA), address(tokenB));
+
+        // Call the getReservoirs function to get the reservoirs
+        (uint256 poolA, uint256 poolB, uint256 reservoirA, uint256 reservoirB) =
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+
+        // Assert that the liquidity balance amounts are empty
+        assertEq(poolA, 0);
+        assertEq(poolB, 0);
+        assertEq(reservoirA, 0);
+        assertEq(reservoirB, 0);
+    }
+
+    function test_getLiquidityBalances_nonEmptyPair(
+        bytes32 saltA,
+        bytes32 saltB,
+        uint112 amountA,
+        uint112 amountB,
+        uint112 numerator,
+        uint112 denominator
+    ) public {
+        // Ensuring that amountA and amountB are enough to mint minimum liquidity
+        vm.assume(amountA > 1000);
+        vm.assume(amountB > 1000);
+
+        // Ensuring the rebase is valid and denominator is non-zero
+        numerator = uint112(bound(numerator, 1, 1000));
+        denominator = uint112(bound(denominator, 1, 1000));
+
+        // Creating the two tokens
+        // Salts are used to fuzz unique addresses in arbitrary order
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+
+        // Create the pair with the factory and two tokens
+        // First liquidity mint - determines price-ratios between the assets
+        address pair = address(createAndInitializePairRebasing(tokenA, tokenB, amountA, amountB));
+
+        // Rebasing tokenA
+        tokenA.applyMultiplier(numerator, denominator);
+        vm.assume((uint256(amountA) * numerator) / denominator < type(uint112).max);
+
+        // Call the getReservoirs function to get the reservoirs
+        (uint256 poolA, uint256 poolB, uint256 reservoirA, uint256 reservoirB) =
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+
+        // If the rebase is positive, reservoirA should be non-zero and reservoirB should be zero
+        if (numerator > denominator) {
+            assertEq(poolA, amountA); // PoolA should be unchanged
+            assertEq(poolB, amountB); // PoolB should be unchanged
+            assertApproxEqAbs(reservoirA, tokenA.balanceOf(pair) - amountA, 10); // ReservoirA created by surplus
+            assertEq(reservoirB, 0); // ReservoirB untouched
+        } else {
+            // If the rebase is negative, reservoirA should be zero and reservoirB should be non-zero
+            assertEq(poolA, tokenA.balanceOf(pair)); // PoolA decreased in size but holds entire amount
+            assertApproxEqAbs(poolB, (tokenA.balanceOf(pair) * amountB) / amountA, amountA); // PoolB decreased in size
+            assertEq(reservoirA, 0); // ReservoirA untouched
+            assertApproxEqAbs(reservoirB, amountB - (tokenA.balanceOf(pair) * amountB) / amountA, 1); // ReservoirB created by deficit
+        }
+    }
+
     function testFail_getPools_missingPair(bytes32 saltA, bytes32 saltB) public {
         // Creating the two tokens
         // Salts are used to fuzz unique addresses in arbitrary order
@@ -102,7 +218,7 @@ contract ButtonswapLibraryTest is Test {
         (uint256 poolA, uint256 poolB) =
             ButtonswapLibrary.getPools(address(buttonswapFactory), address(tokenA), address(tokenB));
 
-        // Assert that the pool amounts equal the token amounts minted
+        // Assert that the pool amounts are empty
         assertEq(poolA, 0);
         assertEq(poolB, 0);
     }
@@ -118,14 +234,8 @@ contract ButtonswapLibraryTest is Test {
         MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B");
 
         // Create the pair with the factory and two tokens
-        address pair = buttonswapFactory.createPair(address(tokenA), address(tokenB));
-
         // Minting liquidity in the pair
-        tokenA.mint(address(this), amountA);
-        tokenA.transfer(pair, amountA);
-        tokenB.mint(address(this), amountB);
-        tokenB.transfer(pair, amountB);
-        ButtonswapPair(pair).mint(address(this));
+        createAndInitializePair(tokenA, tokenB, amountA, amountB);
 
         // Call the getPools function to get the pools
         (uint256 poolA, uint256 poolB) =
@@ -159,7 +269,7 @@ contract ButtonswapLibraryTest is Test {
         (uint256 reservoirA, uint256 reservoirB) =
             ButtonswapLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
 
-        // Assert that the pool amounts equal the token amounts minted
+        // Assert that the reservoir amounts are empty
         assertEq(reservoirA, 0);
         assertEq(reservoirB, 0);
     }
@@ -177,8 +287,8 @@ contract ButtonswapLibraryTest is Test {
         vm.assume(amountB > 1000);
 
         // Ensuring the rebase is valid and denominator is non-zero
-        vm.assume(numerator != 0);
-        vm.assume(denominator != 0);
+        numerator = uint112(bound(numerator, 1, 1000));
+        denominator = uint112(bound(denominator, 1, 1000));
 
         // Creating the two tokens
         // Salts are used to fuzz unique addresses in arbitrary order
@@ -186,21 +296,12 @@ contract ButtonswapLibraryTest is Test {
         MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
 
         // Create the pair with the factory and two tokens
-        address pair = buttonswapFactory.createPair(address(tokenA), address(tokenB));
-
         // First liquidity mint - determines price-ratios between the assets
-        tokenA.mint(address(this), amountA);
-        tokenA.transfer(pair, amountA);
-        tokenB.mint(address(this), amountB);
-        tokenB.transfer(pair, amountB);
-        ButtonswapPair(pair).mint(address(this));
+        address pair = address(createAndInitializePairRebasing(tokenA, tokenB, amountA, amountB));
 
         // Rebasing tokenA
         tokenA.applyMultiplier(numerator, denominator);
         vm.assume((uint256(amountA) * numerator) / denominator < type(uint112).max);
-
-        // Syncing the pair's pools & reservoirs
-        ButtonswapPair(pair).sync();
 
         // Call the getReservoirs function to get the reservoirs
         (uint256 reservoirA, uint256 reservoirB) =
@@ -365,12 +466,7 @@ contract ButtonswapLibraryTest is Test {
         // Creating the path with the missing pair
         for (uint256 idx = 0; idx < pathLength - 1; idx++) {
             if (idx != missingPairIdx) {
-                address pair = buttonswapFactory.createPair(path[idx], path[idx + 1]);
-                MockERC20(path[idx]).mint(address(this), 10000);
-                MockERC20(path[idx]).transfer(pair, 10000);
-                MockERC20(path[idx + 1]).mint(address(this), 10000);
-                MockERC20(path[idx + 1]).transfer(pair, 10000);
-                ButtonswapPair(pair).mint(address(this));
+                createAndInitializePair(MockERC20(path[idx]), MockERC20(path[idx + 1]), 10000, 10000);
             }
         }
 
@@ -407,12 +503,7 @@ contract ButtonswapLibraryTest is Test {
         uint256[] memory expectedAmounts = new uint256[](path.length);
         expectedAmounts[0] = amountIn;
         for (uint256 idx; idx < path.length - 1; idx++) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx + 1]);
-            MockERC20(path[idx]).mint(address(this), 10000);
-            MockERC20(path[idx]).transfer(pair, 10000);
-            MockERC20(path[idx + 1]).mint(address(this), poolOutAmounts[idx + 1]);
-            MockERC20(path[idx + 1]).transfer(pair, poolOutAmounts[idx + 1]);
-            ButtonswapPair(pair).mint(address(this));
+            createAndInitializePair(MockERC20(path[idx]), MockERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]);
             expectedAmounts[idx + 1] =
                 ButtonswapLibrary.getAmountOut(expectedAmounts[idx], 10000, poolOutAmounts[idx + 1]);
         }
@@ -453,12 +544,7 @@ contract ButtonswapLibraryTest is Test {
         // Creating the path with the missing pair
         for (uint256 idx = 0; idx < pathLength - 1; idx++) {
             if (idx != missingPairIdx) {
-                address pair = buttonswapFactory.createPair(path[idx], path[idx + 1]);
-                MockERC20(path[idx]).mint(address(this), 10000);
-                MockERC20(path[idx]).transfer(pair, 10000);
-                MockERC20(path[idx + 1]).mint(address(this), 10000);
-                MockERC20(path[idx + 1]).transfer(pair, 10000);
-                ButtonswapPair(pair).mint(address(this));
+                createAndInitializePair(MockERC20(path[idx]), MockERC20(path[idx + 1]), 10000, 10000);
             }
         }
 
@@ -495,12 +581,7 @@ contract ButtonswapLibraryTest is Test {
         uint256[] memory expectedAmounts = new uint256[](path.length);
         expectedAmounts[expectedAmounts.length - 1] = amountOut;
         for (uint256 idx = path.length - 1; idx > 0; idx--) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx - 1]);
-            MockERC20(path[idx]).mint(address(this), poolOutAmounts[idx]);
-            MockERC20(path[idx]).transfer(pair, poolOutAmounts[idx]);
-            MockERC20(path[idx - 1]).mint(address(this), 10000);
-            MockERC20(path[idx - 1]).transfer(pair, 10000);
-            ButtonswapPair(pair).mint(address(this));
+            createAndInitializePair(MockERC20(path[idx]), MockERC20(path[idx - 1]), poolOutAmounts[idx], 10000);
             expectedAmounts[idx - 1] = ButtonswapLibrary.getAmountIn(expectedAmounts[idx], 10000, poolOutAmounts[idx]);
         }
 
@@ -536,12 +617,7 @@ contract ButtonswapLibraryTest is Test {
 
         // Create the pairs
         for (uint256 idx; idx < path.length - 1; idx++) {
-            address pair = buttonswapFactory.createPair(path[idx], path[idx + 1]);
-            MockERC20(path[idx]).mint(address(this), 10000);
-            MockERC20(path[idx]).transfer(pair, 10000);
-            MockERC20(path[idx + 1]).mint(address(this), poolOutAmounts[idx + 1]);
-            MockERC20(path[idx + 1]).transfer(pair, poolOutAmounts[idx + 1]);
-            ButtonswapPair(pair).mint(address(this));
+            createAndInitializePair(MockERC20(path[idx]), MockERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]);
         }
 
         uint256[] memory amountsForward = ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
