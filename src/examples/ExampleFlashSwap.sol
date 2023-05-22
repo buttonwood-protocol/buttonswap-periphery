@@ -1,7 +1,7 @@
 pragma solidity ^0.8.13;
 
-import {IButtonswapCallee} from "buttonswap-core/interfaces/IButtonswapCallee.sol";
-import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
+import {IButtonswapCallee} from "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapCallee.sol";
+import {IButtonswapPair} from "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
 import {ButtonswapLibrary} from "../libraries/ButtonswapLibrary.sol";
 import "../interfaces/V1/IUniswapV1Factory.sol";
 import "../interfaces/V1/IUniswapV1Exchange.sol";

@@ -1,7 +1,7 @@
 pragma solidity ^0.8.13;
 
-import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
-import {UQ112x112} from "buttonswap-core/libraries/UQ112x112.sol";
+import {IButtonswapPair} from "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
+import {UQ112x112} from "buttonswap-periphery_buttonswap-core/libraries/UQ112x112.sol";
 
 import "../libraries/ButtonwoodOracleLibrary.sol";
 import {ButtonswapLibrary} from "../libraries/ButtonswapLibrary.sol";

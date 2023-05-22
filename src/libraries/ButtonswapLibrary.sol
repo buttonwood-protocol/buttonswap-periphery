@@ -1,6 +1,6 @@
 pragma solidity ^0.8.13;
 
-import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
+import {IButtonswapPair} from "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
 
 library ButtonswapLibrary {
     /// @notice Identical addresses provided
