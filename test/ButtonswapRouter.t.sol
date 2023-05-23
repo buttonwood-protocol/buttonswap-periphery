@@ -5,7 +5,7 @@ import {Test} from "buttonswap-periphery_forge-std/Test.sol";
 import {IButtonswapRouterErrors} from "../src/interfaces/IButtonswapRouter/IButtonswapRouterErrors.sol";
 import {ButtonswapRouter} from "../src/ButtonswapRouter.sol";
 import {IButtonswapPair} from "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
-import {MockRebasingERC20} from "mock-contracts/MockRebasingERC20.sol";
+import {MockRebasingERC20} from "buttonswap-periphery_mock-contracts/MockRebasingERC20.sol";
 import {ButtonswapFactory} from "buttonswap-periphery_buttonswap-core/ButtonswapFactory.sol";
 import {IWETH} from "../src/interfaces/IWETH.sol";
 import {MockWeth} from "./mocks/MockWeth.sol";

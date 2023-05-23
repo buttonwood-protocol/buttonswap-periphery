@@ -428,7 +428,7 @@ contract ButtonswapRouter is IButtonswapRouter {
             address to = i < path.length - 2 ? address(this) : _to;
             IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, input, output));
             TransferHelper.safeApprove(input, address(pair), amountIn);
-            pair.swap(amount0In, amount1In, amount0Out, amount1Out, to, new bytes(0));
+            pair.swap(amount0In, amount1In, amount0Out, amount1Out, to);
         }
     }
 

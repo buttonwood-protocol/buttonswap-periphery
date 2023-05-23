@@ -5,8 +5,8 @@ import {Test} from "buttonswap-periphery_forge-std/Test.sol";
 import {ButtonswapLibrary} from "../../src/libraries/ButtonswapLibrary.sol";
 import {ButtonswapFactory} from "buttonswap-periphery_buttonswap-core/ButtonswapFactory.sol";
 import {ButtonswapPair} from "buttonswap-periphery_buttonswap-core/ButtonswapPair.sol";
-import {MockERC20} from "mock-contracts/MockERC20.sol";
-import {MockRebasingERC20} from "mock-contracts/MockRebasingERC20.sol";
+import {MockERC20} from "buttonswap-periphery_mock-contracts/MockERC20.sol";
+import {MockRebasingERC20} from "buttonswap-periphery_mock-contracts/MockRebasingERC20.sol";
 
 contract ButtonswapLibraryTest is Test {
     address public userA = 0x000000000000000000000000000000000000000A;
