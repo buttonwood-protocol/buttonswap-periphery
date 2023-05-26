@@ -9,6 +9,7 @@ import {IButtonswapRouter} from "./interfaces/IButtonswapRouter/IButtonswapRoute
 import {ButtonswapLibrary} from "./libraries/ButtonswapLibrary.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {IWETH} from "./interfaces/IWETH.sol";
+import {console} from "buttonswap-periphery_forge-std/console.sol";
 
 contract ButtonswapRouter is IButtonswapRouter {
     /**
@@ -39,6 +40,8 @@ contract ButtonswapRouter is IButtonswapRouter {
         assert(msg.sender == WETH);
     }
 
+    // ToDo: Update this to keep totalA:totalB ratio (NOT JUST poolA:poolB)
+    // ToDo: Update unit tests to validate that poolA:poolB ratio isn't sufficient^^^
     // **** ADD LIQUIDITY ****
     function _addLiquidity(
         address tokenA,
@@ -85,8 +88,7 @@ contract ButtonswapRouter is IButtonswapRouter {
         if (IButtonswapFactory(factory).getPair(tokenA, tokenB) == address(0)) {
             revert NoReservoir();
         }
-        (uint256 poolA, uint256 poolB, uint256 reservoirA, uint256 reservoirB) =
-            ButtonswapLibrary.getLiquidityBalances(factory, tokenA, tokenB);
+        (uint256 poolA, uint256 poolB, uint256 reservoirA, uint256 reservoirB) = ButtonswapLibrary.getLiquidityBalances(factory, tokenA, tokenB);
         // the first liquidity addition should happen through _addLiquidity
         // can't initialize by matching with a reservoir
         if (poolA == 0 || poolB == 0) {
@@ -98,7 +100,16 @@ contract ButtonswapRouter is IButtonswapRouter {
 
         if (reservoirA > 0) {
             // we take from reservoirA and the user-provided amountBDesired
-            uint256 amountAOptimal = ButtonswapLibrary.quote(amountBDesired, poolB, poolA);
+            // But modify so that you don't do liquidityOut logic since you don't need it
+            uint256 amountAOptimal;
+            //amountADesired is just a dummy var to avoid IR for now
+            (amountADesired, amountAOptimal) = ButtonswapLibrary.getSwappedAmounts(factory, tokenB, tokenA, amountBDesired);
+            console.log("tokenBToSwap: %s", amountADesired);
+            console.log("amountAOptimal: %s", amountAOptimal);
+            console.log("amountBDesired", amountBDesired);
+
+            // User wants to drain to the res by amountAMin or more
+            // Slippage-check
             if (amountAOptimal < amountAMin) {
                 revert InsufficientAAmount();
             }
@@ -108,7 +119,7 @@ contract ButtonswapRouter is IButtonswapRouter {
             (amountA, amountB) = (0, amountBDesired);
         } else {
             // we take from reservoirB and the user-provided amountADesired
-            uint256 amountBOptimal = ButtonswapLibrary.quote(amountADesired, poolA, poolB);
+            (,uint256 amountBOptimal) = ButtonswapLibrary.getSwappedAmounts(factory, tokenA, tokenB, amountADesired);
             if (amountBOptimal < amountBMin) {
                 revert InsufficientBAmount();
             }
@@ -163,11 +174,14 @@ contract ButtonswapRouter is IButtonswapRouter {
         (amountA, amountB) =
             _addLiquidityWithReservoir(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);
         address pair = ButtonswapLibrary.pairFor(factory, tokenA, tokenB);
+        console.log("Final amountA:", amountA);
+        console.log("Final amountB:", amountB);
 
         if (amountA > 0) {
             TransferHelper.safeTransferFrom(tokenA, msg.sender, address(this), amountA);
             TransferHelper.safeApprove(tokenA, pair, amountA);
             liquidity = IButtonswapPair(pair).mintWithReservoir(amountA, to);
+
         } else if (amountB > 0) {
             TransferHelper.safeTransferFrom(tokenB, msg.sender, address(this), amountB);
             TransferHelper.safeApprove(tokenB, pair, amountB);
