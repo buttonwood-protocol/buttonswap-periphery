@@ -61,7 +61,7 @@ library ButtonswapLibrary {
                             hex"ff",
                             factory,
                             keccak256(abi.encodePacked(token0, token1)),
-//                            hex"ab68a6446422c584a9751a8f9cffda067fc6434cbfb0d29bdf79ed60b072c14c" // init code hash
+                            //                            hex"ab68a6446422c584a9751a8f9cffda067fc6434cbfb0d29bdf79ed60b072c14c" // init code hash
                             initHashCode
                         )
                     )
@@ -149,56 +149,31 @@ library ButtonswapLibrary {
         amountB = (amountA * poolB) / poolA;
     }
 
-    function getSwappedAmounts(
-        address factory,
-        address tokenA,
-        address tokenB,
-        uint256 mintAmountA
-    ) internal view returns (uint256 tokenAToSwap, uint256 swappedReservoirAmountB) {
+    /**
+     * @dev ToDo
+     */
+    function getSwappedAmounts(address factory, address tokenA, address tokenB, uint256 mintAmountA)
+        internal
+        view
+        returns (uint256 tokenAToSwap, uint256 swappedReservoirAmountB)
+    {
         IButtonswapPair pair = IButtonswapPair(pairFor(factory, tokenA, tokenB));
         uint256 totalA = IERC20(tokenA).balanceOf(address(pair));
         uint256 totalB = IERC20(tokenB).balanceOf(address(pair));
         uint256 movingAveragePrice0 = pair.movingAveragePrice0();
 
         // tokenA == token0
-        if(tokenA < tokenB) {
-            tokenAToSwap = (mintAmountA * totalB) / (Math.mulDiv(movingAveragePrice0, (totalA + mintAmountA), 2 ** 112) + totalB);
+        if (tokenA < tokenB) {
+            tokenAToSwap =
+                (mintAmountA * totalB) / (Math.mulDiv(movingAveragePrice0, (totalA + mintAmountA), 2 ** 112) + totalB);
             swappedReservoirAmountB = (tokenAToSwap * movingAveragePrice0) / 2 ** 112;
         } else {
-            tokenAToSwap = (mintAmountA * totalB) / (((2 ** 112 * (totalA + mintAmountA)) / movingAveragePrice0) + totalB);
+            tokenAToSwap =
+                (mintAmountA * totalB) / (((2 ** 112 * (totalA + mintAmountA)) / movingAveragePrice0) + totalB);
             // Inverse price so again we can use it without overflow risk
             swappedReservoirAmountB = (tokenAToSwap * (2 ** 112)) / movingAveragePrice0;
         }
-
     }
-
-//    // A is the one with the reservoir
-//    function quoteTokenSwapAmount(address factory, address tokenA, address tokenB, uint256 poolA, uint256 poolB, uint256 mintAmountB) internal view returns (uint256 amountB) {
-////        if (tokenA < tokenB) {
-////            amountB = Math.mulDiv(amountA, IButtonswapPair(pairFor(factory, tokenA, tokenB)).movingAveragePrice0(), 2**112);
-////        } else {
-////            amountB = Math.mulDiv(amountA, 2**112, IButtonswapPair(pairFor(factory, tokenA, tokenB)).movingAveragePrice0());
-////        }
-//        if (tokenA < tokenB) {
-//            uint256 tokenBToSwap =
-//            (mintAmountB * totalA) / (((2 ** 112 * (totalB + mintAmountB)) / movingAveragePriceA) + totalA);
-//            // Inverse price so again we can use it without overflow risk
-//            swappedReservoirAmountA = (tokenBToSwap * (2 ** 112)) / movingAveragePriceA;
-//        }
-//
-//        // Here we don't risk undesired overflow because if `tokenAToSwap * movingAveragePriceA` exceeded 2^256 then it
-//        //   would necessarily mean `swappedReservoirAmountB` exceeded 2^112, which would result in breaking the poolX unit112 limits.
-//
-//    }
-
-    //    function convertWithMovingAveragePrice(IButtonswapPair pair, MockRebasingERC20 token, uint256 amount) private returns (uint256 convertedAmount) {
-    //        if(pair.token0() == address(token)) {
-    //            convertedAmount = Math.mulDiv(amount, pair.movingAveragePrice0(), 2**112);
-    //        } else {
-    //            convertedAmount = Math.mulDiv(amount, 2**112, pair.movingAveragePrice0());
-    //        }
-    //    }
-
 
     /**
      * @dev Given an input amount of an asset and pair pools, returns the maximum output amount of the other asset

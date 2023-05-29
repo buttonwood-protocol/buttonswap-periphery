@@ -88,7 +88,8 @@ contract ButtonswapRouter is IButtonswapRouter {
         if (IButtonswapFactory(factory).getPair(tokenA, tokenB) == address(0)) {
             revert NoReservoir();
         }
-        (uint256 poolA, uint256 poolB, uint256 reservoirA, uint256 reservoirB) = ButtonswapLibrary.getLiquidityBalances(factory, tokenA, tokenB);
+        (uint256 poolA, uint256 poolB, uint256 reservoirA, uint256 reservoirB) =
+            ButtonswapLibrary.getLiquidityBalances(factory, tokenA, tokenB);
         // the first liquidity addition should happen through _addLiquidity
         // can't initialize by matching with a reservoir
         if (poolA == 0 || poolB == 0) {
@@ -103,7 +104,8 @@ contract ButtonswapRouter is IButtonswapRouter {
             // But modify so that you don't do liquidityOut logic since you don't need it
             uint256 amountAOptimal;
             //amountADesired is just a dummy var to avoid IR for now
-            (amountADesired, amountAOptimal) = ButtonswapLibrary.getSwappedAmounts(factory, tokenB, tokenA, amountBDesired);
+            (amountADesired, amountAOptimal) =
+                ButtonswapLibrary.getSwappedAmounts(factory, tokenB, tokenA, amountBDesired);
             console.log("tokenBToSwap: %s", amountADesired);
             console.log("amountAOptimal: %s", amountAOptimal);
             console.log("amountBDesired", amountBDesired);
@@ -119,7 +121,7 @@ contract ButtonswapRouter is IButtonswapRouter {
             (amountA, amountB) = (0, amountBDesired);
         } else {
             // we take from reservoirB and the user-provided amountADesired
-            (,uint256 amountBOptimal) = ButtonswapLibrary.getSwappedAmounts(factory, tokenA, tokenB, amountADesired);
+            (, uint256 amountBOptimal) = ButtonswapLibrary.getSwappedAmounts(factory, tokenA, tokenB, amountADesired);
             if (amountBOptimal < amountBMin) {
                 revert InsufficientBAmount();
             }
@@ -181,7 +183,6 @@ contract ButtonswapRouter is IButtonswapRouter {
             TransferHelper.safeTransferFrom(tokenA, msg.sender, address(this), amountA);
             TransferHelper.safeApprove(tokenA, pair, amountA);
             liquidity = IButtonswapPair(pair).mintWithReservoir(amountA, to);
-
         } else if (amountB > 0) {
             TransferHelper.safeTransferFrom(tokenB, msg.sender, address(this), amountB);
             TransferHelper.safeApprove(tokenB, pair, amountB);
