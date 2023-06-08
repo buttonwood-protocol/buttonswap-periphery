@@ -117,21 +117,22 @@ contract ButtonswapRouter is IButtonswapRouter {
             }
 
             // ToDo: Removing this check since it's not strong enough
-//            console.log("reservoirA:", reservoirA);
-//            if (reservoirA < amountAOptimal) {
-//                revert InsufficientAReservoir();
-//            }
+            //            console.log("reservoirA:", reservoirA);
+            //            if (reservoirA < amountAOptimal) {
+            //                revert InsufficientAReservoir();
+            //            }
             (amountA, amountB) = (0, amountBDesired);
         } else {
             // we take from reservoirB and the user-provided amountADesired
-            (, uint256 amountBOptimal) = ButtonswapLibrary.getMintSwappedAmounts(factory, tokenA, tokenB, amountADesired);
+            (, uint256 amountBOptimal) =
+                ButtonswapLibrary.getMintSwappedAmounts(factory, tokenA, tokenB, amountADesired);
             if (amountBOptimal < amountBMin) {
                 revert InsufficientBAmount();
             }
             // ToDo: Removing this check since it's not strong enough
-//            if (reservoirB < amountBOptimal) {
-//                revert InsufficientBReservoir();
-//            }
+            //            if (reservoirB < amountBOptimal) {
+            //                revert InsufficientBReservoir();
+            //            }
             (amountA, amountB) = (amountADesired, 0);
         }
     }

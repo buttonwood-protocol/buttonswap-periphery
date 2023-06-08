@@ -24,8 +24,8 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
     // Utility function for creating and initializing pairs with poolA:poolB price ratio. Does not use ButtonwoodRouter
     function createAndInitializePair(MockRebasingERC20 tokenA1, MockRebasingERC20 tokenB1, uint256 poolA, uint256 poolB)
-    private
-    returns (IButtonswapPair pair, uint256 liquidityOut)
+        private
+        returns (IButtonswapPair pair, uint256 liquidityOut)
     {
         pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA1), address(tokenB1)));
         tokenA1.mint(address(this), poolA);
@@ -42,15 +42,17 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
     // Utility function for testing functions that use Permit
     function generateUserAPermitSignature(IButtonswapPair pair, uint256 liquidity, uint256 deadline)
-    private
-    view
-    returns (uint8 v, bytes32 r, bytes32 s)
+        private
+        view
+        returns (uint8 v, bytes32 r, bytes32 s)
     {
         bytes32 permitDigest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
                 pair.DOMAIN_SEPARATOR(),
-                keccak256(abi.encode(pair.PERMIT_TYPEHASH(), userA, address(basicButtonswapRouter), liquidity, 0, deadline))
+                keccak256(
+                    abi.encode(pair.PERMIT_TYPEHASH(), userA, address(basicButtonswapRouter), liquidity, 0, deadline)
+                )
             )
         );
         return vm.sign(userAPrivateKey, permitDigest);
@@ -181,7 +183,7 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         uint256 matchingBAmount = (uint256(amountADesired) * poolB) / poolA;
         vm.assume(
             (matchingAAmount <= amountADesired && matchingAAmount > amountAMin)
-            || (matchingBAmount <= amountBDesired && matchingBAmount > amountBMin)
+                || (matchingBAmount <= amountBDesired && matchingBAmount > amountBMin)
         );
 
         // Approving the router to take at most amountADesired A tokens and at most amountBDesired B tokens
@@ -249,14 +251,7 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Adding liquidity should succeed now. Not concerned with liquidity value
         (uint256 amountA, uint256 amountB,) = basicButtonswapRouter.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            amountADesired,
-            amountBDesired,
-            0,
-            0,
-            userA,
-            block.timestamp + 1
+            address(tokenA), address(tokenB), amountADesired, amountBDesired, 0, 0, userA, block.timestamp + 1
         );
 
         // Validating that it used amountADesired and scaled down to calculate how much B-token to use
@@ -281,13 +276,14 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Ensuring that a B-reservoir is created with a negative rebase on the A-tokens (greater than 1/2)
         rebaseDenominator = bound(rebaseDenominator, 2, type(uint8).max);
-        rebaseNumerator = bound(rebaseNumerator, rebaseDenominator/2, rebaseDenominator - 1);
+        rebaseNumerator = bound(rebaseNumerator, rebaseDenominator / 2, rebaseDenominator - 1);
 
         // Applying the rebase
         tokenA.applyMultiplier(rebaseNumerator, rebaseDenominator);
 
         // Attempting to withdraw the amounts in the pool (because it was a positive rebase, poolA and poolB are unchanged, but resA has been created)
-        (uint256 newPoolA, uint256 newPoolB,,) = ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+        (uint256 newPoolA, uint256 newPoolB,,) =
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
         amountADesired = uint112(newPoolA);
         amountBDesired = uint112(newPoolB);
 
@@ -303,14 +299,7 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Adding liquidity should succeed now. Not concerned with liquidity value
         (uint256 amountA, uint256 amountB,) = basicButtonswapRouter.addLiquidity(
-            address(tokenA),
-            address(tokenB),
-            amountADesired,
-            amountBDesired,
-            0,
-            0,
-            userA,
-            block.timestamp + 1
+            address(tokenA), address(tokenB), amountADesired, amountBDesired, 0, 0, userA, block.timestamp + 1
         );
 
         // Validating that it used amountBDesired and scaled down to calculate how much A-token to use
@@ -320,7 +309,9 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
     // **** addLiquidityWithReservoir() ****
 
-    function test_addLiquidityWithReservoir_revertsIfNoPairExists(uint112 amountADesired, uint112 amountBDesired) public {
+    function test_addLiquidityWithReservoir_revertsIfNoPairExists(uint112 amountADesired, uint112 amountBDesired)
+        public
+    {
         // Minting enough for minimum liquidity requirement
         vm.assume(amountADesired > 10000);
         vm.assume(amountBDesired > 10000);
@@ -337,10 +328,9 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         );
     }
 
-    function test_addLiquidityWithReservoir_pairExistsButEmptyPools(
-        uint112 amountADesired,
-        uint112 amountBDesired
-    ) public {
+    function test_addLiquidityWithReservoir_pairExistsButEmptyPools(uint112 amountADesired, uint112 amountBDesired)
+        public
+    {
         // Creating the pair without any liquidity
         buttonswapFactory.createPair(address(tokenA), address(tokenB));
 
@@ -388,7 +378,9 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         tokenA.applyMultiplier(11, 10);
 
         // Calculating the optimalAmount of tokenA to amountBDesired and ensuring it's under `amountAMin`
-        (,uint256 amountAOptimal) = ButtonswapLibrary.getMintSwappedAmounts(address(buttonswapFactory), address(tokenB), address(tokenA), amountBDesired);
+        (, uint256 amountAOptimal) = ButtonswapLibrary.getMintSwappedAmounts(
+            address(buttonswapFactory), address(tokenB), address(tokenA), amountBDesired
+        );
         uint256 amountAMin = amountAOptimal + 1;
 
         vm.expectRevert(IButtonswapRouterErrors.InsufficientAAmount.selector);
@@ -422,7 +414,7 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         // Getting reservoir size
         uint256 reservoirA;
         (poolA, poolB, reservoirA,) =
-        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
 
         // Estimating how much of amountBDesired will be converted to A-tokens, and how much of the reservoir used
         uint256 liquidityOut;
@@ -483,7 +475,9 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         tokenB.applyMultiplier(11, 10);
 
         // Calculating the optimalAmount of tokenB to amountADesired and ensuring it's under `amountBMin`
-        (,uint256 amountBOptimal) = ButtonswapLibrary.getMintSwappedAmounts(address(buttonswapFactory), address(tokenA), address(tokenB), amountADesired);
+        (, uint256 amountBOptimal) = ButtonswapLibrary.getMintSwappedAmounts(
+            address(buttonswapFactory), address(tokenA), address(tokenB), amountADesired
+        );
         uint256 amountBMin = amountBOptimal + 1;
 
         vm.expectRevert(IButtonswapRouterErrors.InsufficientBAmount.selector);
@@ -517,7 +511,7 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         // Getting reservoir size
         uint256 reservoirB;
         (poolA, poolB,, reservoirB) =
-        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
 
         // Estimating how much of amountADesired will be converted to B-tokens, and how much of the reservoir used
         uint256 liquidityOut;
@@ -567,21 +561,11 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Attempt to remove liquidity but will revert since it's calling `transferFrom()` on an invalid address
         basicButtonswapRouter.removeLiquidity(
-            address(tokenA),
-            address(tokenB),
-            liquidity,
-            0,
-            0,
-            userA,
-            block.timestamp + 1
+            address(tokenA), address(tokenB), liquidity, 0, 0, userA, block.timestamp + 1
         );
     }
 
-    function test_removeLiquidity_insufficientAAmount(
-        uint256 poolA,
-        uint256 poolB,
-        uint112 liquidity
-    ) public {
+    function test_removeLiquidity_insufficientAAmount(uint256 poolA, uint256 poolB, uint112 liquidity) public {
         // Minting enough for minimum liquidity requirement
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -613,11 +597,7 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         );
     }
 
-    function test_removeLiquidity_insufficientBAmount(
-        uint256 poolA,
-        uint256 poolB,
-        uint112 liquidity
-    ) public {
+    function test_removeLiquidity_insufficientBAmount(uint256 poolA, uint256 poolB, uint112 liquidity) public {
         // Minting enough for minimum liquidity requirement
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -703,17 +683,14 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Attempt to remove liquidity but will revert since it's calling `transferFrom()` on an invalid address
         basicButtonswapRouter.removeLiquidityFromReservoir(
-            address(tokenA),
-            address(tokenB),
-            liquidity,
-            0,
-            0,
-            userA,
-            block.timestamp + 1
+            address(tokenA), address(tokenB), liquidity, 0, 0, userA, block.timestamp + 1
         );
     }
 
-    function test_removeLiquidityFromReservoir_insufficientAAmount(uint256 poolA, uint256 poolB, uint112 liquidity,
+    function test_removeLiquidityFromReservoir_insufficientAAmount(
+        uint256 poolA,
+        uint256 poolB,
+        uint112 liquidity,
         uint8 rebaseNumerator,
         uint8 rebaseDenominator
     ) public {
@@ -739,7 +716,9 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         tokenA.applyMultiplier(rebaseNumerator, rebaseDenominator);
 
         // Calculating expectedAmountOutA and swappedReservoirAmountA
-        (uint256 expectedAmountOutA, uint256 swappedReservoirAmountA) = ButtonswapLibrary.getBurnSwappedAmounts(address(buttonswapFactory), address(tokenA), address(tokenB), liquidity);
+        (uint256 expectedAmountOutA, uint256 swappedReservoirAmountA) = ButtonswapLibrary.getBurnSwappedAmounts(
+            address(buttonswapFactory), address(tokenA), address(tokenB), liquidity
+        );
 
         // Ensuring `InsufficientLiquidityBurned()` error not thrown
         vm.assume(expectedAmountOutA > 0);
@@ -748,7 +727,8 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(swappedReservoirAmountA < pair.getSwappableReservoirLimit());
 
         // Ensuring expectedAmountOutA is less than that of the reservoir
-        (uint256 reservoirA,) = ButtonswapLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
+        (uint256 reservoirA,) =
+            ButtonswapLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
         vm.assume(expectedAmountOutA < reservoirA);
 
         // Calculating amountAMin to be one more than the amount of A that would be removed
@@ -764,7 +744,10 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         );
     }
 
-    function test_removeLiquidityFromReservoir_insufficientBAmount(uint256 poolA, uint256 poolB, uint112 liquidity,
+    function test_removeLiquidityFromReservoir_insufficientBAmount(
+        uint256 poolA,
+        uint256 poolB,
+        uint112 liquidity,
         uint8 rebaseNumerator,
         uint8 rebaseDenominator
     ) public {
@@ -790,7 +773,9 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         tokenB.applyMultiplier(rebaseNumerator, rebaseDenominator);
 
         // Calculating expectedAmountOutB and swappedReservoirAmountB
-        (uint256 expectedAmountOutB, uint256 swappedReservoirAmountB) = ButtonswapLibrary.getBurnSwappedAmounts(address(buttonswapFactory), address(tokenB), address(tokenA), liquidity);
+        (uint256 expectedAmountOutB, uint256 swappedReservoirAmountB) = ButtonswapLibrary.getBurnSwappedAmounts(
+            address(buttonswapFactory), address(tokenB), address(tokenA), liquidity
+        );
 
         // Ensuring `InsufficientLiquidityBurned()` error not thrown
         vm.assume(expectedAmountOutB > 0);
@@ -799,7 +784,8 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(swappedReservoirAmountB < pair.getSwappableReservoirLimit());
 
         // Ensuring expectedAmountOutB is less than that of the reservoir
-        (, uint256 reservoirB) = ButtonswapLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
+        (, uint256 reservoirB) =
+            ButtonswapLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
         vm.assume(expectedAmountOutB < reservoirB);
 
         // Calculating amountBMin to be one more than the amount of B that would be removed
@@ -815,7 +801,10 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         );
     }
 
-    function test_removeLiquidityFromReservoir_usingReservoirAWithSufficientAmount(uint256 poolA, uint256 poolB, uint112 liquidity,
+    function test_removeLiquidityFromReservoir_usingReservoirAWithSufficientAmount(
+        uint256 poolA,
+        uint256 poolB,
+        uint112 liquidity,
         uint8 rebaseNumerator,
         uint8 rebaseDenominator
     ) public {
@@ -841,7 +830,9 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         tokenA.applyMultiplier(rebaseNumerator, rebaseDenominator);
 
         // Calculating expectedAmountOutA and swappedReservoirAmountA
-        (uint256 expectedAmountOutA, uint256 swappedReservoirAmountA) = ButtonswapLibrary.getBurnSwappedAmounts(address(buttonswapFactory), address(tokenA), address(tokenB), liquidity);
+        (uint256 expectedAmountOutA, uint256 swappedReservoirAmountA) = ButtonswapLibrary.getBurnSwappedAmounts(
+            address(buttonswapFactory), address(tokenA), address(tokenB), liquidity
+        );
 
         // Ensuring `InsufficientLiquidityBurned()` error not thrown
         vm.assume(expectedAmountOutA > 0);
@@ -850,7 +841,8 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(swappedReservoirAmountA < pair.getSwappableReservoirLimit());
 
         // Ensuring expectedAmountOutA is less than that of the reservoir
-        (uint256 reservoirA,) = ButtonswapLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
+        (uint256 reservoirA,) =
+            ButtonswapLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
         vm.assume(expectedAmountOutA < reservoirA);
 
         // Giving permission to the pair to burn liquidity
@@ -865,7 +857,10 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         assertEq(amountOutB, 0, "Incorrect amount of tokenB removed");
     }
 
-    function test_removeLiquidityFromReservoir_usingReservoirBWithSufficientAmount(uint256 poolA, uint256 poolB, uint112 liquidity,
+    function test_removeLiquidityFromReservoir_usingReservoirBWithSufficientAmount(
+        uint256 poolA,
+        uint256 poolB,
+        uint112 liquidity,
         uint8 rebaseNumerator,
         uint8 rebaseDenominator
     ) public {
@@ -891,7 +886,9 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         tokenB.applyMultiplier(rebaseNumerator, rebaseDenominator);
 
         // Calculating expectedAmountOutB and swappedReservoirAmountB
-        (uint256 expectedAmountOutB, uint256 swappedReservoirAmountB) = ButtonswapLibrary.getBurnSwappedAmounts(address(buttonswapFactory), address(tokenB), address(tokenA), liquidity);
+        (uint256 expectedAmountOutB, uint256 swappedReservoirAmountB) = ButtonswapLibrary.getBurnSwappedAmounts(
+            address(buttonswapFactory), address(tokenB), address(tokenA), liquidity
+        );
 
         // Ensuring `InsufficientLiquidityBurned()` error not thrown
         vm.assume(expectedAmountOutB > 0);
@@ -900,7 +897,8 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(swappedReservoirAmountB < pair.getSwappableReservoirLimit());
 
         // Ensuring expectedAmountOutB is less than that of the reservoir
-        (,uint256 reservoirB) = ButtonswapLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
+        (, uint256 reservoirB) =
+            ButtonswapLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
         vm.assume(expectedAmountOutB < reservoirB);
 
         // Giving permission to the pair to burn liquidity
@@ -948,7 +946,6 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Generating the v,r,s signature for userA to allow access to the pair
         (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, type(uint256).max, block.timestamp + 1);
-
 
         // Expecting to revert with `InsufficientAAmount()` error
         vm.expectRevert(IButtonswapRouterErrors.InsufficientAAmount.selector);
@@ -1028,7 +1025,6 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         // Generating the v,r,s signature for userA to allow access to the pair
         (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, type(uint256).max, block.timestamp + 1);
 
-
         // Expecting to revert with `InsufficientBAmount()` error
         vm.expectRevert(IButtonswapRouterErrors.InsufficientBAmount.selector);
         vm.prank(userA);
@@ -1067,7 +1063,6 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Generating the v,r,s signature for userA to allow access to the pair
         (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, liquidity, block.timestamp + 1);
-
 
         // Expecting to revert with `InsufficientBAmount()` error
         vm.expectRevert(IButtonswapRouterErrors.InsufficientBAmount.selector);
@@ -1108,7 +1103,6 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Generating the v,r,s signature for userA to allow access to the pair
         (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, type(uint256).max, block.timestamp + 1);
-
 
         // Expecting to revert with `InsufficientAAmount()` error
         vm.prank(userA);
@@ -1152,7 +1146,6 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Generating the v,r,s signature for userA to allow access to the pair
         (uint8 v, bytes32 r, bytes32 s) = generateUserAPermitSignature(pair, liquidity, block.timestamp + 1);
-
 
         // Expecting to revert with `InsufficientAAmount()` error
         vm.prank(userA);
@@ -1258,8 +1251,9 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         MockRebasingERC20(path[0]).mint(address(this), amountIn);
         MockRebasingERC20(path[0]).approve(address(basicButtonswapRouter), amountIn);
 
-        (uint256[] memory amounts) =
-        basicButtonswapRouter.swapExactTokensForTokens(amountIn, amountOutMin, path, address(this), block.timestamp + 1);
+        (uint256[] memory amounts) = basicButtonswapRouter.swapExactTokensForTokens(
+            amountIn, amountOutMin, path, address(this), block.timestamp + 1
+        );
 
         // Checking that the amounts in the trade are as expected
         assertEq(amounts, expectedAmounts, "Amounts in the trade are not as expected");
@@ -1365,8 +1359,9 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         MockRebasingERC20(path[0]).mint(address(this), amountInMax);
         MockRebasingERC20(path[0]).approve(address(basicButtonswapRouter), amountInMax);
 
-        (uint256[] memory amounts) =
-        basicButtonswapRouter.swapTokensForExactTokens(amountOut, amountInMax, path, address(this), block.timestamp + 1);
+        (uint256[] memory amounts) = basicButtonswapRouter.swapTokensForExactTokens(
+            amountOut, amountInMax, path, address(this), block.timestamp + 1
+        );
 
         // Checking that the amounts in the trade are as expected
         assertEq(amounts, expectedAmounts, "Amounts in the trade are not as expected");

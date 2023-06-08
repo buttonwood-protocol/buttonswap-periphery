@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {IButtonswapFactory} from
-"buttonswap-periphery_buttonswap-core/interfaces/IButtonswapFactory/IButtonswapFactory.sol";
+    "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapFactory/IButtonswapFactory.sol";
 import {IButtonswapPair} from "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
 import {TransferHelper} from "./libraries/TransferHelper.sol";
 import {IRootButtonswapRouter} from "./interfaces/IButtonswapRouter/IRootButtonswapRouter.sol";
@@ -86,7 +86,7 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
             revert NoReservoir();
         }
         (uint256 poolA, uint256 poolB, uint256 reservoirA, uint256 reservoirB) =
-        ButtonswapLibrary.getLiquidityBalances(factory, tokenA, tokenB);
+            ButtonswapLibrary.getLiquidityBalances(factory, tokenA, tokenB);
         // the first liquidity addition should happen through _addLiquidity
         // can't initialize by matching with a reservoir
         if (poolA == 0 || poolB == 0) {
@@ -99,8 +99,8 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
         if (reservoirA > 0) {
             // we take from reservoirA and the user-provided amountBDesired
             // But modify so that you don't do liquidityOut logic since you don't need it
-            (,uint256 amountAOptimal) =
-            ButtonswapLibrary.getMintSwappedAmounts(factory, tokenB, tokenA, amountBDesired);
+            (, uint256 amountAOptimal) =
+                ButtonswapLibrary.getMintSwappedAmounts(factory, tokenB, tokenA, amountBDesired);
             // User wants to drain to the res by amountAMin or more
             // Slippage-check
             if (amountAOptimal < amountAMin) {
@@ -111,7 +111,8 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
             console.log("amountB", amountB);
         } else {
             // we take from reservoirB and the user-provided amountADesired
-            (, uint256 amountBOptimal) = ButtonswapLibrary.getMintSwappedAmounts(factory, tokenA, tokenB, amountADesired);
+            (, uint256 amountBOptimal) =
+                ButtonswapLibrary.getMintSwappedAmounts(factory, tokenA, tokenB, amountADesired);
             if (amountBOptimal < amountBMin) {
                 revert InsufficientBAmount();
             }
@@ -133,7 +134,7 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
             uint256 amountOut = amounts[i + 1];
             (uint256 amount0In, uint256 amount1In) = input == token0 ? (amountIn, uint256(0)) : (uint256(0), amountIn);
             (uint256 amount0Out, uint256 amount1Out) =
-            input == token0 ? (uint256(0), amountOut) : (amountOut, uint256(0));
+                input == token0 ? (uint256(0), amountOut) : (amountOut, uint256(0));
 
             address to = i < path.length - 2 ? address(this) : _to;
             IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, input, output));
@@ -142,15 +143,15 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
         }
     }
 
-//    // Return the input token's pool, output token's pool, and input token's reservoir
-//    function _getSortedPoolsAndReservoirs(IButtonswapPair pair, bool inputIsFirst)
-//    internal
-//    view
-//    returns (uint256 poolInput, uint256 poolOutput, uint256 reservoirInput)
-//    {
-//        (uint256 pool0, uint256 pool1, uint256 reservoir0, uint256 reservoir1,) = pair.getLiquidityBalances();
-//        return inputIsFirst ? (pool0, pool1, reservoir0) : (pool1, pool0, reservoir1);
-//    }
+    //    // Return the input token's pool, output token's pool, and input token's reservoir
+    //    function _getSortedPoolsAndReservoirs(IButtonswapPair pair, bool inputIsFirst)
+    //    internal
+    //    view
+    //    returns (uint256 poolInput, uint256 poolOutput, uint256 reservoirInput)
+    //    {
+    //        (uint256 pool0, uint256 pool1, uint256 reservoir0, uint256 reservoir1,) = pair.getLiquidityBalances();
+    //        return inputIsFirst ? (pool0, pool1, reservoir0) : (pool1, pool0, reservoir1);
+    //    }
 
     // ToDo: Put this back in after fixing all the other bugs. This requires IR :/
     //    // **** SWAP (supporting fee-on-transfer tokens) ****

@@ -179,9 +179,9 @@ library ButtonswapLibrary {
      * @dev ToDo
      */
     function getBurnSwappedAmounts(address factory, address tokenA, address tokenB, uint256 liquidity)
-    internal
-    view
-    returns (uint256 tokenOutA, uint256 swappedReservoirAmountA)
+        internal
+        view
+        returns (uint256 tokenOutA, uint256 swappedReservoirAmountA)
     {
         IButtonswapPair pair = IButtonswapPair(pairFor(factory, tokenA, tokenB));
         uint256 totalLiquidity = pair.totalSupply();
