@@ -7,6 +7,7 @@ import {ButtonswapFactory} from "buttonswap-periphery_buttonswap-core/Buttonswap
 import {ButtonswapPair} from "buttonswap-periphery_buttonswap-core/ButtonswapPair.sol";
 import {MockERC20} from "buttonswap-periphery_mock-contracts/MockERC20.sol";
 import {MockRebasingERC20} from "buttonswap-periphery_mock-contracts/MockRebasingERC20.sol";
+import {PairMath} from "buttonswap-periphery_buttonswap-core/libraries/PairMath.sol";
 
 contract ButtonswapLibraryTest is Test {
     address public userA = 0x000000000000000000000000000000000000000A;
@@ -631,11 +632,96 @@ contract ButtonswapLibraryTest is Test {
         }
     }
 
-    // TODO: Test your reservoirQuote function
-    // TODO: Add back in your tests for mintingWithReservoir family
-    // TODo: Update _burnFromReservoir function in bSWAP
-    // TODO: Add back in tests for burningFromReservoir family
+    function test_getMintSwappedAmounts(bytes32 saltA, bytes32 saltB, uint256 poolA, uint256 poolB, uint256 amountInA)
+        public
+    {
+        // Minting enough for minimum liquidity requirement
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolB = bound(poolB, 10000, type(uint112).max);
+        amountInA = bound(amountInA, 0, type(uint112).max);
 
-    // ToDo: Add unit tests for getMintSwappedAmounts
-    // ToDo: Add unit tests for getBurnSwappedAmounts
+        // Creating the two tokens
+        // Salts are used to fuzz unique addresses in arbitrary order
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+
+        // Creating the pair with poolA:poolB price ratio
+        ButtonswapPair pair = createAndInitializePairRebasing(tokenA, tokenB, poolA, poolB);
+
+        uint256 totalSupply = pair.totalSupply();
+        uint256 totalA = tokenA.balanceOf(address(pair));
+        uint256 totalB = tokenB.balanceOf(address(pair));
+        uint256 movingAveragePrice0 = pair.movingAveragePrice0();
+
+        uint256 expectedSwappedReservoirAmountB;
+
+        // tokenA == pair.token0
+        if (address(tokenA) < address(tokenB)) {
+            (, expectedSwappedReservoirAmountB) = PairMath.getSingleSidedMintLiquidityOutAmountA(
+                totalSupply, amountInA, totalA, totalB, movingAveragePrice0
+            );
+        } else {
+            // tokenB == pair.token0
+            (, expectedSwappedReservoirAmountB) = PairMath.getSingleSidedMintLiquidityOutAmountB(
+                totalSupply, amountInA, totalB, totalA, movingAveragePrice0
+            );
+        }
+        (, uint256 swappedReservoirAmountB) = ButtonswapLibrary.getMintSwappedAmounts(
+            address(buttonswapFactory), address(tokenA), address(tokenB), amountInA
+        );
+
+        assertEq(
+            swappedReservoirAmountB,
+            expectedSwappedReservoirAmountB,
+            "swappedReservoirAmountB should equal expectedSwappedReservoirAmountB"
+        );
+    }
+
+    function test_getBurnSwappedAmounts(bytes32 saltA, bytes32 saltB, uint256 poolA, uint256 poolB, uint256 liquidity)
+        public
+    {
+        // Minting enough for minimum liquidity requirement
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolB = bound(poolB, 10000, type(uint112).max);
+
+        // Creating the two tokens
+        // Salts are used to fuzz unique addresses in arbitrary order
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+
+        // Creating the pair with poolA:poolB price ratio
+        ButtonswapPair pair = createAndInitializePairRebasing(tokenA, tokenB, poolA, poolB);
+
+        uint256 totalSupply = pair.totalSupply();
+        liquidity = bound(liquidity, 0, totalSupply);
+
+        uint256 totalA = tokenA.balanceOf(address(pair));
+        uint256 totalB = tokenB.balanceOf(address(pair));
+        uint256 movingAveragePrice0 = pair.movingAveragePrice0();
+
+        uint256 expectedTokenOutA;
+        uint256 expectedSwappedReservoirAmountA;
+
+        // tokenA == pair.token0
+        if (address(tokenA) < address(tokenB)) {
+            (expectedTokenOutA, expectedSwappedReservoirAmountA) =
+                PairMath.getSingleSidedBurnOutputAmountA(totalSupply, liquidity, totalA, totalB, movingAveragePrice0);
+        } else {
+            // tokenB == pair.token0
+            (expectedTokenOutA, expectedSwappedReservoirAmountA) =
+                PairMath.getSingleSidedBurnOutputAmountB(totalSupply, liquidity, totalB, totalA, movingAveragePrice0);
+        }
+
+        (uint256 tokenOutA, uint256 swappedReservoirAmountA) = ButtonswapLibrary.getBurnSwappedAmounts(
+            address(buttonswapFactory), address(tokenA), address(tokenB), liquidity
+        );
+
+        assertEq(tokenOutA, expectedTokenOutA, "tokenOutA should equal expectedTokenOutA");
+
+        assertEq(
+            swappedReservoirAmountA,
+            expectedSwappedReservoirAmountA,
+            "swappedReservoirAmountA should equal expectedSwappedReservoirAmountA"
+        );
+    }
 }

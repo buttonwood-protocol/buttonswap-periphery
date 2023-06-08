@@ -85,13 +85,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         }
     }
 
-    function test_getAmountsOut(uint256 amountIn, address[] memory path) public {
-        try buttonswapRouter.getAmountsOut(amountIn, path) returns (uint256[] memory amounts) {
-            assertEq(
-                amounts,
-                ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path),
-                "Call succeeds but output is not as expected"
-            );
+    function test_getAmountsOut_invalidPath(uint256 amountIn, address[] memory path) public {
+        try buttonswapRouter.getAmountsOut(amountIn, path) {
+            assert(false); // Should never hit this line
         } catch (bytes memory reason) {
             if (reason.length == 0) {
                 // Skip these cases as they are not caught by vm.expectRevert
@@ -104,6 +100,46 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         }
     }
 
+    function test_getAmountsOut_validPath(uint256 amountIn, uint256[] calldata seedPoolOutAmounts) public {
+        // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
+        amountIn = bound(amountIn, 1000, 10000);
+
+        // Setting path length to be between 2 and 10
+        vm.assume(seedPoolOutAmounts.length >= 2);
+        uint256 pathLength = bound(seedPoolOutAmounts.length, 2, 11);
+        uint256[] memory poolOutAmounts = new uint256[](pathLength);
+        for (uint256 idx = 0; idx < pathLength; idx++) {
+            poolOutAmounts[idx] = seedPoolOutAmounts[idx];
+        }
+
+        // Assuming the poolIn=10000, calculating poolOut amounts to avoid math overflow/underflow
+        for (uint256 idx = 1; idx < poolOutAmounts.length; idx++) {
+            // The pair-conversion rate will be bounded [0.9 , 10]
+            poolOutAmounts[idx] = bound(poolOutAmounts[idx], 9000, 100000);
+        }
+
+        // Creating all the tokens for the path
+        address[] memory path = new address[](poolOutAmounts.length);
+        for (uint256 idx; idx < path.length; idx++) {
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            path[idx] = address(token);
+        }
+
+        // Create the pairs and populating the pools
+        for (uint256 idx; idx < path.length - 1; idx++) {
+            createAndInitializePair(
+                MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx + 1]), 10000, poolOutAmounts[idx + 1]
+            );
+        }
+
+        uint256[] memory expectedAmounts = ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
+
+        uint256[] memory amounts = buttonswapRouter.getAmountsOut(amountIn, path);
+
+        // Checking that the amounts in the trade are as expected
+        assertEq(amounts, expectedAmounts, "Amounts in the trade are not as expected");
+    }
+
     // Using a testFail to capture EvmErrors that are not caught by vm.expectRevert
     function testFail_getAmountsOut(uint256 amountIn, address[] memory path) public view {
         try buttonswapRouter.getAmountsOut(amountIn, path) {
@@ -113,14 +149,10 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
             ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
         }
     }
-
+    
     function test_getAmountsIn(uint256 amountOut, address[] calldata path) public {
-        try buttonswapRouter.getAmountsIn(amountOut, path) returns (uint256[] memory amounts) {
-            assertEq(
-                amounts,
-                ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path),
-                "Call succeeds but output is not as expected"
-            );
+        try buttonswapRouter.getAmountsIn(amountOut, path) {
+            assert(false); // Should never hit this line
         } catch (bytes memory reason) {
             if (reason.length == 0) {
                 // Skip these cases as they are not caught by vm.expectRevert
@@ -131,6 +163,46 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
                 ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
             }
         }
+    }
+
+    function test_getAmountsIn_validPath(uint256 amountOut, uint256[] calldata seedPoolOutAmounts) public {
+        // Ensuring that amountOut is bounded to avoid errors/overflows/underflows
+        amountOut = bound(amountOut, 900, 1000); // 1000 * (1.1^10) < minimum pool out amount
+
+        // Setting path length to be between 2 and 10
+        vm.assume(seedPoolOutAmounts.length >= 2);
+        uint256 pathLength = bound(seedPoolOutAmounts.length, 2, 10);
+        uint256[] memory poolOutAmounts = new uint256[](pathLength);
+        for (uint256 idx = 0; idx < pathLength; idx++) {
+            poolOutAmounts[idx] = seedPoolOutAmounts[idx];
+        }
+
+        // Assuming the poolIn=10000, calculating poolOut amounts to avoid math overflow/underflow
+        for (uint256 idx = 1; idx < poolOutAmounts.length; idx++) {
+            // The pair-conversion rate will be bounded [0.9 , 10]
+            poolOutAmounts[idx] = bound(poolOutAmounts[idx], 9000, 100000);
+        }
+
+        // Creating all the tokens for the path
+        address[] memory path = new address[](poolOutAmounts.length);
+        for (uint256 idx; idx < path.length; idx++) {
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            path[idx] = address(token);
+        }
+
+        // Create the pairs and calculate expected amounts
+        for (uint256 idx = path.length - 1; idx > 0; idx--) {
+            createAndInitializePair(
+                MockRebasingERC20(path[idx]), MockRebasingERC20(path[idx - 1]), poolOutAmounts[idx], 10000
+            );
+        }
+
+        uint256[] memory expectedAmounts = ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
+
+        uint256[] memory amounts = buttonswapRouter.getAmountsIn(amountOut, path);
+
+        // Checking that the amounts in the trade are as expected
+        assertEq(amounts, expectedAmounts, "Amounts in the trade are not as expected");
     }
 
     // Using a testFail to capture EvmErrors that are not caught by vm.expectRevert
