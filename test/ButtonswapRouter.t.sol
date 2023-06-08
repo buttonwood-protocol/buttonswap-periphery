@@ -149,7 +149,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
             ButtonswapLibrary.getAmountsOut(address(buttonswapFactory), amountIn, path);
         }
     }
-    
+
     function test_getAmountsIn(uint256 amountOut, address[] calldata path) public {
         try buttonswapRouter.getAmountsIn(amountOut, path) {
             assert(false); // Should never hit this line

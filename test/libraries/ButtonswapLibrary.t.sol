@@ -632,9 +632,15 @@ contract ButtonswapLibraryTest is Test {
         }
     }
 
-    function test_getMintSwappedAmounts(bytes32 saltA, bytes32 saltB, uint256 poolA, uint256 poolB, uint256 amountInA)
-        public
-    {
+    function test_getMintSwappedAmounts(
+        bytes32 saltA,
+        bytes32 saltB,
+        uint256 poolA,
+        uint256 poolB,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator,
+        uint256 amountInA
+    ) public {
         // Minting enough for minimum liquidity requirement
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -647,6 +653,13 @@ contract ButtonswapLibraryTest is Test {
 
         // Creating the pair with poolA:poolB price ratio
         ButtonswapPair pair = createAndInitializePairRebasing(tokenA, tokenB, poolA, poolB);
+
+        // Ensuring that a A-reservoir is created with a positive rebase
+        vm.assume(rebaseNumerator > rebaseDenominator);
+        vm.assume(rebaseDenominator > 0);
+
+        // Applying the rebase
+        tokenA.applyMultiplier(rebaseNumerator, rebaseDenominator);
 
         uint256 totalSupply = pair.totalSupply();
         uint256 totalA = tokenA.balanceOf(address(pair));
@@ -677,9 +690,15 @@ contract ButtonswapLibraryTest is Test {
         );
     }
 
-    function test_getBurnSwappedAmounts(bytes32 saltA, bytes32 saltB, uint256 poolA, uint256 poolB, uint256 liquidity)
-        public
-    {
+    function test_getBurnSwappedAmounts(
+        bytes32 saltA,
+        bytes32 saltB,
+        uint256 poolA,
+        uint256 poolB,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator,
+        uint256 liquidity
+    ) public {
         // Minting enough for minimum liquidity requirement
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -691,6 +710,13 @@ contract ButtonswapLibraryTest is Test {
 
         // Creating the pair with poolA:poolB price ratio
         ButtonswapPair pair = createAndInitializePairRebasing(tokenA, tokenB, poolA, poolB);
+
+        // Ensuring that a A-reservoir is created with a positive rebase
+        vm.assume(rebaseNumerator > rebaseDenominator);
+        vm.assume(rebaseDenominator > 0);
+
+        // Applying the rebase
+        tokenA.applyMultiplier(rebaseNumerator, rebaseDenominator);
 
         uint256 totalSupply = pair.totalSupply();
         liquidity = bound(liquidity, 0, totalSupply);
