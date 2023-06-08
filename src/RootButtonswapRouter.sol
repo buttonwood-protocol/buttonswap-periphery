@@ -8,7 +8,6 @@ import {TransferHelper} from "./libraries/TransferHelper.sol";
 import {IRootButtonswapRouter} from "./interfaces/IButtonswapRouter/IRootButtonswapRouter.sol";
 import {ButtonswapLibrary} from "./libraries/ButtonswapLibrary.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
-import {console} from "buttonswap-periphery_forge-std/Console.sol";
 
 contract RootButtonswapRouter is IRootButtonswapRouter {
     /**
@@ -107,8 +106,6 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
                 revert InsufficientAAmount();
             }
             (amountA, amountB) = (0, amountBDesired);
-            console.log("amountA", amountA);
-            console.log("amountB", amountB);
         } else {
             // we take from reservoirB and the user-provided amountADesired
             (, uint256 amountBOptimal) =
@@ -117,8 +114,6 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
                 revert InsufficientBAmount();
             }
             (amountA, amountB) = (amountADesired, 0);
-            console.log("amountA", amountA);
-            console.log("amountB", amountB);
         }
     }
 
@@ -142,43 +137,4 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
             pair.swap(amount0In, amount1In, amount0Out, amount1Out, to);
         }
     }
-
-    //    // Return the input token's pool, output token's pool, and input token's reservoir
-    //    function _getSortedPoolsAndReservoirs(IButtonswapPair pair, bool inputIsFirst)
-    //    internal
-    //    view
-    //    returns (uint256 poolInput, uint256 poolOutput, uint256 reservoirInput)
-    //    {
-    //        (uint256 pool0, uint256 pool1, uint256 reservoir0, uint256 reservoir1,) = pair.getLiquidityBalances();
-    //        return inputIsFirst ? (pool0, pool1, reservoir0) : (pool1, pool0, reservoir1);
-    //    }
-
-    // ToDo: Put this back in after fixing all the other bugs. This requires IR :/
-    //    // **** SWAP (supporting fee-on-transfer tokens) ****
-    //    // requires the initial amount to have already been sent to the first pair
-    //    function _swapSupportingFeeOnTransferTokens(address[] memory path, address _to) internal virtual {
-    //        for (uint256 i; i < path.length - 1; i++) {
-    //            (address input, address output) = (path[i], path[i + 1]);
-    //            (address token0,) = ButtonswapLibrary.sortTokens(input, output);
-    //            IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, input, output));
-    //
-    //            uint256 amountInput;
-    //            uint256 amountOutput;
-    //            {
-    //                // scope to avoid stack too deep errors
-    //                (uint256 poolInput, uint256 poolOutput, uint256 reservoirInput) =
-    //                    _getSortedPoolsAndReservoirs(pair, input == token0);
-    //
-    //                amountInput = IERC20(input).balanceOf(address(pair)) - poolInput - reservoirInput;
-    //                amountOutput = ButtonswapLibrary.getAmountOut(amountInput, poolInput, poolOutput);
-    //            }
-    //            (uint256 amount0In, uint256 amount1In) =
-    //            input == token0 ? (amountInput, uint256(0)) : (uint256(0), amountInput);
-    //
-    //            (uint256 amount0Out, uint256 amount1Out) =
-    //                input == token0 ? (uint256(0), amountOutput) : (amountOutput, uint256(0));
-    //            address to = i < path.length - 2 ? ButtonswapLibrary.pairFor(factory, output, path[i + 2]) : _to;
-    //            pair.swap(amount0In, amount1In, amount0Out, amount1Out, to, new bytes(0));
-    //        }
-    //    }
 }

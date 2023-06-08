@@ -11,7 +11,6 @@ import {MockWeth} from "./mocks/MockWeth.sol";
 import {MockRebasingERC20} from "buttonswap-periphery_mock-contracts/MockRebasingERC20.sol";
 import {ButtonswapLibrary} from "../src/libraries/ButtonswapLibrary.sol";
 import {PairMath} from "buttonswap-periphery_buttonswap-core/libraries/PairMath.sol";
-import {console} from "buttonswap-periphery_forge-std/console.sol";
 
 contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
     address public userA;
