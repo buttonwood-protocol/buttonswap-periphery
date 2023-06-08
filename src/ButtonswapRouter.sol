@@ -80,4 +80,30 @@ contract ButtonswapRouter is ETHButtonswapRouter, IButtonswapRouter {
     {
         return ButtonswapLibrary.getAmountsIn(factory, amountOut, path);
     }
+
+    /**
+     * @inheritdoc IButtonswapRouter
+     */
+    function getMintSwappedAmounts(address tokenA, address tokenB, uint256 mintAmountA)
+        public
+        view
+        virtual
+        override
+        returns (uint256 tokenAToSwap, uint256 swappedReservoirAmountB)
+    {
+        return ButtonswapLibrary.getMintSwappedAmounts(factory, tokenA, tokenB, mintAmountA);
+    }
+
+    /**
+     * @inheritdoc IButtonswapRouter
+     */
+    function getBurnSwappedAmounts(address tokenA, address tokenB, uint256 liquidity)
+        public
+        view
+        virtual
+        override
+        returns (uint256 tokenOutA, uint256 swappedReservoirAmountA)
+    {
+        return ButtonswapLibrary.getBurnSwappedAmounts(factory, tokenA, tokenB, liquidity);
+    }
 }

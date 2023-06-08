@@ -56,4 +56,30 @@ interface IButtonswapRouter is IETHButtonswapRouter {
         external
         view
         returns (uint256[] memory amounts);
+
+    /**
+     * @notice Returns how much of the much of mintAmountA will be swapped for tokenB and for how much during a mintWithReservoir operation.
+     * @param tokenA First token address
+     * @param tokenB Second token address
+     * @param mintAmountA The amount of tokenA to be minted
+     * @return tokenAToSwap The amount of tokenA to be exchanged for tokenB from the reservoir
+     * @return swappedReservoirAmountB The amount of tokenB returned from the reservoir
+     */
+    function getMintSwappedAmounts(address tokenA, address tokenB, uint256 mintAmountA)
+        external
+        view
+        returns (uint256 tokenAToSwap, uint256 swappedReservoirAmountB);
+
+    /**
+     * @notice Returns how much of tokenA will be withdrawn from the pair and how much of it came from the reservoir during a burnFromReservoir operation.
+     * @param tokenA First token address
+     * @param tokenB Second token address
+     * @param liquidity The amount of liquidity to be burned
+     * @return tokenOutA The amount of tokenA to be withdrawn from the pair
+     * @return swappedReservoirAmountA The amount of tokenA returned from the reservoir
+     */
+    function getBurnSwappedAmounts(address tokenA, address tokenB, uint256 liquidity)
+        external
+        view
+        returns (uint256 tokenOutA, uint256 swappedReservoirAmountA);
 }

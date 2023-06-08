@@ -214,4 +214,95 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
             ButtonswapLibrary.getAmountsIn(address(buttonswapFactory), amountOut, path);
         }
     }
+
+    function test_getMintSwappedAmounts(
+        bytes32 saltA,
+        bytes32 saltB,
+        uint256 poolA,
+        uint256 poolB,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator,
+        uint256 amountInA
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolB = bound(poolB, 10000, type(uint112).max);
+        amountInA = bound(amountInA, 0, type(uint112).max);
+
+        // Creating the two tokens
+        // Salts are used to fuzz unique addresses in arbitrary order
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+
+        // Creating the pair with poolA:poolB price ratio
+        createAndInitializePair(tokenA, tokenB, poolA, poolB);
+
+        // Ensuring that a A-reservoir is created with a positive rebase
+        vm.assume(rebaseNumerator > rebaseDenominator);
+        vm.assume(rebaseDenominator > 0);
+
+        // Applying the rebase
+        tokenA.applyMultiplier(rebaseNumerator, rebaseDenominator);
+
+        (uint256 expectedTokenAToSwap, uint256 expectedSwappedReservoirAmountB) = ButtonswapLibrary
+            .getMintSwappedAmounts(address(buttonswapFactory), address(tokenA), address(tokenB), amountInA);
+
+        (uint256 tokenAToSwap, uint256 swappedReservoirAmountB) =
+            buttonswapRouter.getMintSwappedAmounts(address(tokenA), address(tokenB), amountInA);
+
+        assertEq(tokenAToSwap, expectedTokenAToSwap, "tokenAToSwap should equal expectedTokenAToSwap");
+
+        assertEq(
+            swappedReservoirAmountB,
+            expectedSwappedReservoirAmountB,
+            "swappedReservoirAmountB should equal expectedSwappedReservoirAmountB"
+        );
+    }
+
+    function test_getBurnSwappedAmounts(
+        bytes32 saltA,
+        bytes32 saltB,
+        uint256 poolA,
+        uint256 poolB,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator,
+        uint256 liquidity
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolB = bound(poolB, 10000, type(uint112).max);
+
+        // Creating the two tokens
+        // Salts are used to fuzz unique addresses in arbitrary order
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+
+        // Creating the pair with poolA:poolB price ratio
+        (IButtonswapPair pair,) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
+
+        // Ensuring that a A-reservoir is created with a positive rebase
+        vm.assume(rebaseNumerator > rebaseDenominator);
+        vm.assume(rebaseDenominator > 0);
+
+        // Applying the rebase
+        tokenA.applyMultiplier(rebaseNumerator, rebaseDenominator);
+
+        uint256 totalSupply = pair.totalSupply();
+        liquidity = bound(liquidity, 0, totalSupply);
+
+        (uint256 expectedTokenOutA, uint256 expectedSwappedReservoirAmountA) = ButtonswapLibrary.getBurnSwappedAmounts(
+            address(buttonswapFactory), address(tokenA), address(tokenB), liquidity
+        );
+
+        (uint256 tokenOutA, uint256 swappedReservoirAmountA) =
+            buttonswapRouter.getBurnSwappedAmounts(address(tokenA), address(tokenB), liquidity);
+
+        assertEq(tokenOutA, expectedTokenOutA, "tokenOutA should equal expectedTokenOutA");
+
+        assertEq(
+            swappedReservoirAmountA,
+            expectedSwappedReservoirAmountA,
+            "swappedReservoirAmountA should equal expectedSwappedReservoirAmountA"
+        );
+    }
 }
