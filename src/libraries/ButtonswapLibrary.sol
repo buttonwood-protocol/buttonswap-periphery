@@ -150,7 +150,13 @@ library ButtonswapLibrary {
     }
 
     /**
-     * @dev ToDo
+     * @dev Given a factory, two tokens, and a mintAmount, returns how much of the much of the mintAmount will be swapped for the other token and for how much during a mintWithReservoir operation.
+     * @param factory The address of the ButtonswapFactory that created the pairs
+     * @param tokenA First token address
+     * @param tokenB Second token address
+     * @param mintAmountA The amount of tokenA to be minted
+     * @return tokenAToSwap The amount of tokenA to be exchanged for tokenB from the reservoir
+     * @return swappedReservoirAmountB The amount of tokenB returned from the reservoir
      */
     function getMintSwappedAmounts(address factory, address tokenA, address tokenB, uint256 mintAmountA)
         internal
@@ -176,7 +182,13 @@ library ButtonswapLibrary {
     }
 
     /**
-     * @dev ToDo
+     * @dev Given a factory, two tokens, and a liquidity amount, returns how much of the first token will be withdrawn from the pair and how much of it came from the reservoir during a burnFromReservoir operation.
+     * @param factory The address of the ButtonswapFactory that created the pairs
+     * @param tokenA First token address
+     * @param tokenB Second token address
+     * @param liquidity The amount of liquidity to be burned
+     * @return tokenOutA The amount of tokenA to be withdrawn from the pair
+     * @return swappedReservoirAmountA The amount of tokenA returned from the reservoir
      */
     function getBurnSwappedAmounts(address factory, address tokenA, address tokenB, uint256 liquidity)
         internal

@@ -32,8 +32,6 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
         assert(msg.sender == WETH);
     }
 
-    // ToDo: Update this to keep totalA:totalB ratio (NOT JUST poolA:poolB)
-    // ToDo: Update unit tests to validate that poolA:poolB ratio isn't sufficient^^^
     // **** ADD LIQUIDITY ****
     function _addLiquidity(
         address tokenA,
