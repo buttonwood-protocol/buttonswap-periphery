@@ -152,7 +152,7 @@ library ButtonswapLibrary {
     /**
      * @dev ToDo
      */
-    function getSwappedAmounts(address factory, address tokenA, address tokenB, uint256 mintAmountA)
+    function getMintSwappedAmounts(address factory, address tokenA, address tokenB, uint256 mintAmountA)
         internal
         view
         returns (uint256 tokenAToSwap, uint256 swappedReservoirAmountB)
@@ -172,6 +172,32 @@ library ButtonswapLibrary {
                 (mintAmountA * totalB) / (((2 ** 112 * (totalA + mintAmountA)) / movingAveragePrice0) + totalB);
             // Inverse price so again we can use it without overflow risk
             swappedReservoirAmountB = (tokenAToSwap * (2 ** 112)) / movingAveragePrice0;
+        }
+    }
+
+    /**
+     * @dev ToDo
+     */
+    function getBurnSwappedAmounts(address factory, address tokenA, address tokenB, uint256 liquidity)
+    internal
+    view
+    returns (uint256 tokenOutA, uint256 swappedReservoirAmountA)
+    {
+        IButtonswapPair pair = IButtonswapPair(pairFor(factory, tokenA, tokenB));
+        uint256 totalLiquidity = pair.totalSupply();
+        uint256 totalA = IERC20(tokenA).balanceOf(address(pair));
+        uint256 totalB = IERC20(tokenB).balanceOf(address(pair));
+        uint256 movingAveragePrice0 = pair.movingAveragePrice0();
+        uint256 tokenBToSwap = (totalB * liquidity) / totalLiquidity;
+        tokenOutA = (totalA * liquidity) / totalLiquidity;
+
+        // tokenA == token0
+        if (tokenA < tokenB) {
+            swappedReservoirAmountA = (tokenBToSwap * (2 ** 112)) / movingAveragePrice0;
+            tokenOutA += swappedReservoirAmountA;
+        } else {
+            swappedReservoirAmountA = (tokenBToSwap * movingAveragePrice0) / 2 ** 112;
+            tokenOutA += swappedReservoirAmountA;
         }
     }
 

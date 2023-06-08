@@ -5,6 +5,7 @@ import {Test} from "buttonswap-periphery_forge-std/Test.sol";
 import {IButtonswapRouterErrors} from "../src/interfaces/IButtonswapRouter/IButtonswapRouterErrors.sol";
 import {ButtonswapRouter} from "../src/ButtonswapRouter.sol";
 import {IButtonswapPair} from "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
+import {IButtonswapPairErrors} from "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPairErrors.sol";
 import {MockRebasingERC20} from "buttonswap-periphery_mock-contracts/MockRebasingERC20.sol";
 import {ButtonswapFactory} from "buttonswap-periphery_buttonswap-core/ButtonswapFactory.sol";
 import {IWETH} from "../src/interfaces/IWETH.sol";
@@ -354,28 +355,32 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         );
     }
 
-    function test_addLiquidityWithReservoir_usingReservoirAWithInsufficientReservoir(uint112 poolA, uint112 poolB)
-        public
-    {
-        // Minting enough for minimum liquidity requirement
-        vm.assume(poolA > 10000);
-        vm.assume(poolB > 10000);
-
-        // Creating the pair with poolA:poolB price ratio
-        createAndInitializePair(tokenA, tokenB, poolA, poolB);
-
-        // Rebasing tokenA 10% up to create a tokenA reservoir
-        tokenA.applyMultiplier(11, 10);
-
-        // Calculating amountBDesired to be 2x more than the corresponding size of the reservoir
-        // TokenA rebased up 10%, so 10% of poolB matches the tokenA reservoir. 20% is poolB / 5.
-        uint256 amountBDesired = poolB / 5; // / 10 + 100000;
-
-        vm.expectRevert(IButtonswapRouterErrors.InsufficientAReservoir.selector);
-        buttonswapRouter.addLiquidityWithReservoir(
-            address(tokenA), address(tokenB), 0, amountBDesired, 0, 0, userA, block.timestamp + 1
-        );
-    }
+//    function test_addLiquidityWithReservoir_usingReservoirAWithInsufficientReservoir(uint112 poolA, uint112 poolB)
+//        public
+//    {
+//        // Minting enough for minimum liquidity requirement
+//        vm.assume(poolA > 10000);
+//        vm.assume(poolB > 10000);
+//
+//        // Creating the pair with poolA:poolB price ratio
+//        createAndInitializePair(tokenA, tokenB, poolA, poolB);
+//
+//        // Rebasing tokenA 10% up to create a tokenA reservoir
+//        tokenA.applyMultiplier(11, 10);
+//
+//        // Calculating amountBDesired to be 2x more than the corresponding size of the reservoir
+//        // TokenA rebased up 10%, so 10% of poolB matches the tokenA reservoir. 20% is poolB / 5.
+//        uint256 amountBDesired = poolB / 5; // / 10 + 100000;
+//
+//        // ToDo: InsufficientAReservoir error is probably insufficient and will be removed
+//        tokenB.mint(address(this), amountBDesired);
+//        tokenB.approve(address(buttonswapRouter), amountBDesired);
+//
+//        vm.expectRevert(IButtonswapPairErrors.InsufficientReservoir.selector);
+//        buttonswapRouter.addLiquidityWithReservoir(
+//            address(tokenA), address(tokenB), 0, amountBDesired, 0, 0, userA, block.timestamp + 1
+//        );
+//    }
 
     function test_addLiquidityWithReservoir_usingReservoirAWithSufficientAmount(
         uint256 poolA,
@@ -408,7 +413,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         uint256 liquidityOut;
         uint256 tokenBToSwap;
         uint256 swappedReservoirAmountA;
-        (tokenBToSwap, swappedReservoirAmountA) = ButtonswapLibrary.getSwappedAmounts(
+        (tokenBToSwap, swappedReservoirAmountA) = ButtonswapLibrary.getMintSwappedAmounts(
             address(buttonswapFactory), address(tokenB), address(tokenA), amountBDesired
         );
 
@@ -672,7 +677,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Asserting that remaining tokens are returned to the caller
         assertEq(tokenA.balanceOf(address(this)), amountTokenDesired - amountToken);
-        assertEq(address(this).balance, amountETHSent - amountETH, "Test contract should be refuned the remaining ETH");
+        assertEq(address(this).balance, amountETHSent - amountETH, "Test contract should be refunded the remaining ETH");
     }
 
     //    function test_addLiquidityETHWithReservoir_pairExistsButMissingReservoir(

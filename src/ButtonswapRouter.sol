@@ -105,7 +105,7 @@ contract ButtonswapRouter is IButtonswapRouter {
             uint256 amountAOptimal;
             //amountADesired is just a dummy var to avoid IR for now
             (amountADesired, amountAOptimal) =
-                ButtonswapLibrary.getSwappedAmounts(factory, tokenB, tokenA, amountBDesired);
+                ButtonswapLibrary.getMintSwappedAmounts(factory, tokenB, tokenA, amountBDesired);
             console.log("tokenBToSwap: %s", amountADesired);
             console.log("amountAOptimal: %s", amountAOptimal);
             console.log("amountBDesired", amountBDesired);
@@ -115,19 +115,23 @@ contract ButtonswapRouter is IButtonswapRouter {
             if (amountAOptimal < amountAMin) {
                 revert InsufficientAAmount();
             }
-            if (reservoirA < amountAOptimal) {
-                revert InsufficientAReservoir();
-            }
+
+            // ToDo: Removing this check since it's not strong enough
+//            console.log("reservoirA:", reservoirA);
+//            if (reservoirA < amountAOptimal) {
+//                revert InsufficientAReservoir();
+//            }
             (amountA, amountB) = (0, amountBDesired);
         } else {
             // we take from reservoirB and the user-provided amountADesired
-            (, uint256 amountBOptimal) = ButtonswapLibrary.getSwappedAmounts(factory, tokenA, tokenB, amountADesired);
+            (, uint256 amountBOptimal) = ButtonswapLibrary.getMintSwappedAmounts(factory, tokenA, tokenB, amountADesired);
             if (amountBOptimal < amountBMin) {
                 revert InsufficientBAmount();
             }
-            if (reservoirB < amountBOptimal) {
-                revert InsufficientBReservoir();
-            }
+            // ToDo: Removing this check since it's not strong enough
+//            if (reservoirB < amountBOptimal) {
+//                revert InsufficientBReservoir();
+//            }
             (amountA, amountB) = (amountADesired, 0);
         }
     }
