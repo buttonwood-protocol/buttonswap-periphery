@@ -5,6 +5,14 @@ import {IETHButtonswapRouter} from "./IETHButtonswapRouter.sol";
 
 interface IButtonswapRouter is IETHButtonswapRouter {
     /**
+     * @notice Returns the Pair contract for given tokens. Returns the zero address if no pair exists
+     * @param tokenA First token address
+     * @param tokenB Second token address
+     * @return pair The pair address
+     */
+    function pairFor(address tokenA, address tokenB) external view returns (address pair);
+
+    /**
      * @notice Given some amount of an asset and pair pools, returns an equivalent amount of the other asset
      * @param amountA The amount of token A
      * @param poolA The balance of token A in the pool

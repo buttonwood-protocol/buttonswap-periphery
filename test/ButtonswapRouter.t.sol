@@ -45,6 +45,31 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         buttonswapRouter = new ButtonswapRouter(address(buttonswapFactory), address(weth));
     }
 
+    function test_pairFor_pairDoesNotExist(address tokenA, address tokenB) public {
+        address pairAddress = buttonswapRouter.pairFor(tokenA, tokenB);
+        assertEq(pairAddress, address(0), "Pair should not exist");
+    }
+
+    function test_pairFor_pairDoesNotExist(bytes32 saltA,
+        bytes32 saltB,
+        uint256 poolA,
+        uint256 poolB
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolB = bound(poolB, 10000, type(uint112).max);
+
+        // Creating the two tokens
+        // Salts are used to fuzz unique addresses in arbitrary order
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+
+        address expectedPairAddress = buttonswapFactory.createPair(address(tokenA), address(tokenB));
+        address pairAddress = buttonswapRouter.pairFor(address(tokenA), address(tokenB));
+
+        assertEq(pairAddress, expectedPairAddress, "Pair addresses should be equal");
+    }
+
     function test_quote(uint256 amountA, uint256 poolA, uint256 poolB) public {
         try buttonswapRouter.quote(amountA, poolA, poolB) returns (uint256 amountB) {
             assertEq(

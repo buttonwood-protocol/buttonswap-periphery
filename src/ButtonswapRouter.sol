@@ -14,13 +14,20 @@ import {ETHButtonswapRouter} from "./ETHButtonswapRouter.sol";
 contract ButtonswapRouter is ETHButtonswapRouter, IButtonswapRouter {
     constructor(address _factory, address _WETH) ETHButtonswapRouter(_factory, _WETH) {}
 
+    /**
+     * @inheritdoc IButtonswapRouter
+     */
+    function pairFor(address tokenA, address tokenB) external view returns (address pair) {
+        return IButtonswapFactory(factory).getPair(tokenA, tokenB);
+    }
+
     // **** LIBRARY FUNCTIONS ****
 
     /**
      * @inheritdoc IButtonswapRouter
      */
     function quote(uint256 amountA, uint256 poolA, uint256 poolB)
-        public
+        external
         pure
         virtual
         override
@@ -33,7 +40,7 @@ contract ButtonswapRouter is ETHButtonswapRouter, IButtonswapRouter {
      * @inheritdoc IButtonswapRouter
      */
     function getAmountOut(uint256 amountIn, uint256 poolIn, uint256 poolOut)
-        public
+        external
         pure
         virtual
         override
@@ -46,7 +53,7 @@ contract ButtonswapRouter is ETHButtonswapRouter, IButtonswapRouter {
      * @inheritdoc IButtonswapRouter
      */
     function getAmountIn(uint256 amountOut, uint256 poolIn, uint256 poolOut)
-        public
+        external
         pure
         virtual
         override
@@ -59,7 +66,7 @@ contract ButtonswapRouter is ETHButtonswapRouter, IButtonswapRouter {
      * @inheritdoc IButtonswapRouter
      */
     function getAmountsOut(uint256 amountIn, address[] memory path)
-        public
+        external
         view
         virtual
         override
@@ -72,7 +79,7 @@ contract ButtonswapRouter is ETHButtonswapRouter, IButtonswapRouter {
      * @inheritdoc IButtonswapRouter
      */
     function getAmountsIn(uint256 amountOut, address[] memory path)
-        public
+        external
         view
         virtual
         override
@@ -85,7 +92,7 @@ contract ButtonswapRouter is ETHButtonswapRouter, IButtonswapRouter {
      * @inheritdoc IButtonswapRouter
      */
     function getMintSwappedAmounts(address tokenA, address tokenB, uint256 mintAmountA)
-        public
+        external
         view
         virtual
         override
@@ -98,7 +105,7 @@ contract ButtonswapRouter is ETHButtonswapRouter, IButtonswapRouter {
      * @inheritdoc IButtonswapRouter
      */
     function getBurnSwappedAmounts(address tokenA, address tokenB, uint256 liquidity)
-        public
+        external
         view
         virtual
         override
