@@ -50,11 +50,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         assertEq(pairAddress, address(0), "Pair should not exist");
     }
 
-    function test_pairFor_pairDoesNotExist(bytes32 saltA,
-        bytes32 saltB,
-        uint256 poolA,
-        uint256 poolB
-    ) public {
+    function test_pairFor_pairDoesNotExist(bytes32 saltA, bytes32 saltB, uint256 poolA, uint256 poolB) public {
         // Minting enough for minimum liquidity requirement
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
