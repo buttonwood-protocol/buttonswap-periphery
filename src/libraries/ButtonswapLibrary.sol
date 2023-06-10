@@ -1,6 +1,8 @@
 pragma solidity ^0.8.13;
 
-import {IButtonswapPair} from "buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
+import {IButtonswapPair} from "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
+import {Math} from "buttonswap-periphery_buttonswap-core/libraries/Math.sol";
+import {IERC20} from "../interfaces/IERC20.sol";
 
 library ButtonswapLibrary {
     /// @notice Identical addresses provided
@@ -57,13 +59,12 @@ library ButtonswapLibrary {
                             hex"ff",
                             factory,
                             keccak256(abi.encodePacked(token0, token1)),
-                            hex"ca3b621784bb98921ee55dfaef10612a50d322b0bb9242057bed21133c3b21dc" // init code hash
+                            hex"879b01d93295b8ad5e4bdaaa402748838640cd696912627a1bda7a6f254a6ec0" // init code hash
                         )
                     )
                 )
             )
         );
-        //                            initHashCode
     }
 
     /**
@@ -142,6 +143,71 @@ library ButtonswapLibrary {
             revert InsufficientLiquidity();
         }
         amountB = (amountA * poolB) / poolA;
+    }
+
+    /**
+     * @dev Given a factory, two tokens, and a mintAmount of the first, returns how much of the much of the mintAmount will be swapped for the other token and for how much during a mintWithReservoir operation.
+     * @dev The logic is a condensed version of PairMath.getSingleSidedMintLiquidityOutAmountA and PairMath.getSingleSidedMintLiquidityOutAmountB
+     * @param factory The address of the ButtonswapFactory that created the pairs
+     * @param tokenA First token address
+     * @param tokenB Second token address
+     * @param mintAmountA The amount of tokenA to be minted
+     * @return tokenAToSwap The amount of tokenA to be exchanged for tokenB from the reservoir
+     * @return swappedReservoirAmountB The amount of tokenB returned from the reservoir
+     */
+    function getMintSwappedAmounts(address factory, address tokenA, address tokenB, uint256 mintAmountA)
+        internal
+        view
+        returns (uint256 tokenAToSwap, uint256 swappedReservoirAmountB)
+    {
+        IButtonswapPair pair = IButtonswapPair(pairFor(factory, tokenA, tokenB));
+        uint256 totalA = IERC20(tokenA).balanceOf(address(pair));
+        uint256 totalB = IERC20(tokenB).balanceOf(address(pair));
+        uint256 movingAveragePrice0 = pair.movingAveragePrice0();
+
+        // tokenA == token0
+        if (tokenA < tokenB) {
+            tokenAToSwap =
+                (mintAmountA * totalB) / (Math.mulDiv(movingAveragePrice0, (totalA + mintAmountA), 2 ** 112) + totalB);
+            swappedReservoirAmountB = (tokenAToSwap * movingAveragePrice0) / 2 ** 112;
+        } else {
+            tokenAToSwap =
+                (mintAmountA * totalB) / (((2 ** 112 * (totalA + mintAmountA)) / movingAveragePrice0) + totalB);
+            // Inverse price so again we can use it without overflow risk
+            swappedReservoirAmountB = (tokenAToSwap * (2 ** 112)) / movingAveragePrice0;
+        }
+    }
+
+    /**
+     * @dev Given a factory, two tokens, and a liquidity amount, returns how much of the first token will be withdrawn from the pair and how much of it came from the reservoir during a burnFromReservoir operation.
+     * @dev The logic is a condensed version of PairMath.getSingleSidedBurnOutputAmountA and PairMath.getSingleSidedBurnOutputAmountB
+     * @param factory The address of the ButtonswapFactory that created the pairs
+     * @param tokenA First token address
+     * @param tokenB Second token address
+     * @param liquidity The amount of liquidity to be burned
+     * @return tokenOutA The amount of tokenA to be withdrawn from the pair
+     * @return swappedReservoirAmountA The amount of tokenA returned from the reservoir
+     */
+    function getBurnSwappedAmounts(address factory, address tokenA, address tokenB, uint256 liquidity)
+        internal
+        view
+        returns (uint256 tokenOutA, uint256 swappedReservoirAmountA)
+    {
+        IButtonswapPair pair = IButtonswapPair(pairFor(factory, tokenA, tokenB));
+        uint256 totalLiquidity = pair.totalSupply();
+        uint256 totalA = IERC20(tokenA).balanceOf(address(pair));
+        uint256 totalB = IERC20(tokenB).balanceOf(address(pair));
+        uint256 movingAveragePrice0 = pair.movingAveragePrice0();
+        uint256 tokenBToSwap = (totalB * liquidity) / totalLiquidity;
+        tokenOutA = (totalA * liquidity) / totalLiquidity;
+
+        // tokenA == token0
+        if (tokenA < tokenB) {
+            swappedReservoirAmountA = (tokenBToSwap * (2 ** 112)) / movingAveragePrice0;
+        } else {
+            swappedReservoirAmountA = (tokenBToSwap * movingAveragePrice0) / 2 ** 112;
+        }
+        tokenOutA += swappedReservoirAmountA;
     }
 
     /**
