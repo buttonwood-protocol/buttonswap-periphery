@@ -146,7 +146,8 @@ library ButtonswapLibrary {
     }
 
     /**
-     * @dev Given a factory, two tokens, and a mintAmount, returns how much of the much of the mintAmount will be swapped for the other token and for how much during a mintWithReservoir operation.
+     * @dev Given a factory, two tokens, and a mintAmount of the first, returns how much of the much of the mintAmount will be swapped for the other token and for how much during a mintWithReservoir operation.
+     * @dev The logic is a condensed version of PairMath.getSingleSidedMintLiquidityOutAmountA and PairMath.getSingleSidedMintLiquidityOutAmountB
      * @param factory The address of the ButtonswapFactory that created the pairs
      * @param tokenA First token address
      * @param tokenB Second token address
@@ -179,6 +180,7 @@ library ButtonswapLibrary {
 
     /**
      * @dev Given a factory, two tokens, and a liquidity amount, returns how much of the first token will be withdrawn from the pair and how much of it came from the reservoir during a burnFromReservoir operation.
+     * @dev The logic is a condensed version of PairMath.getSingleSidedBurnOutputAmountA and PairMath.getSingleSidedBurnOutputAmountB
      * @param factory The address of the ButtonswapFactory that created the pairs
      * @param tokenA First token address
      * @param tokenB Second token address
@@ -202,11 +204,10 @@ library ButtonswapLibrary {
         // tokenA == token0
         if (tokenA < tokenB) {
             swappedReservoirAmountA = (tokenBToSwap * (2 ** 112)) / movingAveragePrice0;
-            tokenOutA += swappedReservoirAmountA;
         } else {
             swappedReservoirAmountA = (tokenBToSwap * movingAveragePrice0) / 2 ** 112;
-            tokenOutA += swappedReservoirAmountA;
         }
+        tokenOutA += swappedReservoirAmountA;
     }
 
     /**

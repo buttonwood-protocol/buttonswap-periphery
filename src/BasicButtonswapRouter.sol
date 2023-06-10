@@ -19,7 +19,7 @@ contract BasicButtonswapRouter is RootButtonswapRouter, IBasicButtonswapRouter {
         _;
     }
 
-    constructor(address _factory, address _WETH) RootButtonswapRouter(_factory, _WETH) {}
+    constructor(address _factory) RootButtonswapRouter(_factory) {}
 
     /**
      * @inheritdoc IBasicButtonswapRouter

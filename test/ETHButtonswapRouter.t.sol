@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import {Test} from "buttonswap-periphery_forge-std/Test.sol";
 import {IButtonswapPair} from "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
 import {IButtonswapRouterErrors} from "../src/interfaces/IButtonswapRouter/IButtonswapRouterErrors.sol";
+import {IETHButtonswapRouterErrors} from "../src/interfaces/IButtonswapRouter/IETHButtonswapRouterErrors.sol";
 import {ETHButtonswapRouter} from "../src/ETHButtonswapRouter.sol";
 import {ButtonswapFactory} from "buttonswap-periphery_buttonswap-core/ButtonswapFactory.sol";
 import {IWETH} from "../src/interfaces/IWETH.sol";
@@ -12,7 +13,7 @@ import {MockRebasingERC20} from "buttonswap-periphery_mock-contracts/MockRebasin
 import {ButtonswapLibrary} from "../src/libraries/ButtonswapLibrary.sol";
 import {PairMath} from "buttonswap-periphery_buttonswap-core/libraries/PairMath.sol";
 
-contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors {
+contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswapRouterErrors {
     address public userA;
     uint256 public userAPrivateKey;
     MockRebasingERC20 public rebasingToken;
@@ -84,6 +85,41 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors {
         weth = new MockWeth();
         buttonswapFactory = new ButtonswapFactory(userA);
         ethButtonswapRouter = new ETHButtonswapRouter(address(buttonswapFactory), address(weth));
+    }
+
+    function test_WETH() public {
+        assertEq(ethButtonswapRouter.WETH(), address(weth));
+    }
+
+    function test_constructor() public {
+        assertEq(ethButtonswapRouter.WETH(), address(weth));
+        assertEq(ethButtonswapRouter.factory(), address(buttonswapFactory));
+    }
+
+    function test_receive_rejectNonWETHSender(address sender, uint256 ethAmount) public {
+        // Making sure sender isn't the weth contract
+        vm.assume(sender != address(weth));
+
+        // Allocating ETH to the sender
+        vm.deal(sender, ethAmount);
+
+        // Sending ETH, ignoring data in return value
+        vm.prank(sender);
+        (bool sent, bytes memory returndata) = payable(address(ethButtonswapRouter)).call{value: ethAmount}("");
+        assertTrue(!sent, "Expected call to fail");
+        assertEq(
+            returndata,
+            abi.encodeWithSelector(IETHButtonswapRouterErrors.NonWETHSender.selector),
+            "Expected revert reason to be NonWethSender()"
+        );
+    }
+
+    function test_receive_acceptWETHSender(uint256 ethAmount) public {
+        vm.deal(address(weth), ethAmount);
+        vm.prank(address(weth));
+        // Sending ETH, ignoring data in return value
+        (bool sent,) = payable(address(ethButtonswapRouter)).call{value: ethAmount}("");
+        assertTrue(sent, "Expected call to succeed");
     }
 
     // **** addLiquidityETH() ****

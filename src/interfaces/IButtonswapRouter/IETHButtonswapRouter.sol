@@ -2,8 +2,15 @@
 pragma solidity ^0.8.13;
 
 import {IBasicButtonswapRouter} from "./IBasicButtonswapRouter.sol";
+import {IETHButtonswapRouterErrors} from "./IETHButtonswapRouterErrors.sol";
 
-interface IETHButtonswapRouter is IBasicButtonswapRouter {
+interface IETHButtonswapRouter is IBasicButtonswapRouter, IETHButtonswapRouterErrors {
+    /**
+     * @notice Returns the address of the WETH token
+     * @return WETH The address of the WETH token
+     */
+    function WETH() external view returns (address WETH);
+
     /**
      * @notice Similar to `addLiquidity` but one of the tokens is ETH wrapped into WETH.
      * Adds liquidity to a pair, creating it if it doesn't exist yet, and transfers the liquidity tokens to the recipient.

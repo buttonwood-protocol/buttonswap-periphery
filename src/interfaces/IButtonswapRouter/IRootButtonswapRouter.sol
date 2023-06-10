@@ -9,10 +9,4 @@ interface IRootButtonswapRouter is IButtonswapRouterErrors {
      * @return factory The address of the Buttonswap Factory
      */
     function factory() external view returns (address factory);
-
-    /**
-     * @notice Returns the address of the WETH token
-     * @return WETH The address of the WETH token
-     */
-    function WETH() external view returns (address WETH);
 }

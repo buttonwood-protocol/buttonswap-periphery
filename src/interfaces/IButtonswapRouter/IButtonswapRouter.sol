@@ -10,7 +10,7 @@ interface IButtonswapRouter is IETHButtonswapRouter {
      * @param tokenB Second token address
      * @return pair The pair address
      */
-    function pairFor(address tokenA, address tokenB) external view returns (address pair);
+    function getPair(address tokenA, address tokenB) external view returns (address pair);
 
     /**
      * @notice Given some amount of an asset and pair pools, returns an equivalent amount of the other asset

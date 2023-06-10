@@ -12,7 +12,23 @@ import {IWETH} from "./interfaces/IWETH.sol";
 import {BasicButtonswapRouter} from "./BasicButtonswapRouter.sol";
 
 contract ETHButtonswapRouter is BasicButtonswapRouter, IETHButtonswapRouter {
-    constructor(address _factory, address _WETH) BasicButtonswapRouter(_factory, _WETH) {}
+    /**
+     * @inheritdoc IETHButtonswapRouter
+     */
+    address public immutable override WETH;
+
+    constructor(address _factory, address _WETH) BasicButtonswapRouter(_factory) {
+        WETH = _WETH;
+    }
+
+    /**
+     * @dev Only accepts ETH via fallback from the WETH contract
+     */
+    receive() external payable {
+        if (msg.sender != WETH) {
+            revert NonWETHSender();
+        }
+    }
 
     /**
      * @inheritdoc IETHButtonswapRouter
@@ -82,7 +98,9 @@ contract ETHButtonswapRouter is BasicButtonswapRouter, IETHButtonswapRouter {
             liquidity = IButtonswapPair(pair).mintWithReservoir(amountETH, to);
         }
         // refund dust eth, if any
-        if (msg.value > amountETH) TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);
+        if (msg.value > amountETH) {
+            TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);
+        }
     }
 
     /**
@@ -160,10 +178,11 @@ contract ETHButtonswapRouter is BasicButtonswapRouter, IETHButtonswapRouter {
         if (amounts[amounts.length - 1] < amountOutMin) {
             revert InsufficientOutputAmount();
         }
-        IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
 
         IWETH(WETH).deposit{value: amounts[0]}();
-        assert(IWETH(WETH).transfer(address(this), amounts[0]));
+        if(!IWETH(WETH).transfer(address(this), amounts[0])) {
+            revert FailedWETHTransfer();
+        }
         _swap(amounts, path, to);
     }
 
@@ -184,7 +203,6 @@ contract ETHButtonswapRouter is BasicButtonswapRouter, IETHButtonswapRouter {
         if (amounts[0] > amountInMax) {
             revert ExcessiveInputAmount();
         }
-        IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
 
         TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amounts[0]);
         _swap(amounts, path, address(this));
@@ -211,7 +229,6 @@ contract ETHButtonswapRouter is BasicButtonswapRouter, IETHButtonswapRouter {
         if (amounts[amounts.length - 1] < amountOutMin) {
             revert InsufficientOutputAmount();
         }
-        IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
 
         TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amounts[0]);
         _swap(amounts, path, address(this));
@@ -237,12 +254,16 @@ contract ETHButtonswapRouter is BasicButtonswapRouter, IETHButtonswapRouter {
         if (amounts[0] > msg.value) {
             revert ExcessiveInputAmount();
         }
-        IButtonswapPair(ButtonswapLibrary.pairFor(factory, path[0], path[1]));
 
         IWETH(WETH).deposit{value: amounts[0]}();
-        assert(IWETH(WETH).transfer(address(this), amounts[0]));
+        if(!IWETH(WETH).transfer(address(this), amounts[0])) {
+            revert FailedWETHTransfer();
+        }
+
         _swap(amounts, path, to);
         // refund dust eth, if any
-        if (msg.value > amounts[0]) TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]);
+        if (msg.value > amounts[0]) {
+            TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]);
+        }
     }
 }

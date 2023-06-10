@@ -15,21 +15,8 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
      */
     address public immutable override factory;
 
-    /**
-     * @inheritdoc IRootButtonswapRouter
-     */
-    address public immutable override WETH;
-
-    constructor(address _factory, address _WETH) {
+    constructor(address _factory) {
         factory = _factory;
-        WETH = _WETH;
-    }
-
-    /**
-     * @dev Only accepts ETH via fallback from the WETH contract
-     */
-    receive() external payable {
-        assert(msg.sender == WETH);
     }
 
     // **** ADD LIQUIDITY ****
@@ -116,9 +103,7 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
     }
 
     // **** SWAP ****
-    /**
-     * @dev requires the initial amount to have already been sent to the first pair
-     */
+
     function _swap(uint256[] memory amounts, address[] memory path, address _to) internal virtual {
         for (uint256 i; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);

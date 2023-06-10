@@ -6,8 +6,6 @@ import {IButtonswapPair} from "buttonswap-periphery_buttonswap-core/interfaces/I
 import {IButtonswapRouterErrors} from "../src/interfaces/IButtonswapRouter/IButtonswapRouterErrors.sol";
 import {BasicButtonswapRouter} from "../src/BasicButtonswapRouter.sol";
 import {ButtonswapFactory} from "buttonswap-periphery_buttonswap-core/ButtonswapFactory.sol";
-import {IWETH} from "../src/interfaces/IWETH.sol";
-import {MockWeth} from "./mocks/MockWeth.sol";
 import {MockRebasingERC20} from "buttonswap-periphery_mock-contracts/MockRebasingERC20.sol";
 import {ButtonswapLibrary} from "../src/libraries/ButtonswapLibrary.sol";
 import {PairMath} from "buttonswap-periphery_buttonswap-core/libraries/PairMath.sol";
@@ -17,7 +15,6 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
     uint256 public userAPrivateKey;
     MockRebasingERC20 public tokenA;
     MockRebasingERC20 public tokenB;
-    IWETH public weth;
     ButtonswapFactory public buttonswapFactory;
     BasicButtonswapRouter public basicButtonswapRouter;
 
@@ -61,9 +58,12 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         (userA, userAPrivateKey) = makeAddrAndKey("userA");
         tokenA = new MockRebasingERC20("TokenA", "TKNA", 18);
         tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
-        weth = new MockWeth();
         buttonswapFactory = new ButtonswapFactory(userA);
-        basicButtonswapRouter = new BasicButtonswapRouter(address(buttonswapFactory), address(weth));
+        basicButtonswapRouter = new BasicButtonswapRouter(address(buttonswapFactory));
+    }
+
+    function test_constructor() public {
+        assertEq(basicButtonswapRouter.factory(), address(buttonswapFactory));
     }
 
     // **** addLiquidity() ****

@@ -17,7 +17,7 @@ contract ButtonswapRouter is ETHButtonswapRouter, IButtonswapRouter {
     /**
      * @inheritdoc IButtonswapRouter
      */
-    function pairFor(address tokenA, address tokenB) external view returns (address pair) {
+    function getPair(address tokenA, address tokenB) external view returns (address pair) {
         return IButtonswapFactory(factory).getPair(tokenA, tokenB);
     }
 
