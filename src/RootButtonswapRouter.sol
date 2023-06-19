@@ -31,7 +31,7 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
         // create the pair if it doesn't exist yet
         address pair = IButtonswapFactory(factory).getPair(tokenA, tokenB);
         if (pair == address(0)) {
-            IButtonswapFactory(factory).createPair(tokenA, tokenB);
+            pair = IButtonswapFactory(factory).createPair(tokenA, tokenB);
         }
 
         uint256 totalA = IERC20(tokenA).balanceOf(pair);

@@ -91,6 +91,11 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Asserting one pair has been created
         assertEq(buttonswapFactory.allPairsLength(), 1);
+
+        // Asserting pair has the correct amount of tokens
+        address pair = buttonswapFactory.getPair(address(tokenA), address(tokenB));
+        assertEq(tokenA.balanceOf(pair), amountADesired);
+        assertEq(tokenB.balanceOf(pair), amountBDesired);
     }
 
     function test_addLiquidity_pairExistsNoReservoirInsufficientAAmount(
