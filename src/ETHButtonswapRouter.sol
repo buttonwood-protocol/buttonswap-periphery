@@ -180,7 +180,7 @@ contract ETHButtonswapRouter is BasicButtonswapRouter, IETHButtonswapRouter {
         }
 
         IWETH(WETH).deposit{value: amounts[0]}();
-        if(!IWETH(WETH).transfer(address(this), amounts[0])) {
+        if (!IWETH(WETH).transfer(address(this), amounts[0])) {
             revert FailedWETHTransfer();
         }
         _swap(amounts, path, to);
@@ -256,7 +256,7 @@ contract ETHButtonswapRouter is BasicButtonswapRouter, IETHButtonswapRouter {
         }
 
         IWETH(WETH).deposit{value: amounts[0]}();
-        if(!IWETH(WETH).transfer(address(this), amounts[0])) {
+        if (!IWETH(WETH).transfer(address(this), amounts[0])) {
             revert FailedWETHTransfer();
         }
 
