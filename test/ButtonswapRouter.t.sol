@@ -14,8 +14,14 @@ import {MockWeth} from "./mocks/MockWeth.sol";
 import {ButtonswapLibrary} from "../src/libraries/ButtonswapLibrary.sol";
 
 contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
-    address public userA;
-    uint256 public userAPrivateKey;
+    address public feeToSetter;
+    uint256 public feeToSetterPrivateKey;
+    address public isCreationRestrictedSetter;
+    uint256 public isCreationRestrictedSetterPrivateKey;
+    address public isPausedSetter;
+    uint256 public isPausedSetterPrivateKey;
+    address public paramSetter;
+    uint256 public paramSetterPrivateKey;
     IWETH public weth;
     ButtonswapFactory public buttonswapFactory;
     ButtonswapRouter public buttonswapRouter;
@@ -39,9 +45,12 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
     }
 
     function setUp() public {
-        (userA, userAPrivateKey) = makeAddrAndKey("userA");
+        (feeToSetter, feeToSetterPrivateKey) = makeAddrAndKey("feeToSetter");
+        (isCreationRestrictedSetter, isCreationRestrictedSetterPrivateKey) = makeAddrAndKey("isCreationRestrictedSetter");
+        (isPausedSetter, isPausedSetterPrivateKey) = makeAddrAndKey("isPausedSetter");
+        (paramSetter, paramSetterPrivateKey) = makeAddrAndKey("paramSetter");
         weth = new MockWeth();
-        buttonswapFactory = new ButtonswapFactory(userA);
+        buttonswapFactory = new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter);
         buttonswapRouter = new ButtonswapRouter(address(buttonswapFactory), address(weth));
     }
 
@@ -69,6 +78,16 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         address pairAddress = buttonswapRouter.getPair(address(tokenA), address(tokenB));
 
         assertEq(pairAddress, expectedPairAddress, "Pair addresses should be equal");
+    }
+
+    function test_isCreationRestricted(bool isCreationRestricted) public {
+        vm.prank(isCreationRestrictedSetter);
+        buttonswapFactory.setIsCreationRestricted(isCreationRestricted);
+
+        bool factoryIsCreationRestricted = buttonswapFactory.isCreationRestricted();
+
+        assertEq(buttonswapRouter.isCreationRestricted(), isCreationRestricted, "isCreationRestricted should be equal");
+        assertEq(buttonswapRouter.isCreationRestricted(), factoryIsCreationRestricted, "isCreationRestricted should be equal");
     }
 
     function test_quote(uint256 amountA, uint256 poolA, uint256 poolB) public {

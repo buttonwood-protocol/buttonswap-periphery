@@ -10,7 +10,10 @@ import {MockRebasingERC20} from "buttonswap-periphery_mock-contracts/MockRebasin
 import {PairMath} from "buttonswap-periphery_buttonswap-core/libraries/PairMath.sol";
 
 contract ButtonswapLibraryTest is Test {
-    address public userA = 0x000000000000000000000000000000000000000A;
+    address public feeToSetter = 0x000000000000000000000000000000000000000A;
+    address public isCreationRestrictedSetter = 0x000000000000000000000000000000000000000b;
+    address public isPausedSetter = 0x000000000000000000000000000000000000000C;
+    address public paramSetter = 0x000000000000000000000000000000000000000d;
 
     ButtonswapFactory public buttonswapFactory;
 
@@ -53,7 +56,7 @@ contract ButtonswapLibraryTest is Test {
     }
 
     function setUp() public {
-        buttonswapFactory = new ButtonswapFactory(address(this));
+        buttonswapFactory = new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter);
     }
 
     function test_sortTokens_validAddresses(address tokenA, address tokenB) public {

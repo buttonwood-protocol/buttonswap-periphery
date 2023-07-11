@@ -7,14 +7,23 @@ import {RootButtonswapRouter} from "../src/RootButtonswapRouter.sol";
 import {ButtonswapFactory} from "buttonswap-periphery_buttonswap-core/ButtonswapFactory.sol";
 
 contract RootButtonswapRouterTest is Test, IButtonswapRouterErrors {
-    address public userA;
-    uint256 public userAPrivateKey;
+    address public feeToSetter;
+    uint256 public feeToSetterPrivateKey;
+    address public isCreationRestrictedSetter;
+    uint256 public isCreationRestrictedSetterPrivateKey;
+    address public isPausedSetter;
+    uint256 public isPausedSetterPrivateKey;
+    address public paramSetter;
+    uint256 public paramSetterPrivateKey;
     ButtonswapFactory public buttonswapFactory;
     RootButtonswapRouter public rootButtonswapRouter;
 
     function setUp() public {
-        (userA, userAPrivateKey) = makeAddrAndKey("userA");
-        buttonswapFactory = new ButtonswapFactory(userA);
+        (feeToSetter, feeToSetterPrivateKey) = makeAddrAndKey("feeToSetter");
+        (isCreationRestrictedSetter, isCreationRestrictedSetterPrivateKey) = makeAddrAndKey("isCreationRestrictedSetter");
+        (isPausedSetter, isPausedSetterPrivateKey) = makeAddrAndKey("isPausedSetter");
+        (paramSetter, paramSetterPrivateKey) = makeAddrAndKey("paramSetter");
+        buttonswapFactory = new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter);
         rootButtonswapRouter = new RootButtonswapRouter(address(buttonswapFactory));
     }
 

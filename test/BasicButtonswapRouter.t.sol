@@ -11,6 +11,14 @@ import {ButtonswapLibrary} from "../src/libraries/ButtonswapLibrary.sol";
 import {PairMath} from "buttonswap-periphery_buttonswap-core/libraries/PairMath.sol";
 
 contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
+    address public feeToSetter;
+    uint256 public feeToSetterPrivateKey;
+    address public isCreationRestrictedSetter;
+    uint256 public isCreationRestrictedSetterPrivateKey;
+    address public isPausedSetter;
+    uint256 public isPausedSetterPrivateKey;
+    address public paramSetter;
+    uint256 public paramSetterPrivateKey;
     address public userA;
     uint256 public userAPrivateKey;
     MockRebasingERC20 public tokenA;
@@ -55,10 +63,14 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
     }
 
     function setUp() public {
+        (feeToSetter, feeToSetterPrivateKey) = makeAddrAndKey("feeToSetter");
+        (isCreationRestrictedSetter, isCreationRestrictedSetterPrivateKey) = makeAddrAndKey("isCreationRestrictedSetter");
+        (isPausedSetter, isPausedSetterPrivateKey) = makeAddrAndKey("isPausedSetter");
+        (paramSetter, paramSetterPrivateKey) = makeAddrAndKey("paramSetter");
         (userA, userAPrivateKey) = makeAddrAndKey("userA");
         tokenA = new MockRebasingERC20("TokenA", "TKNA", 18);
         tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
-        buttonswapFactory = new ButtonswapFactory(userA);
+        buttonswapFactory = new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter);
         basicButtonswapRouter = new BasicButtonswapRouter(address(buttonswapFactory));
     }
 

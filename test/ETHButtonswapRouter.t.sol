@@ -14,6 +14,14 @@ import {ButtonswapLibrary} from "../src/libraries/ButtonswapLibrary.sol";
 import {PairMath} from "buttonswap-periphery_buttonswap-core/libraries/PairMath.sol";
 
 contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswapRouterErrors {
+    address public feeToSetter;
+    uint256 public feeToSetterPrivateKey;
+    address public isCreationRestrictedSetter;
+    uint256 public isCreationRestrictedSetterPrivateKey;
+    address public isPausedSetter;
+    uint256 public isPausedSetterPrivateKey;
+    address public paramSetter;
+    uint256 public paramSetterPrivateKey;
     address public userA;
     uint256 public userAPrivateKey;
     MockRebasingERC20 public rebasingToken;
@@ -80,10 +88,14 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
     receive() external payable {}
 
     function setUp() public {
+        (feeToSetter, feeToSetterPrivateKey) = makeAddrAndKey("feeToSetter");
+        (isCreationRestrictedSetter, isCreationRestrictedSetterPrivateKey) = makeAddrAndKey("isCreationRestrictedSetter");
+        (isPausedSetter, isPausedSetterPrivateKey) = makeAddrAndKey("isPausedSetter");
+        (paramSetter, paramSetterPrivateKey) = makeAddrAndKey("paramSetter");
         (userA, userAPrivateKey) = makeAddrAndKey("userA");
         rebasingToken = new MockRebasingERC20("RebasingToken", "rTKN", 18);
         weth = new MockWeth();
-        buttonswapFactory = new ButtonswapFactory(userA);
+        buttonswapFactory = new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter);
         ethButtonswapRouter = new ETHButtonswapRouter(address(buttonswapFactory), address(weth));
     }
 
