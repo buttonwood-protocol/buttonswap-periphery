@@ -14,6 +14,8 @@ import {ButtonswapLibrary} from "../src/libraries/ButtonswapLibrary.sol";
 import {PairMath} from "buttonswap-periphery_buttonswap-core/libraries/PairMath.sol";
 
 contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswapRouterErrors {
+    uint256 constant BPS = 10_000;
+
     address public feeToSetter;
     uint256 public feeToSetterPrivateKey;
     address public isCreationRestrictedSetter;
@@ -89,7 +91,8 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
 
     function setUp() public {
         (feeToSetter, feeToSetterPrivateKey) = makeAddrAndKey("feeToSetter");
-        (isCreationRestrictedSetter, isCreationRestrictedSetterPrivateKey) = makeAddrAndKey("isCreationRestrictedSetter");
+        (isCreationRestrictedSetter, isCreationRestrictedSetterPrivateKey) =
+            makeAddrAndKey("isCreationRestrictedSetter");
         (isPausedSetter, isPausedSetterPrivateKey) = makeAddrAndKey("isPausedSetter");
         (paramSetter, paramSetterPrivateKey) = makeAddrAndKey("paramSetter");
         (userA, userAPrivateKey) = makeAddrAndKey("userA");
@@ -155,7 +158,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         );
 
         ethButtonswapRouter.addLiquidityETH{value: amountETHSent}(
-            address(rebasingToken), amountTokenDesired, 0, 0, userA, block.timestamp + 1
+            address(rebasingToken), amountTokenDesired, 0, 0, 700, userA, block.timestamp + 1
         );
 
         // Asserting one pair has been created
@@ -191,7 +194,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         vm.deal(address(this), amountETHSent);
         vm.expectRevert(IButtonswapRouterErrors.InsufficientAAmount.selector);
         ethButtonswapRouter.addLiquidityETH{value: amountETHSent}(
-            address(rebasingToken), amountTokenDesired, amountTokenMin, 0, userA, block.timestamp + 1
+            address(rebasingToken), amountTokenDesired, amountTokenMin, 0, 700, userA, block.timestamp + 1
         );
     }
 
@@ -219,7 +222,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         vm.expectRevert(IButtonswapRouterErrors.InsufficientBAmount.selector);
         vm.deal(address(this), amountETHSent);
         ethButtonswapRouter.addLiquidityETH{value: amountETHSent}(
-            address(rebasingToken), amountTokenDesired, 0, amountETHMin, userA, block.timestamp + 1
+            address(rebasingToken), amountTokenDesired, 0, amountETHMin, 700, userA, block.timestamp + 1
         );
     }
 
@@ -263,7 +266,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
 
         // Adding liquidity should succeed now. Not concerned with liquidity value
         (uint256 amountToken, uint256 amountETH,) = ethButtonswapRouter.addLiquidityETH{value: amountETHSent}(
-            address(rebasingToken), amountTokenDesired, amountTokenMin, amountETHMin, userA, block.timestamp + 1
+            address(rebasingToken), amountTokenDesired, amountTokenMin, amountETHMin, 700, userA, block.timestamp + 1
         );
 
         // Assert that deposited amounts are within bounds
@@ -312,7 +315,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
 
         // Adding liquidity should succeed now. Not concerned with liquidity value
         (uint256 amountToken, uint256 amountETH,) = ethButtonswapRouter.addLiquidityETH{value: amountETHSent}(
-            address(rebasingToken), amountTokenDesired, 0, 0, userA, block.timestamp + 1
+            address(rebasingToken), amountTokenDesired, 0, 0, 700, userA, block.timestamp + 1
         );
 
         // Validating that it used amountTokenDesired and scaled down to calculate how much ETH to use
@@ -359,12 +362,60 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
 
         // Adding liquidity should succeed now. Not concerned with liquidity value
         (uint256 amountToken, uint256 amountETH,) = ethButtonswapRouter.addLiquidityETH{value: amountETHSent}(
-            address(rebasingToken), amountTokenDesired, 0, 0, userA, block.timestamp + 1
+            address(rebasingToken), amountTokenDesired, 0, 0, 700, userA, block.timestamp + 1
         );
 
         // Validating that it used amountETHSent and scaled down to calculate how much rebasingToken to use
         assertLt(amountToken, amountTokenDesired, "Router should have scaled down the rebasingTokens it used");
         assertEq(amountETH, amountETHSent, "Router should have used amountETHSent tokens");
+    }
+
+    function test_addLiquidityETH_movingAveragePriceOutOfBounds(
+        uint256 poolToken,
+        uint256 poolETH,
+        uint256 swappedToken
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        poolToken = bound(poolToken, 10000, type(uint112).max);
+        poolETH = bound(poolETH, 10000, type(uint112).max);
+        swappedToken = bound(swappedToken, poolToken / 100, poolToken - poolToken / 100);
+
+        // Creating the pair with poolToken:poolETH price ratio
+        createAndInitializePairETH(rebasingToken, poolToken, poolETH);
+
+        // Do a swap to move the moving average price out of bounds
+        address[] memory path = new address[](2);
+        path[0] = address(rebasingToken);
+        path[1] = address(weth);
+        rebasingToken.mint(address(this), swappedToken);
+        rebasingToken.approve(address(ethButtonswapRouter), swappedToken);
+        ethButtonswapRouter.swapExactTokensForETH(swappedToken, 0, path, address(this), block.timestamp + 1);
+
+        // Figuring out what the value of movingAveragePriceThresholdBps to use to guarantee movingAveragePrice0 exceeds valid range
+        (uint256 newPoolToken, uint256 newPoolETH,,) =
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(rebasingToken), address(weth));
+
+        vm.assume((newPoolToken * poolETH * BPS) > (newPoolETH * poolToken) * (BPS + 1));
+        uint256 movingAveragePriceThresholdBps = (newPoolToken * poolETH * BPS) / (newPoolETH * poolToken) - BPS - 1;
+        vm.assume(0 < movingAveragePriceThresholdBps);
+        vm.assume(movingAveragePriceThresholdBps < BPS);
+
+        // Approving the router to take at most newPoolToken tokens and at most newPoolETH eth
+        rebasingToken.mint(address(this), newPoolToken);
+        rebasingToken.approve(address(ethButtonswapRouter), newPoolToken);
+        vm.deal(address(this), newPoolETH);
+
+        // Adding liquidity with the same balances that are currently in the pair
+        vm.expectRevert(IButtonswapRouterErrors.MovingAveragePriceOutOfBounds.selector);
+        ethButtonswapRouter.addLiquidityETH{value: newPoolETH}(
+            address(rebasingToken),
+            newPoolToken,
+            0,
+            0,
+            uint16(movingAveragePriceThresholdBps),
+            userA,
+            block.timestamp + 1
+        );
     }
 
     // **** addLiquidityETHWithReservoir() ****

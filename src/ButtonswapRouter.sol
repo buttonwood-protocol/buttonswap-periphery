@@ -22,8 +22,8 @@ contract ButtonswapRouter is ETHButtonswapRouter, IButtonswapRouter {
     }
 
     /**
-    * @inheritdoc IButtonswapRouter
-    */
+     * @inheritdoc IButtonswapRouter
+     */
     function isCreationRestricted() external view returns (bool _isCreationRestricted) {
         _isCreationRestricted = IButtonswapFactory(factory).isCreationRestricted();
     }

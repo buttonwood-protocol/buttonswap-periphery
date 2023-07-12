@@ -12,7 +12,7 @@ interface IButtonswapRouter is IETHButtonswapRouter {
      */
     function getPair(address tokenA, address tokenB) external view returns (address pair);
 
-     /**
+    /**
      * @notice Returns the factory state of `isCreationRestricted`
      * @return _isCreationRestricted The `isCreationRestricted` state of the factory.
      */

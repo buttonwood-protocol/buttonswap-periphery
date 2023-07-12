@@ -46,7 +46,8 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
     function setUp() public {
         (feeToSetter, feeToSetterPrivateKey) = makeAddrAndKey("feeToSetter");
-        (isCreationRestrictedSetter, isCreationRestrictedSetterPrivateKey) = makeAddrAndKey("isCreationRestrictedSetter");
+        (isCreationRestrictedSetter, isCreationRestrictedSetterPrivateKey) =
+            makeAddrAndKey("isCreationRestrictedSetter");
         (isPausedSetter, isPausedSetterPrivateKey) = makeAddrAndKey("isPausedSetter");
         (paramSetter, paramSetterPrivateKey) = makeAddrAndKey("paramSetter");
         weth = new MockWeth();
@@ -87,7 +88,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         bool factoryIsCreationRestricted = buttonswapFactory.isCreationRestricted();
 
         assertEq(buttonswapRouter.isCreationRestricted(), isCreationRestricted, "isCreationRestricted should be equal");
-        assertEq(buttonswapRouter.isCreationRestricted(), factoryIsCreationRestricted, "isCreationRestricted should be equal");
+        assertEq(
+            buttonswapRouter.isCreationRestricted(), factoryIsCreationRestricted, "isCreationRestricted should be equal"
+        );
     }
 
     function test_quote(uint256 amountA, uint256 poolA, uint256 poolB) public {

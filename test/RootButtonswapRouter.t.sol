@@ -20,7 +20,8 @@ contract RootButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
     function setUp() public {
         (feeToSetter, feeToSetterPrivateKey) = makeAddrAndKey("feeToSetter");
-        (isCreationRestrictedSetter, isCreationRestrictedSetterPrivateKey) = makeAddrAndKey("isCreationRestrictedSetter");
+        (isCreationRestrictedSetter, isCreationRestrictedSetterPrivateKey) =
+            makeAddrAndKey("isCreationRestrictedSetter");
         (isPausedSetter, isPausedSetterPrivateKey) = makeAddrAndKey("isPausedSetter");
         (paramSetter, paramSetterPrivateKey) = makeAddrAndKey("paramSetter");
         buttonswapFactory = new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter);

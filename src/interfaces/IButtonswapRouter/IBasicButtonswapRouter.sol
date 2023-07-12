@@ -17,6 +17,7 @@ interface IBasicButtonswapRouter is IRootButtonswapRouter {
      * @param amountBDesired The maximum amount of the second token to add to the pair.
      * @param amountAMin The minimum amount of the first token to add to the pair.
      * @param amountBMin The minimum amount of the second token to add to the pair.
+     * @param movingAveragePriceThresholdBps The percentage threshold that movingAveragePrice0 can deviate from the current price.
      * @param to The address to send the liquidity tokens to.
      * @param deadline The time after which this transaction can no longer be executed.
      * @return amountA The amount of tokenA actually added to the pair.
@@ -30,6 +31,7 @@ interface IBasicButtonswapRouter is IRootButtonswapRouter {
         uint256 amountBDesired,
         uint256 amountAMin,
         uint256 amountBMin,
+        uint16 movingAveragePriceThresholdBps,
         address to,
         uint256 deadline
     ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
