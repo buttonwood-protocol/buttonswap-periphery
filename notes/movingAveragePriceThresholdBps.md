@@ -48,5 +48,29 @@ In addition we invert the conditions to check for the reverting case.
 
 The check exists inside of `RootButtonswapRouter.sol`:
 ```solidity
-TODO
+// Validate that the moving average price is within the threshold for pairs that exist
+if (poolA > 0 && poolB > 0) {
+    uint256 movingAveragePrice0 = IButtonswapPair(pair).movingAveragePrice0();
+    if (tokenA < tokenB) {
+        // tokenA is token0
+        if (
+            poolB * (BPS - movingAveragePrice0ThresholdBps)
+                > Math.mulDiv(movingAveragePrice0, poolA * BPS, 2 ** 112)
+                || poolB * (BPS + movingAveragePrice0ThresholdBps)
+                    < Math.mulDiv(movingAveragePrice0, poolA * BPS, 2 ** 112)
+        ) {
+            revert MovingAveragePriceOutOfBounds();
+        }
+    } else {
+        // tokenB is token0
+        if (
+            poolA * (BPS - movingAveragePrice0ThresholdBps)
+                > Math.mulDiv(movingAveragePrice0, poolB * BPS, 2 ** 112)
+                || poolA * (BPS + movingAveragePrice0ThresholdBps)
+                    < Math.mulDiv(movingAveragePrice0, poolB * BPS, 2 ** 112)
+        ) {
+            revert MovingAveragePriceOutOfBounds();
+        }
+    }
+}
 ```
