@@ -23,6 +23,7 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
     }
 
     // **** ADD LIQUIDITY ****
+    // @dev Refer to [movingAveragePriceThreshold.md](https://github.com/buttonwood-protocol/buttonswap-periphery/blob/main/notes/movingAveragePriceThreshold.md) for more detail.
     function _addLiquidity(
         address tokenA,
         address tokenB,
