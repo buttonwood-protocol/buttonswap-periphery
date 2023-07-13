@@ -7,9 +7,12 @@ import {IButtonswapPair} from "buttonswap-periphery_buttonswap-core/interfaces/I
 import {TransferHelper} from "./libraries/TransferHelper.sol";
 import {IRootButtonswapRouter} from "./interfaces/IButtonswapRouter/IRootButtonswapRouter.sol";
 import {ButtonswapLibrary} from "./libraries/ButtonswapLibrary.sol";
+import {Math} from "./libraries/Math.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 
 contract RootButtonswapRouter is IRootButtonswapRouter {
+    uint256 private constant BPS = 10_000;
+
     /**
      * @inheritdoc IRootButtonswapRouter
      */
@@ -20,13 +23,15 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
     }
 
     // **** ADD LIQUIDITY ****
+    // @dev Refer to [movingAveragePriceThreshold.md](https://github.com/buttonwood-protocol/buttonswap-periphery/blob/main/notes/movingAveragePriceThreshold.md) for more detail.
     function _addLiquidity(
         address tokenA,
         address tokenB,
         uint256 amountADesired,
         uint256 amountBDesired,
         uint256 amountAMin,
-        uint256 amountBMin
+        uint256 amountBMin,
+        uint16 movingAveragePrice0ThresholdBps
     ) internal virtual returns (uint256 amountA, uint256 amountB) {
         // create the pair if it doesn't exist yet
         address pair = IButtonswapFactory(factory).getPair(tokenA, tokenB);
@@ -34,25 +39,49 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
             pair = IButtonswapFactory(factory).createPair(tokenA, tokenB);
         }
 
-        uint256 totalA = IERC20(tokenA).balanceOf(pair);
-        uint256 totalB = IERC20(tokenB).balanceOf(pair);
+        (uint256 poolA, uint256 poolB, uint256 reservoirA, uint256 reservoirB) =
+            ButtonswapLibrary.getLiquidityBalances(factory, tokenA, tokenB);
 
-        if (totalA == 0 && totalB == 0) {
+        if ((poolA + reservoirA) == 0 && (poolB + reservoirB) == 0) {
             (amountA, amountB) = (amountADesired, amountBDesired);
         } else {
-            uint256 amountBOptimal = ButtonswapLibrary.quote(amountADesired, totalA, totalB);
+            uint256 amountBOptimal = ButtonswapLibrary.quote(amountADesired, poolA + reservoirA, poolB + reservoirB);
             if (amountBOptimal <= amountBDesired) {
                 if (amountBOptimal < amountBMin) {
                     revert InsufficientBAmount();
                 }
                 (amountA, amountB) = (amountADesired, amountBOptimal);
             } else {
-                uint256 amountAOptimal = ButtonswapLibrary.quote(amountBDesired, totalB, totalA);
+                uint256 amountAOptimal = ButtonswapLibrary.quote(amountBDesired, poolB + reservoirB, poolA + reservoirA);
                 assert(amountAOptimal <= amountADesired);
                 if (amountAOptimal < amountAMin) {
                     revert InsufficientAAmount();
                 }
                 (amountA, amountB) = (amountAOptimal, amountBDesired);
+            }
+        }
+
+        // Validate that the moving average price is within the threshold for pairs that exist
+        if (poolA > 0 && poolB > 0) {
+            uint256 movingAveragePrice0 = IButtonswapPair(pair).movingAveragePrice0();
+            if (tokenA < tokenB) {
+                // tokenA is token0
+                uint256 cachedTerm = Math.mulDiv(movingAveragePrice0, poolA * BPS, 2 ** 112);
+                if (
+                    poolB * (BPS - movingAveragePrice0ThresholdBps) > cachedTerm
+                        || poolB * (BPS + movingAveragePrice0ThresholdBps) < cachedTerm
+                ) {
+                    revert MovingAveragePriceOutOfBounds();
+                }
+            } else {
+                // tokenB is token0
+                uint256 cachedTerm = Math.mulDiv(movingAveragePrice0, poolB * BPS, 2 ** 112);
+                if (
+                    poolA * (BPS - movingAveragePrice0ThresholdBps) > cachedTerm
+                        || poolA * (BPS + movingAveragePrice0ThresholdBps) < cachedTerm
+                ) {
+                    revert MovingAveragePriceOutOfBounds();
+                }
             }
         }
     }

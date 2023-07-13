@@ -23,6 +23,7 @@ interface IETHButtonswapRouter is IBasicButtonswapRouter, IETHButtonswapRouterEr
      * @param amountTokenDesired The maximum amount of the non-ETH token to add to the pair.
      * @param amountTokenMin The minimum amount of the non-ETH token to add to the pair.
      * @param amountETHMin The minimum amount of ETH/WETH to add to the pair.
+     * @param movingAveragePrice0ThresholdBps The percentage threshold that movingAveragePrice0 can deviate from the current price.
      * @param to The address to send the liquidity tokens to.
      * @param deadline The time after which this transaction can no longer be executed.
      * @return amountToken The amount of token actually added to the pair.
@@ -34,6 +35,7 @@ interface IETHButtonswapRouter is IBasicButtonswapRouter, IETHButtonswapRouterEr
         uint256 amountTokenDesired,
         uint256 amountTokenMin,
         uint256 amountETHMin,
+        uint16 movingAveragePrice0ThresholdBps,
         address to,
         uint256 deadline
     ) external payable returns (uint256 amountToken, uint256 amountETH, uint256 liquidity);

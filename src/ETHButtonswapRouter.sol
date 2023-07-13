@@ -38,6 +38,7 @@ contract ETHButtonswapRouter is BasicButtonswapRouter, IETHButtonswapRouter {
         uint256 amountTokenDesired,
         uint256 amountTokenMin,
         uint256 amountETHMin,
+        uint16 movingAveragePrice0ThresholdBps,
         address to,
         uint256 deadline
     )
@@ -48,8 +49,9 @@ contract ETHButtonswapRouter is BasicButtonswapRouter, IETHButtonswapRouter {
         ensure(deadline)
         returns (uint256 amountToken, uint256 amountETH, uint256 liquidity)
     {
-        (amountToken, amountETH) =
-            _addLiquidity(token, WETH, amountTokenDesired, msg.value, amountTokenMin, amountETHMin);
+        (amountToken, amountETH) = _addLiquidity(
+            token, WETH, amountTokenDesired, msg.value, amountTokenMin, amountETHMin, movingAveragePrice0ThresholdBps
+        );
         address pair = ButtonswapLibrary.pairFor(factory, token, WETH);
         TransferHelper.safeTransferFrom(token, msg.sender, address(this), amountToken);
         TransferHelper.safeApprove(token, pair, amountToken);

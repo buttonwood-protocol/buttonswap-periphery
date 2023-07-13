@@ -21,6 +21,13 @@ contract ButtonswapRouter is ETHButtonswapRouter, IButtonswapRouter {
         return IButtonswapFactory(factory).getPair(tokenA, tokenB);
     }
 
+    /**
+     * @inheritdoc IButtonswapRouter
+     */
+    function isCreationRestricted() external view returns (bool _isCreationRestricted) {
+        _isCreationRestricted = IButtonswapFactory(factory).isCreationRestricted();
+    }
+
     // **** LIBRARY FUNCTIONS ****
 
     /**

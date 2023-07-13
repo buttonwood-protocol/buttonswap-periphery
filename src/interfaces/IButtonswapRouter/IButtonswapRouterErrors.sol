@@ -22,4 +22,6 @@ interface IButtonswapRouterErrors {
     error ExcessiveInputAmount();
     /// @notice Invalid path provided
     error InvalidPath();
+    /// @notice movingAveragePrice0 is out of specified bounds
+    error MovingAveragePriceOutOfBounds();
 }

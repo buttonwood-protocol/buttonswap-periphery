@@ -13,6 +13,12 @@ interface IButtonswapRouter is IETHButtonswapRouter {
     function getPair(address tokenA, address tokenB) external view returns (address pair);
 
     /**
+     * @notice Returns the factory state of `isCreationRestricted`
+     * @return _isCreationRestricted The `isCreationRestricted` state of the factory.
+     */
+    function isCreationRestricted() external view returns (bool _isCreationRestricted);
+
+    /**
      * @notice Given some amount of an asset and pair pools, returns an equivalent amount of the other asset
      * @param amountA The amount of token A
      * @param poolA The balance of token A in the pool

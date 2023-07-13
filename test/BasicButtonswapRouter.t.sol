@@ -11,6 +11,16 @@ import {ButtonswapLibrary} from "../src/libraries/ButtonswapLibrary.sol";
 import {PairMath} from "buttonswap-periphery_buttonswap-core/libraries/PairMath.sol";
 
 contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
+    uint256 constant BPS = 10_000;
+
+    address public feeToSetter;
+    uint256 public feeToSetterPrivateKey;
+    address public isCreationRestrictedSetter;
+    uint256 public isCreationRestrictedSetterPrivateKey;
+    address public isPausedSetter;
+    uint256 public isPausedSetterPrivateKey;
+    address public paramSetter;
+    uint256 public paramSetterPrivateKey;
     address public userA;
     uint256 public userAPrivateKey;
     MockRebasingERC20 public tokenA;
@@ -55,10 +65,15 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
     }
 
     function setUp() public {
+        (feeToSetter, feeToSetterPrivateKey) = makeAddrAndKey("feeToSetter");
+        (isCreationRestrictedSetter, isCreationRestrictedSetterPrivateKey) =
+            makeAddrAndKey("isCreationRestrictedSetter");
+        (isPausedSetter, isPausedSetterPrivateKey) = makeAddrAndKey("isPausedSetter");
+        (paramSetter, paramSetterPrivateKey) = makeAddrAndKey("paramSetter");
         (userA, userAPrivateKey) = makeAddrAndKey("userA");
         tokenA = new MockRebasingERC20("TokenA", "TKNA", 18);
         tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
-        buttonswapFactory = new ButtonswapFactory(userA);
+        buttonswapFactory = new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter);
         basicButtonswapRouter = new BasicButtonswapRouter(address(buttonswapFactory));
     }
 
@@ -86,7 +101,7 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
             address(buttonswapFactory), abi.encodeCall(ButtonswapFactory.createPair, (address(tokenA), address(tokenB)))
         );
         basicButtonswapRouter.addLiquidity(
-            address(tokenA), address(tokenB), amountADesired, amountBDesired, 0, 0, userA, block.timestamp + 1
+            address(tokenA), address(tokenB), amountADesired, amountBDesired, 0, 0, 700, userA, block.timestamp + 1
         );
 
         // Asserting one pair has been created
@@ -126,7 +141,15 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.assume(matchingAAmount < amountAMin);
         vm.expectRevert(IButtonswapRouterErrors.InsufficientAAmount.selector);
         basicButtonswapRouter.addLiquidity(
-            address(tokenA), address(tokenB), amountADesired, amountBDesired, amountAMin, 0, userA, block.timestamp + 1
+            address(tokenA),
+            address(tokenB),
+            amountADesired,
+            amountBDesired,
+            amountAMin,
+            0,
+            700,
+            userA,
+            block.timestamp + 1
         );
     }
 
@@ -153,7 +176,15 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         vm.expectRevert(IButtonswapRouterErrors.InsufficientBAmount.selector);
         basicButtonswapRouter.addLiquidity(
-            address(tokenA), address(tokenB), amountADesired, amountBDesired, 0, amountBMin, userA, block.timestamp + 1
+            address(tokenA),
+            address(tokenB),
+            amountADesired,
+            amountBDesired,
+            0,
+            amountBMin,
+            700,
+            userA,
+            block.timestamp + 1
         );
     }
 
@@ -204,6 +235,7 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
             amountBDesired,
             amountAMin,
             amountBMin,
+            700,
             userA,
             block.timestamp + 1
         );
@@ -255,7 +287,7 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Adding liquidity should succeed now. Not concerned with liquidity value
         (uint256 amountA, uint256 amountB,) = basicButtonswapRouter.addLiquidity(
-            address(tokenA), address(tokenB), amountADesired, amountBDesired, 0, 0, userA, block.timestamp + 1
+            address(tokenA), address(tokenB), amountADesired, amountBDesired, 0, 0, 700, userA, block.timestamp + 1
         );
 
         // Validating that it used amountADesired and scaled down to calculate how much B-token to use
@@ -303,12 +335,83 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Adding liquidity should succeed now. Not concerned with liquidity value
         (uint256 amountA, uint256 amountB,) = basicButtonswapRouter.addLiquidity(
-            address(tokenA), address(tokenB), amountADesired, amountBDesired, 0, 0, userA, block.timestamp + 1
+            address(tokenA), address(tokenB), amountADesired, amountBDesired, 0, 0, 700, userA, block.timestamp + 1
         );
 
         // Validating that it used amountBDesired and scaled down to calculate how much A-token to use
         assertLt(amountA, amountADesired, "Router should have scaled down the A-tokens it used");
         assertEq(amountB, amountBDesired, "Router should have used amountBDesired tokens");
+    }
+
+    function test_addLiquidity_movingAveragePriceOutOfBounds(
+        bytes32 saltA,
+        bytes32 saltB,
+        uint256 poolA,
+        uint256 poolB,
+        uint256 swappedA
+    ) public {
+        // Re-assigning tokenA and tokenB to fuzz the order of the tokens
+        tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
+        tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+
+        // Minting enough for minimum liquidity requirement
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolB = bound(poolB, 10000, type(uint112).max);
+        swappedA = bound(swappedA, poolA / 100, poolA - poolA / 100);
+
+        // Creating the pair with poolA:poolB price ratio
+        createAndInitializePair(tokenA, tokenB, poolA, poolB);
+
+        // Do a swap to move the moving average price out of bounds
+        address[] memory path = new address[](2);
+        path[0] = address(tokenA);
+        path[1] = address(tokenB);
+        tokenA.mint(address(this), swappedA);
+        tokenA.approve(address(basicButtonswapRouter), swappedA);
+        basicButtonswapRouter.swapExactTokensForTokens(swappedA, 0, path, address(this), block.timestamp + 1);
+
+        // Figuring out what the value of movingAveragePriceThresholdBps to use to guarantee movingAveragePrice0 exceeds valid range
+        (uint256 newPoolA, uint256 newPoolB,,) =
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+
+        uint16 movingAveragePrice0ThresholdBps;
+        // Deriving the threshold by setting it to 1 under how much the deviation actually was
+        //        (pool1/pool0) = newPool1/newPool0 * (mT + BPS)/(BPS)
+        //        pool1 * newPool0 * BPS = newPool1 * (mT + BPS) * pool0
+        //        (mT) = (pool1 * newPool0 * BPS)/(newPool1 * pool0) - BPS
+        if (address(tokenA) < address(tokenB)) {
+            // tokenA is token0
+            vm.assume((poolB * newPoolA * BPS) > (newPoolB * poolA) * (BPS + 1));
+            movingAveragePrice0ThresholdBps = uint16((poolB * newPoolA * BPS) / (newPoolB * poolA) - BPS - 1);
+            vm.assume(0 < movingAveragePrice0ThresholdBps);
+            vm.assume(movingAveragePrice0ThresholdBps < BPS);
+        } else {
+            // tokenB is token0
+            vm.assume((poolA * newPoolB * BPS) > (newPoolA * poolB) * (BPS + 1));
+            movingAveragePrice0ThresholdBps = uint16((poolA * newPoolB * BPS) / (newPoolA * poolB) - BPS - 1);
+            vm.assume(0 < movingAveragePrice0ThresholdBps);
+            vm.assume(movingAveragePrice0ThresholdBps < BPS);
+        }
+
+        // Approving the router to take at most newPoolA A tokens and at most newPoolB B tokens
+        tokenA.mint(address(this), newPoolA);
+        tokenB.mint(address(this), newPoolB);
+        tokenA.approve(address(basicButtonswapRouter), newPoolA);
+        tokenB.approve(address(basicButtonswapRouter), newPoolB);
+
+        // Adding liquidity with the same balances that are currently in the pair
+        vm.expectRevert(IButtonswapRouterErrors.MovingAveragePriceOutOfBounds.selector);
+        basicButtonswapRouter.addLiquidity(
+            address(tokenA),
+            address(tokenB),
+            newPoolA,
+            newPoolB,
+            0,
+            0,
+            movingAveragePrice0ThresholdBps,
+            userA,
+            block.timestamp + 1
+        );
     }
 
     // **** addLiquidityWithReservoir() ****
