@@ -9,59 +9,44 @@ currentPrice \cdot (1 - movingAverageThreshold) \leq movingAveragePrice \leq cur
 
 The movingAveragePrice is represented in the pair as `movingAveragePrice0`, which is defined as the amount of token1 equivalent to `2**112` token0.
 
-The movingAverageThreshold is a percentage that is represented by `MovingAveragePriceThresholdBps` in basis points. In practice, it is divided by `BPS = 10_000`.
+The movingAverageThreshold is a percentage that is represented by `movingAveragePrice0ThresholdBps` in basis points. In practice, it is divided by `BPS = 10_000`.
 
 ## Math
-To ensure that the movingAveragePrice is within the threshold, we use the following math:
+To ensure that the movingAveragePrice is within the threshold, we have the following conditions:
 ```math
-\frac{pool0}{pool1} \cdot \frac{BPS - movingAveragePriceThresholdBps}{BPS} \leq \frac{2^{112}}{movingAveragePrice0} 
+{movingAveragePrice0 \over 2^{112}} \geq {pool1 \over pool0} \cdot (1 - {movingAveragePrice0ThresholdBps \over BPS})
 ```
 ```math
-\frac{2^{112}}{movingAveragePrice0} \leq \frac{pool0}{pool1} \cdot \frac{BPS + movingAveragePriceThresholdBps}{BPS}
+{movingAveragePrice0 \over 2^{112}} \leq {pool1 \over pool0} \cdot (1 + {movingAveragePrice0ThresholdBps \over BPS})
 ```
-These inequalities can be simplified to:
+These can be rearranged as follows:
 ```math
-(pool0)(BPS - movingAveragePriceThresholdBps)(movingAveragePrice0) \leq (2^{112})(pool1)(BPS) 
+movingAveragePrice0 \cdot pool0 \geq 2^{112} \cdot pool1 \cdot {BPS - movingAveragePrice0ThresholdBps \over BPS}
 ```
 ```math
-(2^{112})(pool1)(BPS) \leq (pool0)(BPS + movingAveragePriceThresholdBps)(movingAveragePrice0)
+movingAveragePrice0 \cdot pool0 \leq 2^{112} \cdot pool1 \cdot {BPS + movingAveragePrice0ThresholdBps \over BPS}
 ```
-Given that the multiplications of $2^{112}$ just compares $(pool1)(BPS)$ by the upper bits (skip the bottom 112) of the other side of the inequalities, we can use mulDivs without any loss of precision. Bit-shifting doesn't work because of the phantom overflow beforehand. We thus simplify it as such:
+And finally:
+```math
+movingAveragePrice0 \cdot pool0 \cdot BPS \geq 2^{112} \cdot pool1 \cdot (BPS - movingAveragePrice0ThresholdBps)
+```
+```math
+movingAveragePrice0 \cdot pool0 \cdot BPS \leq 2^{112} \cdot pool1 \cdot (BPS + movingAveragePrice0ThresholdBps)
+```
+
+Due to max integer constraints, it's actually simpler to divide by $2^{112}$ (which still requires a mulDiv to avoid phantom overflow).
+This premature division has negligible impact the result.
 ```solidity
-Math.mulDiv(pool0 * (BPS - movingAveragePriceThresholdBps), movingAveragePrice0, 2**112) <= (pool1)(BPS)
+Math.mulDiv(movingAveragePrice0, pool0 * BPS, 2**112) <= pool1 * (BPS - movingAveragePrice0ThresholdBps)
 ```
 ```solidity
-(pool1)(BPS) <= Math.mulDiv(pool0 * (BPS + movingAveragePriceThresholdBps), movingAveragePrice0, 2**112)
+Math.mulDiv(movingAveragePrice0, pool0 * BPS, 2**112) <= pool1 * (BPS + movingAveragePrice0ThresholdBps)
 ```
-In the code, before, we simply check which token is token0 and then use the appropriate values of `poolA` and `poolB` in-place of `pool0` and `pool1`.
-In addition, we invert the conditions to check for the reverting case.
+In the code we simply check beforehand which token is token0 and then use the appropriate values of `poolA` and `poolB` in-place of `pool0` and `pool1`.
+In addition we invert the conditions to check for the reverting case.
 
 ## Code
 The check exists inside of `RootButtonswapRouter.sol`:
 ```solidity
-// Validate that the moving average price is within the threshold for pairs that exist
-        if (poolA > 0 && poolB > 0) {
-            uint256 movingAveragePrice = IButtonswapPair(pair).movingAveragePrice0();
-            if (tokenA < tokenB) {
-                // tokenA is token0
-                if (
-                    poolB * BPS
-                        > Math.mulDiv(poolA * (BPS + movingAveragePriceThresholdBps), movingAveragePrice, 2 ** 112)
-                        || Math.mulDiv(poolA * (BPS - movingAveragePriceThresholdBps), movingAveragePrice, 2 ** 112)
-                            > poolB * BPS
-                ) {
-                    revert MovingAveragePriceOutOfBounds();
-                }
-            } else {
-                // tokenB is token0
-                if (
-                    poolA * BPS
-                        > Math.mulDiv(poolB * (BPS + movingAveragePriceThresholdBps), movingAveragePrice, 2 ** 112)
-                        || Math.mulDiv(poolB * (BPS - movingAveragePriceThresholdBps), movingAveragePrice, 2 ** 112)
-                            > poolA * BPS
-                ) {
-                    revert MovingAveragePriceOutOfBounds();
-                }
-            }
-        }
+TODO
 ```
