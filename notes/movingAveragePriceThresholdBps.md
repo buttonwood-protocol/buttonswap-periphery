@@ -1,8 +1,15 @@
 # MovingAveragePriceThresholdBps
 
-This parameter is pass in to `addLiquidity` and `addLiquidityEth` to guarantee that the pair's current movingAveragePrice does not deviate too far from the current pool price.
+This parameter is passed into `addLiquidity` and `addLiquidityEth` to guarantee that the pair's current movingAveragePrice does not deviate too far from the current pool price. It thus must be within a threshold bound around the current pool price.
+
+On an abstract level, the check is:
+```math
+currentPrice \cdot (1 - movingAverageThreshold) \leq movingAveragePrice \leq currentPrice \cdot (1 + movingAverageThreshold)
+```
 
 The movingAveragePrice is represented in the pair as `movingAveragePrice0`, which is defined as the amount of token1 equivalent to `2**112` token0.
+
+The movingAverageThreshold is a percentage that is represented by `MovingAveragePriceThresholdBps` in basis points. In practice, it is divided by `BPS = 10_000`.
 
 ## Math
 To ensure that the movingAveragePrice is within the threshold, we use the following math:
