@@ -52,8 +52,7 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
                 }
                 (amountA, amountB) = (amountADesired, amountBOptimal);
             } else {
-                uint256 amountAOptimal =
-                    ButtonswapLibrary.quote(amountBDesired, poolB + reservoirB, poolA + reservoirA);
+                uint256 amountAOptimal = ButtonswapLibrary.quote(amountBDesired, poolB + reservoirB, poolA + reservoirA);
                 assert(amountAOptimal <= amountADesired);
                 if (amountAOptimal < amountAMin) {
                     revert InsufficientAAmount();
@@ -67,21 +66,19 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
             uint256 movingAveragePrice0 = IButtonswapPair(pair).movingAveragePrice0();
             if (tokenA < tokenB) {
                 // tokenA is token0
+                uint256 cachedTerm = Math.mulDiv(movingAveragePrice0, poolA * BPS, 2 ** 112);
                 if (
-                    poolB * (BPS - movingAveragePrice0ThresholdBps)
-                        > Math.mulDiv(movingAveragePrice0, poolA * BPS, 2 ** 112)
-                        || poolB * (BPS + movingAveragePrice0ThresholdBps)
-                            < Math.mulDiv(movingAveragePrice0, poolA * BPS, 2 ** 112)
+                    poolB * (BPS - movingAveragePrice0ThresholdBps) > cachedTerm
+                        || poolB * (BPS + movingAveragePrice0ThresholdBps) < cachedTerm
                 ) {
                     revert MovingAveragePriceOutOfBounds();
                 }
             } else {
                 // tokenB is token0
+                uint256 cachedTerm = Math.mulDiv(movingAveragePrice0, poolB * BPS, 2 ** 112);
                 if (
-                    poolA * (BPS - movingAveragePrice0ThresholdBps)
-                        > Math.mulDiv(movingAveragePrice0, poolB * BPS, 2 ** 112)
-                        || poolA * (BPS + movingAveragePrice0ThresholdBps)
-                            < Math.mulDiv(movingAveragePrice0, poolB * BPS, 2 ** 112)
+                    poolA * (BPS - movingAveragePrice0ThresholdBps) > cachedTerm
+                        || poolA * (BPS + movingAveragePrice0ThresholdBps) < cachedTerm
                 ) {
                     revert MovingAveragePriceOutOfBounds();
                 }
