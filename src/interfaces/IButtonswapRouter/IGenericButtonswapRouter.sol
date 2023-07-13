@@ -45,12 +45,13 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
 
     // Swap
     function swapExactTokensForTokens(
+        address tokenIn,
         uint256 amountIn,
         uint256 amountOutMin,
         SwapStep[] calldata swapSteps,
         address to,
         uint256 deadline
-    ) external returns (uint256[] memory amounts);
+    ) external payable returns (uint256[] memory amounts);
 
     // Example: exact ETH > stETH
     /**
@@ -72,7 +73,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
         SwapStep[] calldata swapSteps,
         address to,
         uint256 deadline
-    ) external returns (uint256[] memory amounts);
+    ) external payable returns (uint256[] memory amounts);
 
     // Example: stETH > exact rocketETH
     /**

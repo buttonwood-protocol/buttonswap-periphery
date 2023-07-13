@@ -8,6 +8,7 @@ import {IButtonToken} from "./interfaces/IButtonToken.sol";
 import {ButtonswapLibrary} from "./libraries/ButtonswapLibrary.sol";
 import {TransferHelper} from "./libraries/TransferHelper.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
+import {ButtonswapOperations} from "./libraries/ButtonswapOperations.sol";
 
 contract GenericButtonswapRouter is IGenericButtonswapRouter {
     uint256 private constant BPS = 10_000;
@@ -20,6 +21,13 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
      * @inheritdoc IGenericButtonswapRouter
      */
     address public immutable override WETH;
+
+    modifier ensure(uint256 deadline) {
+        if (block.timestamp > deadline) {
+            revert Expired();
+        }
+        _;
+    }
 
     constructor(address _factory, address _WETH) {
         factory = _factory;
@@ -72,8 +80,8 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         amountOut = IButtonToken(tokenIn).burnAll();
     }
 
-    // Wrap-ETH
-    function _wrapETH(address tokenIn, address tokenOut, uint256 amountIn)
+    // Wrap-WETH
+    function _wrapWETH(address tokenIn, address tokenOut, uint256 amountIn)
         internal
         virtual
         returns (uint256 amountOut)
@@ -94,8 +102,8 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         amountOut = IERC20(WETH).balanceOf(address(this));
     }
 
-    // Unwrap-ETH
-    function _UnwrapETH(address tokenIn, address tokenOut, uint256 amountIn)
+    // Unwrap-WETH
+    function _unwrapWETH(address tokenIn, address tokenOut, uint256 amountIn)
         internal
         virtual
         returns (uint256 amountOut)
@@ -112,14 +120,85 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         amountOut = address(this).balance;
     }
 
+    function _swapStep(address tokenIn, uint256 amountIn, SwapStep calldata swapStep)
+        internal
+        virtual
+        returns (address tokenOut, uint256 amountOut)
+    {
+        tokenOut = swapStep.tokenOut;
+        if (swapStep.operation == ButtonswapOperations.Swap.SWAP) {
+            amountOut = _swap(tokenIn, tokenOut, amountIn);
+        } else if (swapStep.operation == ButtonswapOperations.Swap.WRAP_BUTTON) {
+            amountOut = _wrapButton(tokenIn, tokenOut, amountIn);
+        } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_BUTTON) {
+            amountOut = _unwrapButton(tokenIn, tokenOut, amountIn);
+        } else if (swapStep.operation == ButtonswapOperations.Swap.WRAP_WETH) {
+            amountOut = _wrapWETH(tokenIn, tokenOut, amountIn);
+        } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_WETH) {
+            amountOut = _unwrapWETH(tokenIn, tokenOut, amountIn);
+        }
+    }
+
     // **** External Functions **** //
     function swapExactTokensForTokens(
+        address tokenIn,
         uint256 amountIn,
         uint256 amountOutMin,
         SwapStep[] calldata swapSteps,
         address to,
         uint256 deadline
-    ) external returns (uint256[] memory amounts) {}
+    ) external payable override ensure(deadline) returns (uint256[] memory amounts) {
+        amounts = new uint256[](swapSteps.length + 1);
+        amounts[0] = amountIn;
+
+        for (uint256 i = 0; i < swapSteps.length; i++) {
+            (tokenIn, amountIn) = _swapStep(tokenIn, amountIn, swapSteps[i]);
+            amounts[i + 1] = amountIn;
+        }
+        if (amountIn < amountOutMin) {
+            revert InsufficientOutputAmount();
+        }
+        TransferHelper.safeTransfer(tokenIn, to, amountIn);
+    }
+
+    // ToDo: Potentially move into it's own library
+    function _getAmountIn(address tokenIn, uint256 amountOut, SwapStep calldata swapStep)
+        internal
+        virtual
+        returns (uint256 amountIn)
+    {
+        if (swapStep.operation == ButtonswapOperations.Swap.SWAP) {
+            (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, swapStep.tokenOut);
+            amountIn = ButtonswapLibrary.getAmountIn(amountOut, poolIn, poolOut);
+        } else if (swapStep.operation == ButtonswapOperations.Swap.WRAP_BUTTON) {
+            amountIn = IButtonToken(swapStep.tokenOut).wrapperToUnderlying(amountOut);
+        } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_BUTTON) {
+            amountIn = IButtonToken(tokenIn).underlyingToWrapper(amountOut);
+        } else if (swapStep.operation == ButtonswapOperations.Swap.WRAP_WETH) {
+            amountIn = amountOut;
+        } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_WETH) {
+            amountIn = amountOut;
+        }
+    }
+
+    // ToDo: Potentially move into it's own library
+    function _getAmountsIn(address firstTokenIn, uint256 amountOut, SwapStep[] calldata swapSteps)
+        internal
+        virtual
+        returns (uint256[] memory amounts)
+    {
+        amounts = new uint256[](swapSteps.length + 1);
+        amounts[swapSteps.length] = amountOut;
+        for (uint256 i = swapSteps.length; i > 0; i--) {
+            if (i == 1) {
+                amountOut = _getAmountIn(firstTokenIn, amountOut, swapSteps[i - 1]);
+                amounts[i - 1] = amountOut;
+            } else {
+                amountOut = _getAmountIn(swapSteps[i - 2].tokenOut, amountOut, swapSteps[i - 1]);
+                amounts[i - 1] = amountOut;
+            }
+        }
+    }
 
     function swapTokensForExactTokens(
         uint256 amountOut,
@@ -127,7 +206,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         SwapStep[] calldata swapSteps,
         address to,
         uint256 deadline
-    ) external returns (uint256[] memory amounts) {}
+    ) external payable override ensure(deadline) returns (uint256[] memory amounts) {}
 
     function addLiquidity(
         AddLiquidityStep calldata addLiquidityStep,

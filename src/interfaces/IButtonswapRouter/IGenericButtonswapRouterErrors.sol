@@ -20,4 +20,10 @@ interface IGenericButtonswapRouterErrors {
     // **** IERC20 Errors **** //
     /// @notice Incorrect balance of IERC20 token
     error IncorrectBalance();
+
+    // **** Swap Errors **** //
+    /// @notice Insufficient tokens returned from operation
+    error InsufficientOutputAmount();
+    /// @notice Deadline was exceeded
+    error Expired();
 }

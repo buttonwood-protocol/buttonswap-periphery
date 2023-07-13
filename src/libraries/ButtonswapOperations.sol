@@ -7,8 +7,8 @@ library ButtonswapOperations {
         SWAP,
         WRAP_BUTTON,
         UNWRAP_BUTTON,
-        WRAP_ETH,
-        UNWRAP_ETH
+        WRAP_WETH,
+        UNWRAP_WETH
     }
 
     // ToDo: Potentially redundant
