@@ -31,12 +31,12 @@ contract BasicButtonswapRouter is RootButtonswapRouter, IBasicButtonswapRouter {
         uint256 amountBDesired,
         uint256 amountAMin,
         uint256 amountBMin,
-        uint16 movingAveragePriceThresholdBps,
+        uint16 movingAveragePrice0ThresholdBps,
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
         (amountA, amountB) = _addLiquidity(
-            tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin, movingAveragePriceThresholdBps
+            tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin, movingAveragePrice0ThresholdBps
         );
         address pair = ButtonswapLibrary.pairFor(factory, tokenA, tokenB);
         TransferHelper.safeTransferFrom(tokenA, msg.sender, address(this), amountA);

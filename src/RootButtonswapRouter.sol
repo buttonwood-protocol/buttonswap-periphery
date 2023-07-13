@@ -31,7 +31,7 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
         uint256 amountBDesired,
         uint256 amountAMin,
         uint256 amountBMin,
-        uint16 movingAveragePriceThresholdBps
+        uint16 movingAveragePrice0ThresholdBps
     ) internal virtual returns (uint256 amountA, uint256 amountB) {
         // create the pair if it doesn't exist yet
         address pair = IButtonswapFactory(factory).getPair(tokenA, tokenB);
@@ -64,24 +64,24 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
 
         // Validate that the moving average price is within the threshold for pairs that exist
         if (poolA > 0 && poolB > 0) {
-            uint256 movingAveragePrice = IButtonswapPair(pair).movingAveragePrice0();
+            uint256 movingAveragePrice0 = IButtonswapPair(pair).movingAveragePrice0();
             if (tokenA < tokenB) {
                 // tokenA is token0
                 if (
-                    poolB * BPS
-                        > Math.mulDiv(poolA * (BPS + movingAveragePriceThresholdBps), movingAveragePrice, 2 ** 112)
-                        || Math.mulDiv(poolA * (BPS - movingAveragePriceThresholdBps), movingAveragePrice, 2 ** 112)
-                            > poolB * BPS
+                    poolB * (BPS - movingAveragePrice0ThresholdBps)
+                        > Math.mulDiv(movingAveragePrice0, poolA * BPS, 2 ** 112)
+                        || poolB * (BPS + movingAveragePrice0ThresholdBps)
+                            < Math.mulDiv(movingAveragePrice0, poolA * BPS, 2 ** 112)
                 ) {
                     revert MovingAveragePriceOutOfBounds();
                 }
             } else {
                 // tokenB is token0
                 if (
-                    poolA * BPS
-                        > Math.mulDiv(poolB * (BPS + movingAveragePriceThresholdBps), movingAveragePrice, 2 ** 112)
-                        || Math.mulDiv(poolB * (BPS - movingAveragePriceThresholdBps), movingAveragePrice, 2 ** 112)
-                            > poolA * BPS
+                    poolA * (BPS - movingAveragePrice0ThresholdBps)
+                        > Math.mulDiv(movingAveragePrice0, poolB * BPS, 2 ** 112)
+                        || poolA * (BPS + movingAveragePrice0ThresholdBps)
+                            < Math.mulDiv(movingAveragePrice0, poolB * BPS, 2 ** 112)
                 ) {
                     revert MovingAveragePriceOutOfBounds();
                 }

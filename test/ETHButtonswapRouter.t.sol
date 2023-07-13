@@ -371,10 +371,14 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
     }
 
     function test_addLiquidityETH_movingAveragePriceOutOfBounds(
+        bytes32 saltToken,
         uint256 poolToken,
         uint256 poolETH,
         uint256 swappedToken
     ) public {
+        // Re-assigning token to fuzz the order of the tokens
+        rebasingToken = new MockRebasingERC20{salt: saltToken}("Rebasing Token", "rTKN", 18);
+
         // Minting enough for minimum liquidity requirement
         poolToken = bound(poolToken, 10000, type(uint112).max);
         poolETH = bound(poolETH, 10000, type(uint112).max);
@@ -395,10 +399,26 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         (uint256 newPoolToken, uint256 newPoolETH,,) =
             ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(rebasingToken), address(weth));
 
-        vm.assume((newPoolToken * poolETH * BPS) > (newPoolETH * poolToken) * (BPS + 1));
-        uint256 movingAveragePriceThresholdBps = (newPoolToken * poolETH * BPS) / (newPoolETH * poolToken) - BPS - 1;
-        vm.assume(0 < movingAveragePriceThresholdBps);
-        vm.assume(movingAveragePriceThresholdBps < BPS);
+        uint16 movingAveragePrice0ThresholdBps;
+        // Deriving the threshold by setting it to 1 under how much the deviation actually was
+        //        (pool1/pool0) = newPool1/newPool0 * (mT + BPS)/(BPS)
+        //        pool1 * newPool0 * BPS = newPool1 * (mT + BPS) * pool0
+        //        (mT) = (pool1 * newPool0 * BPS)/(newPool1 * pool0) - BPS
+        if (address(rebasingToken) < address(weth)) {
+            // token is token0
+            vm.assume((poolETH * newPoolToken * BPS) > (newPoolETH * poolToken) * (BPS + 1));
+            movingAveragePrice0ThresholdBps =
+                uint16((poolETH * newPoolToken * BPS) / (newPoolETH * poolToken) - BPS - 1);
+            vm.assume(0 < movingAveragePrice0ThresholdBps);
+            vm.assume(movingAveragePrice0ThresholdBps < BPS);
+        } else {
+            // weth is token0
+            vm.assume((poolToken * newPoolETH * BPS) > (newPoolToken * poolETH) * (BPS + 1));
+            movingAveragePrice0ThresholdBps =
+                uint16((poolToken * newPoolETH * BPS) / (newPoolToken * poolETH) - BPS - 1);
+            vm.assume(0 < movingAveragePrice0ThresholdBps);
+            vm.assume(movingAveragePrice0ThresholdBps < BPS);
+        }
 
         // Approving the router to take at most newPoolToken tokens and at most newPoolETH eth
         rebasingToken.mint(address(this), newPoolToken);
@@ -408,13 +428,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         // Adding liquidity with the same balances that are currently in the pair
         vm.expectRevert(IButtonswapRouterErrors.MovingAveragePriceOutOfBounds.selector);
         ethButtonswapRouter.addLiquidityETH{value: newPoolETH}(
-            address(rebasingToken),
-            newPoolToken,
-            0,
-            0,
-            uint16(movingAveragePriceThresholdBps),
-            userA,
-            block.timestamp + 1
+            address(rebasingToken), newPoolToken, 0, 0, movingAveragePrice0ThresholdBps, userA, block.timestamp + 1
         );
     }
 

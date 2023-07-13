@@ -343,7 +343,17 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         assertEq(amountB, amountBDesired, "Router should have used amountBDesired tokens");
     }
 
-    function test_addLiquidity_movingAveragePriceOutOfBounds(uint256 poolA, uint256 poolB, uint256 swappedA) public {
+    function test_addLiquidity_movingAveragePriceOutOfBounds(
+        bytes32 saltA,
+        bytes32 saltB,
+        uint256 poolA,
+        uint256 poolB,
+        uint256 swappedA
+    ) public {
+        // Re-assigning tokenA and tokenB to fuzz the order of the tokens
+        tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
+        tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+
         // Minting enough for minimum liquidity requirement
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -364,10 +374,24 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         (uint256 newPoolA, uint256 newPoolB,,) =
             ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
 
-        vm.assume((newPoolA * poolB * BPS) > (newPoolB * poolA) * (BPS + 1));
-        uint256 movingAveragePriceThresholdBps = (newPoolA * poolB * BPS) / (newPoolB * poolA) - BPS - 1;
-        vm.assume(0 < movingAveragePriceThresholdBps);
-        vm.assume(movingAveragePriceThresholdBps < BPS);
+        uint16 movingAveragePrice0ThresholdBps;
+        // Deriving the threshold by setting it to 1 under how much the deviation actually was
+        //        (pool1/pool0) = newPool1/newPool0 * (mT + BPS)/(BPS)
+        //        pool1 * newPool0 * BPS = newPool1 * (mT + BPS) * pool0
+        //        (mT) = (pool1 * newPool0 * BPS)/(newPool1 * pool0) - BPS
+        if (address(tokenA) < address(tokenB)) {
+            // tokenA is token0
+            vm.assume((poolB * newPoolA * BPS) > (newPoolB * poolA) * (BPS + 1));
+            movingAveragePrice0ThresholdBps = uint16((poolB * newPoolA * BPS) / (newPoolB * poolA) - BPS - 1);
+            vm.assume(0 < movingAveragePrice0ThresholdBps);
+            vm.assume(movingAveragePrice0ThresholdBps < BPS);
+        } else {
+            // tokenB is token0
+            vm.assume((poolA * newPoolB * BPS) > (newPoolA * poolB) * (BPS + 1));
+            movingAveragePrice0ThresholdBps = uint16((poolA * newPoolB * BPS) / (newPoolA * poolB) - BPS - 1);
+            vm.assume(0 < movingAveragePrice0ThresholdBps);
+            vm.assume(movingAveragePrice0ThresholdBps < BPS);
+        }
 
         // Approving the router to take at most newPoolA A tokens and at most newPoolB B tokens
         tokenA.mint(address(this), newPoolA);
@@ -384,7 +408,7 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
             newPoolB,
             0,
             0,
-            uint16(movingAveragePriceThresholdBps),
+            movingAveragePrice0ThresholdBps,
             userA,
             block.timestamp + 1
         );
