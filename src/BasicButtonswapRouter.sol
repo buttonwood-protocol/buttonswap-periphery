@@ -44,7 +44,6 @@ contract BasicButtonswapRouter is RootButtonswapRouter, IBasicButtonswapRouter {
         TransferHelper.safeTransferFrom(tokenB, msg.sender, address(this), amountB);
         TransferHelper.safeApprove(tokenB, pair, amountB);
 
-        //        (address token0,) = ButtonswapLibrary.sortTokens(tokenA, tokenB);
         if (tokenA < tokenB) {
             liquidity = IButtonswapPair(pair).mint(amountA, amountB, to);
         } else {

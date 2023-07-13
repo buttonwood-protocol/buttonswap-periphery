@@ -45,7 +45,7 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
         if ((poolA + reservoirA) == 0 && (poolB + reservoirB) == 0) {
             (amountA, amountB) = (amountADesired, amountBDesired);
         } else {
-            uint256 amountBOptimal = ButtonswapLibrary.quote(amountADesired, (poolA + reservoirA), (poolB + reservoirB));
+            uint256 amountBOptimal = ButtonswapLibrary.quote(amountADesired, poolA + reservoirA, poolB + reservoirB);
             if (amountBOptimal <= amountBDesired) {
                 if (amountBOptimal < amountBMin) {
                     revert InsufficientBAmount();
@@ -53,7 +53,7 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
                 (amountA, amountB) = (amountADesired, amountBOptimal);
             } else {
                 uint256 amountAOptimal =
-                    ButtonswapLibrary.quote(amountBDesired, (poolB + reservoirB), (poolA + reservoirA));
+                    ButtonswapLibrary.quote(amountBDesired, poolB + reservoirB, poolA + reservoirA);
                 assert(amountAOptimal <= amountADesired);
                 if (amountAOptimal < amountAMin) {
                     revert InsufficientAAmount();
