@@ -34,10 +34,11 @@ movingAveragePrice0 \cdot pool0 \cdot BPS \geq 2^{112} \cdot pool1 \cdot (BPS - 
 movingAveragePrice0 \cdot pool0 \cdot BPS \leq 2^{112} \cdot pool1 \cdot (BPS + movingAveragePrice0ThresholdBps)
 ```
 
+## Code
 Due to max integer constraints, it's actually simpler to divide by $2^{112}$ (which still requires a mulDiv to avoid phantom overflow).
 This premature division has negligible impact the result.
 ```solidity
-Math.mulDiv(movingAveragePrice0, pool0 * BPS, 2**112) <= pool1 * (BPS - movingAveragePrice0ThresholdBps)
+Math.mulDiv(movingAveragePrice0, pool0 * BPS, 2**112) >= pool1 * (BPS - movingAveragePrice0ThresholdBps)
 ```
 ```solidity
 Math.mulDiv(movingAveragePrice0, pool0 * BPS, 2**112) <= pool1 * (BPS + movingAveragePrice0ThresholdBps)
@@ -45,7 +46,6 @@ Math.mulDiv(movingAveragePrice0, pool0 * BPS, 2**112) <= pool1 * (BPS + movingAv
 In the code we simply check beforehand which token is token0 and then use the appropriate values of `poolA` and `poolB` in-place of `pool0` and `pool1`.
 In addition we invert the conditions to check for the reverting case.
 
-## Code
 The check exists inside of `RootButtonswapRouter.sol`:
 ```solidity
 TODO
