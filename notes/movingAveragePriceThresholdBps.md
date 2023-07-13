@@ -8,20 +8,22 @@ The movingAveragePrice is represented in the pair as `movingAveragePrice0`, whic
 To ensure that the movingAveragePrice is within the threshold, we use the following math:
 ```math
 \frac{pool0}{pool1} \cdot \frac{BPS - movingAveragePriceThresholdBps}{BPS} \leq \frac{2^{112}}{movingAveragePrice0} 
-\\
+```
+```math
 \frac{2^{112}}{movingAveragePrice0} \leq \frac{pool0}{pool1} \cdot \frac{BPS + movingAveragePriceThresholdBps}{BPS}
 ```
 These inequalities can be simplified to:
 ```math
-```math
 (pool0)(BPS - movingAveragePriceThresholdBps)(movingAveragePrice0) \leq (2^{112})(pool1)(BPS) 
-\\
+```
+```math
 (2^{112})(pool1)(BPS) \leq (pool0)(BPS + movingAveragePriceThresholdBps)(movingAveragePrice0)
 ```
 Given that the multiplications of $2^{112}$ just compares $(pool1)(BPS)$ by the upper bits (skip the bottom 112) of the other side of the inequalities, we can use mulDivs without any loss of precision. Bit-shifting doesn't work because of the phantom overflow beforehand. We thus simplify it as such:
 ```solidity
 Math.mulDiv(pool0 * (BPS - movingAveragePriceThresholdBps), movingAveragePrice0, 2**112) <= (pool1)(BPS)
-
+```
+```solidity
 (pool1)(BPS) <= Math.mulDiv(pool0 * (BPS + movingAveragePriceThresholdBps), movingAveragePrice0, 2**112)
 ```
 In the code, before, we simply check which token is token0 and then use the appropriate values of `poolA` and `poolB` in-place of `pool0` and `pool1`.
