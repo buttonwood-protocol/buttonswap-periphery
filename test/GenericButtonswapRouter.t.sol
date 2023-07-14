@@ -53,27 +53,6 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         }
     }
 
-    // Utility function for creating and initializing pairs with poolA:poolB price ratio. Does not use ButtonwoodRouter
-    function createAndInitializePair(MockRebasingERC20 tokenA1, MockButtonToken tokenB1, uint256 poolA, uint256 poolB)
-        private
-        returns (IButtonswapPair pair, uint256 liquidityOut)
-    {
-        pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA1), address(tokenB1)));
-        tokenA1.mint(address(this), poolA);
-        tokenA1.approve(address(pair), poolA);
-
-        tokenA1.mint(address(this), poolB);
-        tokenA1.approve(address(tokenB1), poolB);
-        tokenB1.mint(poolB);
-        tokenB1.approve(address(pair), poolB);
-
-        if (pair.token0() == address(tokenA1)) {
-            liquidityOut = pair.mint(poolA, poolB, address(this));
-        } else {
-            liquidityOut = pair.mint(poolB, poolA, address(this));
-        }
-    }
-
     // Utility function for creating and initializing ETH-pairs with poolToken:poolETH price ratio. Does not use ButtonwoodRouter
     function createAndInitializePairETH(MockRebasingERC20 token, uint256 poolToken, uint256 poolETH)
         private
@@ -216,20 +195,9 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         assertEq(amounts[1], expectedAmountOut, "Last amount should be expectedAmountOut");
     }
 
-    function test_swapExactTokensForTokens_singleWrapButtonWithInsufficientOutputAmount(
-        uint256 poolA,
-        uint256 poolbA,
-        uint256 amountIn
-    ) public {
-        // Minting enough for minimum liquidity requirement
-        poolA = bound(poolA, 10000, type(uint112).max);
-        poolbA = bound(poolbA, 10000, type(uint112).max);
-
+    function test_swapExactTokensForTokens_singleWrapButtonWithInsufficientOutputAmount(uint256 amountIn) public {
         // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
         amountIn = bound(amountIn, 1000, 10000);
-
-        // Creating the pair with poolA:poolB price ratio
-        createAndInitializePair(tokenA, buttonTokenA, poolA, poolbA);
 
         // Estimating how much output a wrap-button would give and making amountOutMin +1 higher
         uint256 amountOutMin = amountIn + 1;
@@ -249,21 +217,9 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         );
     }
 
-    function test_swapExactTokensForTokens_singleWrapButton(
-        uint256 poolA,
-        uint256 poolbA,
-        uint256 amountIn,
-        uint256 amountOutMin
-    ) public {
-        // Minting enough for minimum liquidity requirement
-        poolA = bound(poolA, 10000, type(uint112).max);
-        poolbA = bound(poolbA, 10000, type(uint112).max);
-
+    function test_swapExactTokensForTokens_singleWrapButton(uint256 amountIn, uint256 amountOutMin) public {
         // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
         amountIn = bound(amountIn, 1000, 10000);
-
-        // Creating the pair with poolA:poolB price ratio
-        createAndInitializePair(tokenA, buttonTokenA, poolA, poolbA);
 
         // Estimating how much output a wrap-button would give
         uint256 expectedAmountOut = amountIn;
@@ -288,20 +244,9 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         assertEq(amounts[1], expectedAmountOut, "Last amount should be expectedAmountOut");
     }
 
-    function test_swapExactTokensForTokens_singleUnwrapButtonWithInsufficientOutputAmount(
-        uint256 poolA,
-        uint256 poolbA,
-        uint256 amountIn
-    ) public {
-        // Minting enough for minimum liquidity requirement
-        poolA = bound(poolA, 10000, type(uint112).max);
-        poolbA = bound(poolbA, 10000, type(uint112).max);
-
+    function test_swapExactTokensForTokens_singleUnwrapButtonWithInsufficientOutputAmount(uint256 amountIn) public {
         // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
         amountIn = bound(amountIn, 1000, 10000);
-
-        // Creating the pair with poolA:poolB price ratio
-        createAndInitializePair(tokenA, buttonTokenA, poolA, poolbA);
 
         // Estimating how much output a unwrap-button would give and making amountOutMin +1 higher
         uint256 amountOutMin = amountIn + 1;
@@ -323,21 +268,9 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         );
     }
 
-    function test_swapExactTokensForTokens_singleUnwrapButton(
-        uint256 poolA,
-        uint256 poolbA,
-        uint256 amountIn,
-        uint256 amountOutMin
-    ) public {
-        // Minting enough for minimum liquidity requirement
-        poolA = bound(poolA, 10000, type(uint112).max);
-        poolbA = bound(poolbA, 10000, type(uint112).max);
-
+    function test_swapExactTokensForTokens_singleUnwrapButton(uint256 amountIn, uint256 amountOutMin) public {
         // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
         amountIn = bound(amountIn, 1000, 10000);
-
-        // Creating the pair with poolA:poolB price ratio
-        createAndInitializePair(tokenA, buttonTokenA, poolA, poolbA);
 
         // Estimating how much output an unwrap-button would give
         uint256 expectedAmountOut = amountIn;
