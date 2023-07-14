@@ -249,7 +249,7 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         );
     }
 
-    function test_swapExactTokensForTokens_singleWrapButtonWithInsufficientOutputAmount(
+    function test_swapExactTokensForTokens_singleWrapButton(
         uint256 poolA,
         uint256 poolbA,
         uint256 amountIn,
