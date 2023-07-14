@@ -9,6 +9,7 @@ import {ButtonswapLibrary} from "./libraries/ButtonswapLibrary.sol";
 import {TransferHelper} from "./libraries/TransferHelper.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {ButtonswapOperations} from "./libraries/ButtonswapOperations.sol";
+import {console} from "buttonswap-periphery_forge-std/console.sol";
 
 contract GenericButtonswapRouter is IGenericButtonswapRouter {
     uint256 private constant BPS = 10_000;
@@ -215,16 +216,11 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         returns (uint256[] memory amounts)
     {
         amounts = new uint256[](swapSteps.length + 1);
-        amounts[swapSteps.length] = amountOut;
-        for (uint256 i = swapSteps.length; i > 0; i--) {
-            if (i == 1) {
-                amountOut = _getAmountIn(firstTokenIn, amountOut, swapSteps[i - 1]);
-                amounts[i - 1] = amountOut;
-            } else {
-                amountOut = _getAmountIn(swapSteps[i - 2].tokenOut, amountOut, swapSteps[i - 1]);
-                amounts[i - 1] = amountOut;
-            }
+        amounts[amounts.length - 1] = amountOut;
+        for (uint256 i = amounts.length - 2; i > 1; i--) {
+            amountOut = _getAmountIn(swapSteps[i - 1].tokenOut, amountOut, swapSteps[i]);
         }
+        amounts[0] = _getAmountIn(firstTokenIn, amountOut, swapSteps[0]);
     }
 
     function swapTokensForExactTokens(
@@ -239,16 +235,24 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         if (amounts[0] > amountInMax) {
             revert ExcessiveInputAmount();
         }
+        // Transferring in the initial amount if the first swapStep is not wrap-weth
+        if (swapSteps[0].operation != ButtonswapOperations.Swap.WRAP_WETH) {
+            TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amounts[0]);
+        }
 
         for (uint256 i = 0; i < swapSteps.length; i++) {
             (tokenIn, amountOut) = _swapStep(tokenIn, amounts[i], swapSteps[i]);
-            if (amountOut != amounts[i + 1]) {
+            if (amountOut < amounts[i + 1]) {
                 revert InsufficientOutputAmount();
             }
         }
-
-        // The final value of tokenIn is the last tokenOut from the swapSteps
-        TransferHelper.safeTransfer(tokenIn, to, amountOut);
+        // Transferring out final amount if the last swapStep is not unwrap-weth
+        // The final value of amountIn is the last amountOut from the last _swapStep execution
+        if (swapSteps[swapSteps.length - 1].operation != ButtonswapOperations.Swap.UNWRAP_WETH) {
+            TransferHelper.safeTransfer(tokenIn, to, amountOut);
+        } else {
+            payable(to).transfer(amountOut);
+        }
     }
 
     function addLiquidity(
@@ -267,4 +271,10 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         address to,
         uint256 deadline
     ) external returns (uint256 amountA, uint256 amountB) {}
+
+    // ToDo: swapTokensForExactTokens
+    // ToDo: addLiquidity
+    // ToDo: addLiquidityWithReservoir
+    // ToDo: removeLiquidity
+    // ToDo: removeLiquidityFromReservoir
 }
