@@ -44,7 +44,11 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         amountOut = ButtonswapLibrary.getAmountOut(amountIn, poolIn, poolOut);
 
         TransferHelper.safeApprove(tokenIn, address(pair), amountIn);
-        pair.swap(amountIn, 0, 0, amountOut, address(this));
+        if (tokenIn < tokenOut) {
+            pair.swap(amountIn, 0, 0, amountOut, address(this));
+        } else {
+            pair.swap(0, amountIn, amountOut, 0, address(this));
+        }
     }
 
     // Wrap-Button
@@ -58,7 +62,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             revert IncorrectButtonUnderlying();
         }
         // ToDo: Maybe approve/deposit the entire balance?
-        TransferHelper.safeApprove(tokenIn, address(tokenOut), amountIn);
+        TransferHelper.safeApprove(tokenIn, tokenOut, amountIn);
         amountOut = IButtonToken(tokenOut).deposit(amountIn);
     }
 
@@ -148,6 +152,9 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         address to,
         uint256 deadline
     ) external payable override ensure(deadline) returns (uint256[] memory amounts) {
+        // Transferring in the initial amount
+        TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amountIn);
+
         amounts = new uint256[](swapSteps.length + 1);
         amounts[0] = amountIn;
 
@@ -155,11 +162,12 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             (tokenIn, amountIn) = _swapStep(tokenIn, amountIn, swapSteps[i]);
             amounts[i + 1] = amountIn;
         }
+
+        // The final value of amountIn is the last amountOut from the last _swapStep execution
         if (amountIn < amountOutMin) {
             revert InsufficientOutputAmount();
         }
 
-        // The final value of tokenIn is the last tokenOut from the swapSteps
         // The final value of amountIn is the last amountOut from the last _swapStep execution
         TransferHelper.safeTransfer(tokenIn, to, amountIn);
     }
