@@ -261,7 +261,7 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         buttonTokenA.deposit(amountIn);
         buttonTokenA.approve(address(genericButtonswapRouter), amountIn);
 
-        // Attempting to do a simple swap
+        // Doing a single unwrap-button
         vm.expectRevert(IGenericButtonswapRouterErrors.InsufficientOutputAmount.selector);
         genericButtonswapRouter.swapExactTokensForTokens(
             address(buttonTokenA), amountIn, amountOutMin, swapSteps, address(this), block.timestamp + 1
@@ -287,9 +287,56 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         buttonTokenA.deposit(amountIn);
         buttonTokenA.approve(address(genericButtonswapRouter), amountIn);
 
-        // Doing a single wrap-button
+        // Doing a single unwrap-button
         uint256[] memory amounts = genericButtonswapRouter.swapExactTokensForTokens(
             address(buttonTokenA), amountIn, amountOutMin, swapSteps, address(this), block.timestamp + 1
+        );
+
+        // Validating the correct amounts
+        assertEq(amounts[0], amountIn, "First amount should be amountIn");
+        assertEq(amounts[1], expectedAmountOut, "Last amount should be expectedAmountOut");
+    }
+
+    function test_swapExactTokensForTokens_singleWrapWethWithInsufficientOutputAmount(uint256 amountIn) public {
+        // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
+        amountIn = bound(amountIn, 1000, 10000);
+
+        // Estimating how much output a wrap-weth would give and making amountOutMin +1 higher
+        uint256 amountOutMin = amountIn + 1;
+
+        // Creating swapSteps for single wrap-button
+        IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.WRAP_WETH, address(weth));
+
+        // Dealing enough ETH to the test for calling the function
+        vm.deal(address(this), amountIn);
+
+        // Attempting to do a simple wrap-weth
+        vm.expectRevert(IGenericButtonswapRouterErrors.InsufficientOutputAmount.selector);
+        genericButtonswapRouter.swapExactTokensForTokens{value: amountIn}(
+            address(0), amountIn, amountOutMin, swapSteps, address(this), block.timestamp + 1
+        );
+    }
+
+    function test_swapExactTokensForTokens_singleWrapWeth(uint256 amountIn, uint256 amountOutMin) public {
+        // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
+        amountIn = bound(amountIn, 1000, 10000);
+
+        // Estimating how much output an wrap-weth would give
+        uint256 expectedAmountOut = amountIn;
+        // Ensuring amountOutMin bounded below expectedAmountOut
+        amountOutMin = bound(amountOutMin, 0, expectedAmountOut);
+
+        // Creating swapSteps for single wrap-button
+        IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.WRAP_WETH, address(weth));
+
+        // Dealing enough ETH to the test for calling the function
+        vm.deal(address(this), amountIn);
+
+        // Doing a single wrap-eth
+        uint256[] memory amounts = genericButtonswapRouter.swapExactTokensForTokens{value: amountIn}(
+            address(0), amountIn, amountOutMin, swapSteps, address(this), block.timestamp + 1
         );
 
         // Validating the correct amounts

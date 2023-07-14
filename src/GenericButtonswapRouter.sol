@@ -90,11 +90,11 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         virtual
         returns (uint256 amountOut)
     {
-        if (tokenIn == address(0)) {
+        if (tokenIn != address(0)) {
             // ToDo: Remove check?
             revert NonEthToken();
         }
-        if (tokenOut == address(WETH)) {
+        if (tokenOut != address(WETH)) {
             // ToDo: Remove check?
             revert NonWethToken();
         }
@@ -152,8 +152,10 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         address to,
         uint256 deadline
     ) external payable override ensure(deadline) returns (uint256[] memory amounts) {
-        // Transferring in the initial amount
-        TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amountIn);
+        // Transferring in the initial amount if the first swapStep is not weth
+        if (swapSteps[0].operation != ButtonswapOperations.Swap.WRAP_WETH) {
+            TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amountIn);
+        }
 
         amounts = new uint256[](swapSteps.length + 1);
         amounts[0] = amountIn;
