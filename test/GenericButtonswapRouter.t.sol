@@ -304,7 +304,7 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         // Estimating how much output a wrap-weth would give and making amountOutMin +1 higher
         uint256 amountOutMin = amountIn + 1;
 
-        // Creating swapSteps for single wrap-button
+        // Creating swapSteps for single wrap-weth
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
         swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.WRAP_WETH, address(weth));
 
@@ -327,7 +327,7 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         // Ensuring amountOutMin bounded below expectedAmountOut
         amountOutMin = bound(amountOutMin, 0, expectedAmountOut);
 
-        // Creating swapSteps for single wrap-button
+        // Creating swapSteps for single wrap-weth
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
         swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.WRAP_WETH, address(weth));
 
@@ -337,6 +337,57 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         // Doing a single wrap-eth
         uint256[] memory amounts = genericButtonswapRouter.swapExactTokensForTokens{value: amountIn}(
             address(0), amountIn, amountOutMin, swapSteps, address(this), block.timestamp + 1
+        );
+
+        // Validating the correct amounts
+        assertEq(amounts[0], amountIn, "First amount should be amountIn");
+        assertEq(amounts[1], expectedAmountOut, "Last amount should be expectedAmountOut");
+    }
+
+    function test_swapExactTokensForTokens_singleUnwrapWethWithInsufficientOutputAmount(uint256 amountIn) public {
+        // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
+        amountIn = bound(amountIn, 1000, 10000);
+
+        // Estimating how much output a unwrap-weth would give and making amountOutMin +1 higher
+        uint256 amountOutMin = amountIn + 1;
+
+        // Creating swapSteps for single unwrap-weth
+        IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.UNWRAP_WETH, address(0));
+
+        // Approving the router to take at most amountIn weth
+        vm.deal(address(this), amountIn);
+        weth.deposit{value: amountIn}();
+        weth.approve(address(genericButtonswapRouter), amountIn);
+
+        // Attempting to do a simple unwrap-weth
+        vm.expectRevert(IGenericButtonswapRouterErrors.InsufficientOutputAmount.selector);
+        genericButtonswapRouter.swapExactTokensForTokens(
+            address(weth), amountIn, amountOutMin, swapSteps, address(this), block.timestamp + 1
+        );
+    }
+
+    function test_swapExactTokensForTokens_singleUnwrapWeth(uint256 amountIn, uint256 amountOutMin) public {
+        // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
+        amountIn = bound(amountIn, 1000, 10000);
+
+        // Estimating how much output an unwrap-weth would give
+        uint256 expectedAmountOut = amountIn;
+        // Ensuring amountOutMin bounded below expectedAmountOut
+        amountOutMin = bound(amountOutMin, 0, expectedAmountOut);
+
+        // Creating swapSteps for single unwrap-weth
+        IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.UNWRAP_WETH, address(0));
+
+        // Approving the router to take at most amountIn weth
+        vm.deal(address(this), amountIn);
+        weth.deposit{value: amountIn}();
+        weth.approve(address(genericButtonswapRouter), amountIn);
+
+        // Doing a single wrap-eth
+        uint256[] memory amounts = genericButtonswapRouter.swapExactTokensForTokens(
+            address(weth), amountIn, amountOutMin, swapSteps, address(this), block.timestamp + 1
         );
 
         // Validating the correct amounts

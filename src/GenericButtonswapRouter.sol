@@ -29,6 +29,15 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         _;
     }
 
+    /**
+     * @dev Only accepts ETH via fallback from the WETH contract
+     */
+    receive() external payable {
+        if (msg.sender != WETH) {
+            revert NonWETHSender();
+        }
+    }
+
     constructor(address _factory, address _WETH) {
         factory = _factory;
         WETH = _WETH;
@@ -99,7 +108,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             revert NonWethToken();
         }
         if (amountIn != address(this).balance) {
-            // ToDo: Remove check?
+            // ToDo: Remove check? Maybe just deposit the entire balance of the router so it's always empty.
             revert IncorrectBalance();
         }
         IWETH(WETH).deposit{value: amountIn}();
@@ -112,11 +121,11 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         virtual
         returns (uint256 amountOut)
     {
-        if (tokenIn == address(WETH)) {
+        if (tokenIn != address(WETH)) {
             // ToDo: Remove check?
             revert NonWethToken();
         }
-        if (tokenOut == address(0)) {
+        if (tokenOut != address(0)) {
             // ToDo: Remove check?
             revert NonEthToken();
         }
@@ -152,7 +161,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         address to,
         uint256 deadline
     ) external payable override ensure(deadline) returns (uint256[] memory amounts) {
-        // Transferring in the initial amount if the first swapStep is not weth
+        // Transferring in the initial amount if the first swapStep is not wrap-weth
         if (swapSteps[0].operation != ButtonswapOperations.Swap.WRAP_WETH) {
             TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amountIn);
         }
@@ -170,8 +179,13 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             revert InsufficientOutputAmount();
         }
 
+        // Transferring out final amount if the last swapStep is not unwrap-weth
         // The final value of amountIn is the last amountOut from the last _swapStep execution
-        TransferHelper.safeTransfer(tokenIn, to, amountIn);
+        if (swapSteps[swapSteps.length - 1].operation != ButtonswapOperations.Swap.UNWRAP_WETH) {
+            TransferHelper.safeTransfer(tokenIn, to, amountIn);
+        } else {
+            payable(to).transfer(amountIn);
+        }
     }
 
     // ToDo: Potentially move into it's own library
