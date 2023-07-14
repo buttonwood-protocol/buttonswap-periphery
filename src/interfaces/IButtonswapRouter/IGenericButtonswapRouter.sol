@@ -68,6 +68,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      */
 
     function swapTokensForExactTokens(
+        address tokenIn,
         uint256 amountOut,
         uint256 amountInMax,
         SwapStep[] calldata swapSteps,

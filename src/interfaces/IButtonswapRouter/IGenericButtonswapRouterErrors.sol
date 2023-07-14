@@ -22,6 +22,8 @@ interface IGenericButtonswapRouterErrors {
     error IncorrectBalance();
 
     // **** Swap Errors **** //
+    /// @notice Required input amount exceeds specified maximum
+    error ExcessiveInputAmount();
     /// @notice Insufficient tokens returned from operation
     error InsufficientOutputAmount();
     /// @notice Deadline was exceeded

@@ -158,6 +158,9 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         if (amountIn < amountOutMin) {
             revert InsufficientOutputAmount();
         }
+
+        // The final value of tokenIn is the last tokenOut from the swapSteps
+        // The final value of amountIn is the last amountOut from the last _swapStep execution
         TransferHelper.safeTransfer(tokenIn, to, amountIn);
     }
 
@@ -201,12 +204,28 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     }
 
     function swapTokensForExactTokens(
+        address tokenIn,
         uint256 amountOut,
         uint256 amountInMax,
         SwapStep[] calldata swapSteps,
         address to,
         uint256 deadline
-    ) external payable override ensure(deadline) returns (uint256[] memory amounts) {}
+    ) external payable override ensure(deadline) returns (uint256[] memory amounts) {
+        amounts = _getAmountsIn(tokenIn, amountOut, swapSteps);
+        if (amounts[0] > amountInMax) {
+            revert ExcessiveInputAmount();
+        }
+
+        for (uint256 i = 0; i < swapSteps.length; i++) {
+            (tokenIn, amountOut) = _swapStep(tokenIn, amounts[i], swapSteps[i]);
+            if (amountOut != amounts[i + 1]) {
+                revert InsufficientOutputAmount();
+            }
+        }
+
+        // The final value of tokenIn is the last tokenOut from the swapSteps
+        TransferHelper.safeTransfer(tokenIn, to, amountOut);
+    }
 
     function addLiquidity(
         AddLiquidityStep calldata addLiquidityStep,
