@@ -234,7 +234,7 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         // Estimating how much output a wrap-button would give and making amountOutMin +1 higher
         uint256 amountOutMin = amountIn + 1;
 
-        // Creating swapSteps for single swap
+        // Creating swapSteps for single wrap-button
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
         swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.WRAP_BUTTON, address(buttonTokenA));
 
@@ -265,12 +265,12 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         // Creating the pair with poolA:poolB price ratio
         createAndInitializePair(tokenA, buttonTokenA, poolA, poolbA);
 
-        // Estimating how much output a trade would give
+        // Estimating how much output a wrap-button would give
         uint256 expectedAmountOut = amountIn;
         // Ensuring amountOutMin bounded below expectedAmountOut
         amountOutMin = bound(amountOutMin, 0, expectedAmountOut);
 
-        // Creating swapSteps for single swap
+        // Creating swapSteps for single wrap-button
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
         swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.WRAP_BUTTON, address(buttonTokenA));
 
@@ -281,6 +281,82 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         // Doing a single wrap-button
         uint256[] memory amounts = genericButtonswapRouter.swapExactTokensForTokens(
             address(tokenA), amountIn, amountOutMin, swapSteps, address(this), block.timestamp + 1
+        );
+
+        // Validating the correct amounts
+        assertEq(amounts[0], amountIn, "First amount should be amountIn");
+        assertEq(amounts[1], expectedAmountOut, "Last amount should be expectedAmountOut");
+    }
+
+    function test_swapExactTokensForTokens_singleUnwrapButtonWithInsufficientOutputAmount(
+        uint256 poolA,
+        uint256 poolbA,
+        uint256 amountIn
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolbA = bound(poolbA, 10000, type(uint112).max);
+
+        // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
+        amountIn = bound(amountIn, 1000, 10000);
+
+        // Creating the pair with poolA:poolB price ratio
+        createAndInitializePair(tokenA, buttonTokenA, poolA, poolbA);
+
+        // Estimating how much output a unwrap-button would give and making amountOutMin +1 higher
+        uint256 amountOutMin = amountIn + 1;
+
+        // Creating swapSteps for single unwrap-button
+        IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.UNWRAP_BUTTON, address(tokenA));
+
+        // Approving the router to take at most amountIn buttonTokenA
+        tokenA.mint(address(this), amountIn);
+        tokenA.approve(address(buttonTokenA), amountIn);
+        buttonTokenA.deposit(amountIn);
+        buttonTokenA.approve(address(genericButtonswapRouter), amountIn);
+
+        // Attempting to do a simple swap
+        vm.expectRevert(IGenericButtonswapRouterErrors.InsufficientOutputAmount.selector);
+        genericButtonswapRouter.swapExactTokensForTokens(
+            address(buttonTokenA), amountIn, amountOutMin, swapSteps, address(this), block.timestamp + 1
+        );
+    }
+
+    function test_swapExactTokensForTokens_singleUnwrapButton(
+        uint256 poolA,
+        uint256 poolbA,
+        uint256 amountIn,
+        uint256 amountOutMin
+    ) public {
+        // Minting enough for minimum liquidity requirement
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolbA = bound(poolbA, 10000, type(uint112).max);
+
+        // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
+        amountIn = bound(amountIn, 1000, 10000);
+
+        // Creating the pair with poolA:poolB price ratio
+        createAndInitializePair(tokenA, buttonTokenA, poolA, poolbA);
+
+        // Estimating how much output an unwrap-button would give
+        uint256 expectedAmountOut = amountIn;
+        // Ensuring amountOutMin bounded below expectedAmountOut
+        amountOutMin = bound(amountOutMin, 0, expectedAmountOut);
+
+        // Creating swapSteps for single unwrap-button
+        IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.UNWRAP_BUTTON, address(tokenA));
+
+        // Approving the router to take at most amountIn buttonTokenA
+        tokenA.mint(address(this), amountIn);
+        tokenA.approve(address(buttonTokenA), amountIn);
+        buttonTokenA.deposit(amountIn);
+        buttonTokenA.approve(address(genericButtonswapRouter), amountIn);
+
+        // Doing a single wrap-button
+        uint256[] memory amounts = genericButtonswapRouter.swapExactTokensForTokens(
+            address(buttonTokenA), amountIn, amountOutMin, swapSteps, address(this), block.timestamp + 1
         );
 
         // Validating the correct amounts
