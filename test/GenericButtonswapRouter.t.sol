@@ -517,4 +517,8 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         assertEq(amounts[0], expectedAmountIn, "First amount should be expectedAmountIn");
         assertEq(amounts[1], amountOut, "Last amount should be amountOut");
     }
+
+    // ToDo: Tests for swapTokensForExact unwrap-buttons
+    // ToDo: Tests for wrap-weth
+    // ToDo: Tests for unwrap-weth
 }
