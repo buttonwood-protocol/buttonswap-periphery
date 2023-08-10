@@ -56,7 +56,7 @@ contract ButtonswapLibraryTest is Test {
     }
 
     function setUp() public {
-        buttonswapFactory = new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter);
+        buttonswapFactory = new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "LP Token", "LP");
     }
 
     function test_sortTokens_validAddresses(address tokenA, address tokenB) public {

@@ -98,7 +98,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         (userA, userAPrivateKey) = makeAddrAndKey("userA");
         rebasingToken = new MockRebasingERC20("RebasingToken", "rTKN", 18);
         weth = new MockWeth();
-        buttonswapFactory = new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter);
+        buttonswapFactory = new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "LP Token", "LP");
         ethButtonswapRouter = new ETHButtonswapRouter(address(buttonswapFactory), address(weth));
     }
 
