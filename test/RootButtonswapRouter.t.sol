@@ -24,7 +24,7 @@ contract RootButtonswapRouterTest is Test, IButtonswapRouterErrors {
             makeAddrAndKey("isCreationRestrictedSetter");
         (isPausedSetter, isPausedSetterPrivateKey) = makeAddrAndKey("isPausedSetter");
         (paramSetter, paramSetterPrivateKey) = makeAddrAndKey("paramSetter");
-        buttonswapFactory = new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter);
+        buttonswapFactory = new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "LP Token", "LP");
         rootButtonswapRouter = new RootButtonswapRouter(address(buttonswapFactory));
     }
 

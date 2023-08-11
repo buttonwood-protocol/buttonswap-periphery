@@ -59,7 +59,7 @@ library ButtonswapLibrary {
                             hex"ff",
                             factory,
                             keccak256(abi.encodePacked(token0, token1)),
-                            hex"0e26b0955b8f08def7dd8d039f24fd2f1ce4b2d9763852fec38831e9589ecd49" // init code hash
+                            hex"912fa011211d18178fef8f22392edc90ca8f101645ab8347e1359b5ce2f890df" // init code hash
                         )
                     )
                 )
