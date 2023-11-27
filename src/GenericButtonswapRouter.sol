@@ -108,10 +108,11 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             // ToDo: Remove check?
             revert NonWethToken();
         }
-        if (amountIn != address(this).balance) {
-            // ToDo: Remove check? Maybe just deposit the entire balance of the router so it's always empty.
-            revert IncorrectBalance();
-        }
+        // ToDo: No need for this check. Always transfer entire router balance
+        //        if (amountIn != address(this).balance) {
+        //            // ToDo: Remove check? Maybe just deposit the entire balance of the router so it's always empty.
+        //            revert IncorrectBalance();
+        //        }
         IWETH(WETH).deposit{value: amountIn}();
         amountOut = IERC20(WETH).balanceOf(address(this));
     }

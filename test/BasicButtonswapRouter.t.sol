@@ -73,7 +73,8 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         (userA, userAPrivateKey) = makeAddrAndKey("userA");
         tokenA = new MockRebasingERC20("TokenA", "TKNA", 18);
         tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
-        buttonswapFactory = new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "LP Token", "LP");
+        buttonswapFactory =
+        new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "LP Token", "LP");
         basicButtonswapRouter = new BasicButtonswapRouter(address(buttonswapFactory));
     }
 

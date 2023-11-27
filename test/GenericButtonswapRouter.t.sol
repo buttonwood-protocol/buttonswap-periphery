@@ -105,7 +105,8 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
         buttonTokenA = new MockButtonToken(address(tokenA));
         weth = new MockWeth();
-        buttonswapFactory = new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter);
+        buttonswapFactory =
+        new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "Token Name", "SYMBOL");
         genericButtonswapRouter = new GenericButtonswapRouter(address(buttonswapFactory), address(weth));
     }
 
@@ -334,7 +335,7 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         // Dealing enough ETH to the test for calling the function
         vm.deal(address(this), amountIn);
 
-        // Doing a single wrap-eth
+        // Doing a single swap
         uint256[] memory amounts = genericButtonswapRouter.swapExactTokensForTokens{value: amountIn}(
             address(0), amountIn, amountOutMin, swapSteps, address(this), block.timestamp + 1
         );
@@ -394,7 +395,7 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
 
     //**** swapTokensForExactTokens ****//
 
-    function test_swapTokensForExactTokens_singleSwapWithInsufficientOutputAmount(
+    function test_swapTokensForExactTokens_singleSwapWithExcessiveInputAmount(
         uint256 poolA,
         uint256 poolB,
         uint256 amountOut
@@ -469,9 +470,9 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         assertEq(amounts[1], amountOut, "Last amount should be amountOut");
     }
 
-    function test_swapTokensForExactTokens_singleWrapButtonWithInsufficientOutputAmount(uint256 amountOut) public {
-        // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
-        amountOut = bound(amountOut, 1000, tokenA.mintableBalance());
+    function test_swapTokensForExactTokens_singleWrapButtonWithExcessiveInputAmount(uint256 amountOut) public {
+        // Ensuring that amountOut is bounded to avoid errors/overflows/underflows
+        amountOut = bound(amountOut, 1, tokenA.mintableBalance());
 
         // Estimating how much output a trade would give and making amountOutMin -1 lower
         uint256 amountInMax = amountOut - 1;
@@ -500,7 +501,7 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         // Ensuring amountInMax bounded above expectedAmountIn
         amountInMax = bound(amountInMax, expectedAmountIn, tokenA.mintableBalance());
 
-        // Creating swapSteps for single swap
+        // Creating swapSteps for single wrap-button
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
         swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.WRAP_BUTTON, address(buttonTokenA));
 
@@ -518,7 +519,148 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
         assertEq(amounts[1], amountOut, "Last amount should be amountOut");
     }
 
-    // ToDo: Tests for swapTokensForExact unwrap-buttons
-    // ToDo: Tests for wrap-weth
-    // ToDo: Tests for unwrap-weth
+    function test_swapTokensForExactTokens_singleUnwrapButtonWithExcessiveInputAmount(uint256 amountOut) public {
+        // Ensuring that amountOut is bounded to avoid errors/overflows/underflows
+        amountOut = bound(amountOut, 1, tokenA.mintableBalance());
+
+        // Estimating how much output a trade would give and making amountOutMin -1 lower
+        uint256 amountInMax = amountOut - 1;
+
+        // Creating swapSteps for single unwrap-button
+        IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.UNWRAP_BUTTON, address(tokenA));
+
+        // Approving the router to take at most amountInMax tokenA
+        tokenA.mint(address(this), amountInMax);
+        tokenA.approve(address(buttonTokenA), amountInMax);
+        buttonTokenA.deposit(amountInMax);
+        buttonTokenA.approve(address(genericButtonswapRouter), amountInMax);
+
+        // Attempting to do a simple swap
+        vm.expectRevert(IGenericButtonswapRouterErrors.ExcessiveInputAmount.selector);
+        genericButtonswapRouter.swapTokensForExactTokens(
+            address(buttonTokenA), amountOut, amountInMax, swapSteps, address(this), block.timestamp + 1
+        );
+    }
+
+    function test_swapTokensForExactTokens_singleUnwrapButton(uint256 amountOut, uint256 amountInMax) public {
+        // Ensuring that amountOut is bounded to avoid errors/overflows/underflows
+        amountOut = bound(amountOut, 1000, tokenA.mintableBalance());
+
+        // Estimating how much output a trade would give
+        uint256 expectedAmountIn = amountOut;
+        // Ensuring amountInMax bounded above expectedAmountIn
+        amountInMax = bound(amountInMax, expectedAmountIn, tokenA.mintableBalance());
+
+        // Creating swapSteps for single unwrap-button
+        IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.UNWRAP_BUTTON, address(tokenA));
+
+        // Approving the router to take at most amountInMax tokenA
+        tokenA.mint(address(this), amountInMax);
+        tokenA.approve(address(buttonTokenA), amountInMax);
+        buttonTokenA.deposit(amountInMax);
+        buttonTokenA.approve(address(genericButtonswapRouter), amountInMax);
+
+        // Doing a single swap
+        uint256[] memory amounts = genericButtonswapRouter.swapTokensForExactTokens(
+            address(buttonTokenA), amountOut, amountInMax, swapSteps, address(this), block.timestamp + 1
+        );
+
+        // Validating the correct amounts
+        assertEq(amounts[0], expectedAmountIn, "First amount should be expectedAmountIn");
+        assertEq(amounts[1], amountOut, "Last amount should be amountOut");
+    }
+
+    function test_swapTokensForExactTokens_singleWrapWethWithExcessiveInputAmount(uint256 amountOut) public {
+        // Ensuring that amountOut is bounded to avoid errors/overflows/underflows
+        amountOut = bound(amountOut, 1, type(uint256).max);
+
+        // Estimating how much output a trade would give and making amountOutMin -1 lower
+        uint256 amountInMax = amountOut - 1;
+
+        // Creating swapSteps for single wrap-weth
+        IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.WRAP_WETH, address(weth));
+
+        // Dealing enough ETH to the test for calling the function
+        vm.deal(address(this), amountInMax);
+
+        // Attempting to do a simple swap
+        vm.expectRevert(IGenericButtonswapRouterErrors.ExcessiveInputAmount.selector);
+        genericButtonswapRouter.swapTokensForExactTokens{value: amountInMax}(
+            address(0), amountOut, amountInMax, swapSteps, address(this), block.timestamp + 1
+        );
+    }
+
+    function test_swapTokensForExactTokens_singleWrapWeth(uint256 amountOut, uint256 amountInMax) public {
+        /// Estimating how much input a wrap-weth would need
+        uint256 expectedAmountIn = amountOut;
+        // Ensuring amountInMax bounded above expectedAmountIn
+        amountInMax = bound(amountInMax, expectedAmountIn, type(uint256).max);
+
+        // Creating swapSteps for single wrap-weth
+        IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.WRAP_WETH, address(weth));
+
+        // Dealing enough ETH to the test for calling the function
+        vm.deal(address(this), amountInMax);
+
+        // Doing a single swap
+        uint256[] memory amounts = genericButtonswapRouter.swapTokensForExactTokens{value: amountInMax}(
+            address(0), amountOut, amountInMax, swapSteps, address(this), block.timestamp + 1
+        );
+
+        // Validating the correct amounts
+        assertEq(amounts[0], expectedAmountIn, "First amount should be expectedAmountIn");
+        assertEq(amounts[1], amountOut, "Last amount should be amountOut");
+    }
+
+    function test_swapTokensForExactTokens_singleUnwrapWethWithExcessiveInputAmount(uint256 amountOut) public {
+        // Ensuring that amountOut is bounded to avoid errors/overflows/underflows
+        amountOut = bound(amountOut, 1, type(uint256).max);
+
+        // Estimating how much output a trade would give and making amountOutMin -1 lower
+        uint256 amountInMax = amountOut - 1;
+
+        // Creating swapSteps for single unwrap-weth
+        IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.UNWRAP_WETH, address(0));
+
+        // Approving the router to take at most amountInMax weth
+        vm.deal(address(this), amountInMax);
+        weth.deposit{value: amountInMax}();
+        weth.approve(address(genericButtonswapRouter), amountInMax);
+
+        // Attempting to do a simple swap
+        vm.expectRevert(IGenericButtonswapRouterErrors.ExcessiveInputAmount.selector);
+        genericButtonswapRouter.swapTokensForExactTokens(
+            address(weth), amountOut, amountInMax, swapSteps, address(this), block.timestamp + 1
+        );
+    }
+
+    function test_swapTokensForExactTokens_singleUnwrapWeth(uint256 amountOut, uint256 amountInMax) public {
+        /// Estimating how much input a unwwrap-weth would need
+        uint256 expectedAmountIn = amountOut;
+        // Ensuring amountInMax bounded above expectedAmountIn
+        amountInMax = bound(amountInMax, expectedAmountIn, type(uint256).max);
+
+        // Creating swapSteps for single unwrap-weth
+        IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.UNWRAP_WETH, address(0));
+
+        // Approving the router to take at most amountInMax weth
+        vm.deal(address(this), amountInMax);
+        weth.deposit{value: amountInMax}();
+        weth.approve(address(genericButtonswapRouter), amountInMax);
+
+        // Doing a single swap
+        uint256[] memory amounts = genericButtonswapRouter.swapTokensForExactTokens(
+            address(weth), amountOut, amountInMax, swapSteps, address(this), block.timestamp + 1
+        );
+
+        // Validating the correct amounts
+        assertEq(amounts[0], expectedAmountIn, "First amount should be expectedAmountIn");
+        assertEq(amounts[1], amountOut, "Last amount should be amountOut");
+    }
 }
