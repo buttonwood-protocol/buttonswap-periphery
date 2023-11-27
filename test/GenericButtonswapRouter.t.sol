@@ -201,7 +201,7 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
 
     function test_swapExactTokensForTokens_singleWrapButtonWithInsufficientOutputAmount(uint256 amountIn) public {
         // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
-        amountIn = bound(amountIn, 1000, 10000); // ToDo: Remove?
+        amountIn = bound(amountIn, 0, tokenA.mintableBalance());
 
         // Estimating how much output a wrap-button would give and making amountOutMin +1 higher
         uint256 amountOutMin = amountIn + 1;
@@ -223,7 +223,7 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
 
     function test_swapExactTokensForTokens_singleWrapButton(uint256 amountIn, uint256 amountOutMin) public {
         // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
-        amountIn = bound(amountIn, 1000, 10000); // ToDo: Remove?
+        amountIn = bound(amountIn, 0, tokenA.mintableBalance());
 
         // Estimating how much output a wrap-button would give
         uint256 expectedAmountOut = amountIn;
@@ -250,7 +250,7 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
 
     function test_swapExactTokensForTokens_singleUnwrapButtonWithInsufficientOutputAmount(uint256 amountIn) public {
         // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
-        amountIn = bound(amountIn, 1000, 10000); // ToDo: Remove?
+        amountIn = bound(amountIn, 0, tokenA.mintableBalance());
 
         // Estimating how much output a unwrap-button would give and making amountOutMin +1 higher
         uint256 amountOutMin = amountIn + 1;
@@ -274,7 +274,7 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
 
     function test_swapExactTokensForTokens_singleUnwrapButton(uint256 amountIn, uint256 amountOutMin) public {
         // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
-        amountIn = bound(amountIn, 1000, 10000); // ToDo: Remove?
+        amountIn = bound(amountIn, 0, tokenA.mintableBalance());
 
         // Estimating how much output an unwrap-button would give
         uint256 expectedAmountOut = amountIn;
@@ -303,7 +303,7 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
 
     function test_swapExactTokensForTokens_singleWrapWethWithInsufficientOutputAmount(uint256 amountIn) public {
         // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
-        amountIn = bound(amountIn, 1000, 10000); // ToDo: Remove?
+        amountIn = bound(amountIn, 0, tokenA.mintableBalance());
 
         // Estimating how much output a wrap-weth would give and making amountOutMin +1 higher
         uint256 amountOutMin = amountIn + 1;
@@ -347,7 +347,7 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
 
     function test_swapExactTokensForTokens_singleUnwrapWethWithInsufficientOutputAmount(uint256 amountIn) public {
         // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
-        amountIn = bound(amountIn, 1000, 10000); // ToDo: Remove?
+        amountIn = bound(amountIn, 0, type(uint256).max - 1);
 
         // Estimating how much output a unwrap-weth would give and making amountOutMin +1 higher
         uint256 amountOutMin = amountIn + 1;
@@ -494,7 +494,7 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
 
     function test_swapTokensForExactTokens_singleWrapButton(uint256 amountOut, uint256 amountInMax) public {
         // Ensuring that amountOut is bounded to avoid errors/overflows/underflows
-        amountOut = bound(amountOut, 1000, tokenA.mintableBalance());
+        amountOut = bound(amountOut, 0, tokenA.mintableBalance());
 
         // Estimating how much output a trade would give
         uint256 expectedAmountIn = amountOut;
@@ -545,7 +545,7 @@ contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
 
     function test_swapTokensForExactTokens_singleUnwrapButton(uint256 amountOut, uint256 amountInMax) public {
         // Ensuring that amountOut is bounded to avoid errors/overflows/underflows
-        amountOut = bound(amountOut, 1000, tokenA.mintableBalance());
+        amountOut = bound(amountOut, 0, tokenA.mintableBalance());
 
         // Estimating how much output a trade would give
         uint256 expectedAmountIn = amountOut;
