@@ -25,7 +25,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
 
     modifier ensure(uint256 deadline) {
         if (block.timestamp > deadline) {
-            revert Expired();
+            revert Expired(deadline, block.timestamp);
         }
         _;
     }
@@ -35,7 +35,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
      */
     receive() external payable {
         if (msg.sender != WETH) {
-            revert NonWETHSender();
+            revert NonWETHSender(msg.sender);
         }
     }
 
@@ -69,7 +69,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     {
         if (IButtonToken(tokenOut).underlying() != tokenIn) {
             // ToDo: Remove check?
-            revert IncorrectButtonUnderlying();
+            revert IncorrectButtonUnderlying(tokenOut, IButtonToken(tokenOut).underlying(), tokenIn);
         }
         // ToDo: Maybe approve/deposit the entire balance?
         TransferHelper.safeApprove(tokenIn, tokenOut, amountIn);
@@ -84,11 +84,11 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     {
         if (IButtonToken(tokenIn).underlying() != tokenOut) {
             // ToDo: Remove check?
-            revert IncorrectButtonUnderlying();
+            revert IncorrectButtonUnderlying(tokenIn, IButtonToken(tokenIn).underlying(), tokenOut);
         }
         if (IERC20(tokenIn).balanceOf(address(this)) != amountIn) {
             // ToDo: Remove check?
-            revert IncorrectBalance();
+            revert IncorrectBalance(tokenIn, IERC20(tokenIn).balanceOf(address(this)), amountIn);
         }
         // ToDo: Maybe withdraw the entire balance?
         amountOut = IButtonToken(tokenIn).burnAll();
@@ -101,12 +101,10 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         returns (uint256 amountOut)
     {
         if (tokenIn != address(0)) {
-            // ToDo: Remove check?
-            revert NonEthToken();
+            revert NonEthToken(tokenIn);
         }
         if (tokenOut != address(WETH)) {
-            // ToDo: Remove check?
-            revert NonWethToken();
+            revert NonWethToken(WETH, tokenOut);
         }
         // ToDo: No need for this check. Always transfer entire router balance
         //        if (amountIn != address(this).balance) {
@@ -124,12 +122,10 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         returns (uint256 amountOut)
     {
         if (tokenIn != address(WETH)) {
-            // ToDo: Remove check?
-            revert NonWethToken();
+            revert NonWethToken(WETH, tokenIn);
         }
         if (tokenOut != address(0)) {
-            // ToDo: Remove check?
-            revert NonEthToken();
+            revert NonEthToken(tokenOut);
         }
         IWETH(WETH).withdraw(amountIn); // ToDo: Maybe just withdraw the entire balance?
         amountOut = address(this).balance;
@@ -178,7 +174,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
 
         // The final value of amountIn is the last amountOut from the last _swapStep execution
         if (amountIn < amountOutMin) {
-            revert InsufficientOutputAmount();
+            revert InsufficientOutputAmount(amountOutMin, amountIn);
         }
 
         // Transferring out final amount if the last swapStep is not unwrap-weth
@@ -234,7 +230,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     ) external payable override ensure(deadline) returns (uint256[] memory amounts) {
         amounts = _getAmountsIn(tokenIn, amountOut, swapSteps);
         if (amounts[0] > amountInMax) {
-            revert ExcessiveInputAmount();
+            revert ExcessiveInputAmount(amountInMax, amounts[0]);
         }
         // Transferring in the initial amount if the first swapStep is not wrap-weth
         if (swapSteps[0].operation != ButtonswapOperations.Swap.WRAP_WETH) {
@@ -244,7 +240,8 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         for (uint256 i = 0; i < swapSteps.length; i++) {
             (tokenIn, amountOut) = _swapStep(tokenIn, amounts[i], swapSteps[i]);
             if (amountOut < amounts[i + 1]) {
-                revert InsufficientOutputAmount();
+                // ToDo: Consider using a different error for better clarity. This might not even be a necessary error
+                revert InsufficientOutputAmount(amounts[i + 1], amountOut);
             }
         }
         // Transferring out final amount if the last swapStep is not unwrap-weth
