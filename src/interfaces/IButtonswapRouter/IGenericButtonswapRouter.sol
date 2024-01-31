@@ -12,14 +12,27 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
     }
 
     // ToDo: Fold back into function signature (unless needs IR)
+//    struct AddLiquidityStep {
+//        ButtonswapOperations.AddLiquidity operation;
+//        address tokenA;
+//        address tokenB;
+//        uint256 amountADesired;
+//        uint256 amountBDesired;
+//        uint256 amountAMin;
+//        uint256 amountBMin;
+//        uint16 movingAveragePrice0ThresholdBps;
+//    }
     struct AddLiquidityStep {
         ButtonswapOperations.AddLiquidity operation;
         address tokenA;
         address tokenB;
+        SwapStep[] swapStepsA;
+        SwapStep[] swapStepsB;
         uint256 amountADesired;
         uint256 amountBDesired;
         uint256 amountAMin;
         uint256 amountBMin;
+        uint16 movingAveragePrice0ThresholdBps;
     }
 
     // ToDo: Fold back into function signature (unless need IR)
@@ -93,12 +106,11 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
     // AddLiquidity
     function addLiquidity(
         AddLiquidityStep calldata addLiquidityStep,
-        SwapStep[] calldata swapStepsA,
-        SwapStep[] calldata swapStepsB,
-        uint16 movingAveragePrice0ThresholdBps,
+//        SwapStep[] calldata swapStepsA,
+//        SwapStep[] calldata swapStepsB,
         address to,
         uint256 deadline
-    ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
+    ) external payable returns (uint256 amountA, uint256 amountB, uint256 liquidity);
     // Example: bWETH + buttonRocketEth
     /**
      * addLiquidity(

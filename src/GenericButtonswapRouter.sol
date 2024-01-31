@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
+import {IButtonswapFactory} from
+"buttonswap-periphery_buttonswap-core/interfaces/IButtonswapFactory/IButtonswapFactory.sol";
 import {IButtonswapPair} from "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
 import {IGenericButtonswapRouter} from "./interfaces/IButtonswapRouter/IGenericButtonswapRouter.sol";
 import {IWETH} from "./interfaces/IWETH.sol";
@@ -9,6 +11,7 @@ import {ButtonswapLibrary} from "./libraries/ButtonswapLibrary.sol";
 import {TransferHelper} from "./libraries/TransferHelper.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {ButtonswapOperations} from "./libraries/ButtonswapOperations.sol";
+import {Math} from "./libraries/Math.sol";
 import {console} from "buttonswap-periphery_forge-std/console.sol";
 
 contract GenericButtonswapRouter is IGenericButtonswapRouter {
@@ -207,6 +210,18 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     }
 
     // ToDo: Potentially move into it's own library
+    function _getAmountIn(address tokenIn, uint256 amountOut, SwapStep[] calldata swapSteps)
+    internal
+    virtual
+    returns (uint256 amountIn)
+    {
+        amountIn = amountOut;
+        for (uint256 i = swapSteps.length - 1; i > 0; i--) {
+            amountIn = _getAmountIn(swapSteps[i].tokenOut, amountIn, swapSteps[i]);
+        }
+    }
+
+    // ToDo: Potentially move into it's own library
     function _getAmountsIn(address firstTokenIn, uint256 amountOut, SwapStep[] calldata swapSteps)
         internal
         virtual
@@ -215,9 +230,34 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         amounts = new uint256[](swapSteps.length + 1);
         amounts[amounts.length - 1] = amountOut;
         for (uint256 i = amounts.length - 2; i > 1; i--) {
+            // ToDo: Fix the fact that this isn't updating any array values in amounts
             amountOut = _getAmountIn(swapSteps[i - 1].tokenOut, amountOut, swapSteps[i]);
         }
         amounts[0] = _getAmountIn(firstTokenIn, amountOut, swapSteps[0]);
+    }
+
+    // ToDo: Standardize with amountIn-functions and potentially move into it's own library
+    function _getAmountOut(address tokenIn, uint256 amountIn, SwapStep calldata swapStep) internal virtual returns (uint256 amountOut) {
+        if (swapStep.operation == ButtonswapOperations.Swap.SWAP) {
+            (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, swapStep.tokenOut);
+            amountOut = ButtonswapLibrary.getAmountOut(amountIn, poolIn, poolOut);
+        } else if (swapStep.operation == ButtonswapOperations.Swap.WRAP_BUTTON) {
+            amountOut = IButtonToken(swapStep.tokenOut).underlyingToWrapper(amountIn);
+        } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_BUTTON) {
+            amountOut = IButtonToken(tokenIn).wrapperToUnderlying(amountIn);
+        } else if (swapStep.operation == ButtonswapOperations.Swap.WRAP_WETH) {
+            amountOut = amountIn;
+        } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_WETH) {
+            amountOut = amountIn;
+        }
+    }
+
+    // ToDo: Standardize with amountIn-functions and potentially move into it's own library
+    function _getAmountOut(address tokenIn, uint256 amountIn, SwapStep[] calldata swapSteps) internal virtual returns (uint256 amountOut) {
+        amountOut = amountIn;
+        for (uint256 i=0; i < swapSteps.length; i++) {
+            amountOut = _getAmountOut(tokenIn, amountOut, swapSteps[i]);
+        }
     }
 
     function swapTokensForExactTokens(
@@ -253,14 +293,151 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
     }
 
+    function _addLiquidityGetPair(AddLiquidityStep calldata addLiquidityStep) internal returns (address pair) {
+        // No need to validate if finalTokenA or finalTokenB are address(0) since getPair and createPair will handle it
+        address pairTokenA = addLiquidityStep.swapStepsA.length > 0 ? addLiquidityStep.swapStepsA[addLiquidityStep.swapStepsA.length - 1].tokenOut : addLiquidityStep.tokenA;
+        address pairTokenB = addLiquidityStep.swapStepsB.length > 0 ? addLiquidityStep.swapStepsB[addLiquidityStep.swapStepsB.length - 1].tokenOut : addLiquidityStep.tokenB;
+
+        // create the pair if it doesn't exist yet
+        pair = IButtonswapFactory(factory).getPair(pairTokenA, pairTokenB);
+        if (pair == address(0)) {
+            pair = IButtonswapFactory(factory).createPair(pairTokenA, pairTokenB);
+        }
+    }
+
+    function _validateMovingAveragePrice0Threshold(
+        AddLiquidityStep calldata addLiquidityStep,
+        uint256 poolA,
+        uint256 poolB,
+        address pair
+    ) internal {
+        address pairTokenA = addLiquidityStep.swapStepsA.length > 0 ? addLiquidityStep.swapStepsA[addLiquidityStep.swapStepsA.length - 1].tokenOut : addLiquidityStep.tokenA;
+        address pairTokenB = addLiquidityStep.swapStepsB.length > 0 ? addLiquidityStep.swapStepsB[addLiquidityStep.swapStepsB.length - 1].tokenOut : addLiquidityStep.tokenB;
+
+        // Validate that the moving average price is within the threshold for pairs that exist
+        if (poolA > 0 && poolB > 0) {
+            uint256 movingAveragePrice0 = IButtonswapPair(pair).movingAveragePrice0();
+            if (pairTokenA < pairTokenB) {
+                // pairTokenA is token0
+                uint256 cachedTerm = Math.mulDiv(movingAveragePrice0, poolA * BPS, 2 ** 112);
+                if (
+                    poolB * (BPS - addLiquidityStep.movingAveragePrice0ThresholdBps) > cachedTerm
+                    || poolB * (BPS + addLiquidityStep.movingAveragePrice0ThresholdBps) < cachedTerm
+                ) {
+                    revert MovingAveragePriceOutOfBounds(poolA, poolB, movingAveragePrice0, addLiquidityStep.movingAveragePrice0ThresholdBps);
+                }
+            } else {
+                // pairTokenB is token0
+                uint256 cachedTerm = Math.mulDiv(movingAveragePrice0, poolB * BPS, 2 ** 112);
+                if (
+                    poolA * (BPS - addLiquidityStep.movingAveragePrice0ThresholdBps) > cachedTerm
+                    || poolA * (BPS + addLiquidityStep.movingAveragePrice0ThresholdBps) < cachedTerm
+                ) {
+                    revert MovingAveragePriceOutOfBounds(poolB, poolA, movingAveragePrice0, addLiquidityStep.movingAveragePrice0ThresholdBps);
+                }
+            }
+        }
+    }
+
+    function _addLiquidity(
+        AddLiquidityStep calldata addLiquidityStep,
+        address pair
+    ) internal returns (uint256 amountA, uint256 amountB) {
+        // Fetch pair liquidity
+        (uint256 poolA, uint256 poolB, uint256 reservoirA, uint256 reservoirB,) = IButtonswapPair(pair).getLiquidityBalances();
+
+        // If pair has no liquidity, then deposit addLiquidityStep.amountADesired and addLiquidityStep.amountBDesired
+        if ((poolA + reservoirA) == 0 && (poolB + reservoirB) == 0) {
+            (amountA, amountB) = (addLiquidityStep.amountADesired, addLiquidityStep.amountBDesired);
+        } else {
+            // Calculate tokenBOptimal and check if it fits
+            uint256 amountBOptimal =
+                _getAmountIn(
+                    addLiquidityStep.tokenB,
+                    ButtonswapLibrary.quote(
+                        _getAmountOut(addLiquidityStep.tokenA, addLiquidityStep.amountADesired, addLiquidityStep.swapStepsA),
+                        poolA + reservoirA,
+                        poolB + reservoirB
+                    ),
+                    addLiquidityStep.swapStepsB
+                );
+            if (amountBOptimal <= addLiquidityStep.amountBDesired) {
+                if (amountBOptimal < addLiquidityStep.amountBMin) {
+                    revert InsufficientTokenAmount(addLiquidityStep.tokenB, addLiquidityStep.amountBDesired, amountBOptimal);
+                }
+                (amountA, amountB) = (addLiquidityStep.amountADesired, amountBOptimal);
+            } else {
+                // Calculate tokenAOptimal and check if it fits
+                uint256 amountAOptimal =
+                    _getAmountIn(
+                        addLiquidityStep.tokenA,
+                        ButtonswapLibrary.quote(
+                            _getAmountOut(addLiquidityStep.tokenB, addLiquidityStep.amountBDesired, addLiquidityStep.swapStepsB),
+                            poolB + reservoirB,
+                            poolA + reservoirA
+                        ),
+                        addLiquidityStep.swapStepsA
+                    );
+                assert(amountAOptimal <= addLiquidityStep.amountADesired); //ToDo: Consider replacing with an error instead of an assert
+                if (amountAOptimal < addLiquidityStep.amountAMin) {
+                    revert InsufficientTokenAmount(addLiquidityStep.tokenA, addLiquidityStep.amountADesired, amountAOptimal);
+                }
+                (amountA, amountB) = (amountAOptimal, addLiquidityStep.amountBDesired);
+            }
+        }
+
+        // Validate that the moving average price is within the threshold for pairs that already existed
+        _validateMovingAveragePrice0Threshold(
+            addLiquidityStep,
+            poolA,
+            poolB,
+            pair
+        );
+    }
+
+    // ToDo: Rewrite this to just use swapExactTokenForTokens
     function addLiquidity(
         AddLiquidityStep calldata addLiquidityStep,
-        SwapStep[] calldata swapStepsA,
-        SwapStep[] calldata swapStepsB,
-        uint16 movingAveragePrice0ThresholdBps,
         address to,
-        uint256 deadline
-    ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity) {}
+        uint256 deadline //ToDo: Ensure the deadline
+    ) external payable returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
+        // Create the pair if it doesn't exist yet
+        address pair = _addLiquidityGetPair(addLiquidityStep);
+
+        // Calculating how much of tokenA and tokenB to take from user
+        (amountA, amountB) = _addLiquidity(addLiquidityStep, pair);
+        address tokenA = addLiquidityStep.tokenA;
+        address tokenB = addLiquidityStep.tokenB;
+        // Transferring in tokenA from user if first swapStepsA is not wrap-weth
+        if (addLiquidityStep.swapStepsA[0].operation != ButtonswapOperations.Swap.WRAP_WETH) {
+            TransferHelper.safeTransferFrom(tokenA, msg.sender, address(this), amountA);
+        }
+        // Transferring in tokenB from user if first swapStepsB is not wrap-weth
+        if (addLiquidityStep.swapStepsB[0].operation != ButtonswapOperations.Swap.WRAP_WETH) {
+            TransferHelper.safeTransferFrom(tokenB, msg.sender, address(this), amountB);
+        }
+        {
+            uint256 i = 0;
+            // Doing all of swapStepsA
+            for (i = 0; i < addLiquidityStep.swapStepsA.length; i++) {
+                (tokenA, amountA) = _swapStep(tokenA, amountA, addLiquidityStep.swapStepsA[i]);
+            }
+            // Doing all of swapStepsB
+            for (i = 0; i < addLiquidityStep.swapStepsB.length; i++) {
+                (tokenB, amountB) = _swapStep(tokenB, amountB, addLiquidityStep.swapStepsB[i]);
+            }
+        }
+        // Approving final tokenA for transfer to pair
+        TransferHelper.safeApprove(tokenA, pair, amountA);
+        // Approving final tokenB for transfer to pair
+        TransferHelper.safeApprove(tokenB, pair, amountB);
+
+        if (tokenA < tokenB) {
+            liquidity = IButtonswapPair(pair).mint(amountA, amountB, to);
+        } else {
+            liquidity = IButtonswapPair(pair).mint(amountB, amountA, to);
+        }
+    }
 
     function removeLiquidity(
         RemoveLiquidityStep calldata removeLiquidityStep,

@@ -12,7 +12,7 @@ interface IGenericButtonswapRouterErrors {
     /// @notice WETH transfer failed
     //    error FailedWETHTransfer();
     /**
-     * @notice Thrown when a different token address is provided where WETH address is expected\
+     * @notice Thrown when a different token address is provided where WETH address is expected
      * @param weth The address of WETH
      * @param token The address of the token
      */
@@ -59,4 +59,23 @@ interface IGenericButtonswapRouterErrors {
      * @param timestamp The current timestamp
      */
     error Expired(uint256 deadline, uint256 timestamp);
+
+    // **** AddLiquidity Errors **** //
+    /**
+    * @notice movingAveragePrice0 is out of specified bounds
+    * @param pool0 The amount in pool0
+    * @param pool1 The amount in pool1
+    * @param movingAveragePrice0 The current movingAveragePrice0 of the pair
+    * @param movingAveragePrice0ThresholdBps The threshold of deviation of movingAveragePrice0 from the pool price
+    */
+    error MovingAveragePriceOutOfBounds(uint256 pool0, uint256 pool1, uint256 movingAveragePrice0, uint16 movingAveragePrice0ThresholdBps);
+
+    // **** AddLiquidity/RemoveLiquidity Errors **** //
+    /**
+    * @notice Insufficient amount of token available
+    * @param token The address of token
+    * @param amount The amount of token available
+    * @param requiredAmount The amount of token required
+    */
+    error InsufficientTokenAmount(address token, uint256 amount, uint256 requiredAmount);
 }
