@@ -3,17 +3,17 @@ pragma solidity ^0.8.13;
 
 import {Test} from "buttonswap-periphery_forge-std/Test.sol";
 import {IButtonswapPair} from "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
-import {IGenericButtonswapRouter} from "../src/interfaces/IButtonswapRouter/IGenericButtonswapRouter.sol";
-import {IGenericButtonswapRouterErrors} from "../src/interfaces/IButtonswapRouter/IGenericButtonswapRouterErrors.sol";
-import {GenericButtonswapRouter} from "../src/GenericButtonswapRouter.sol";
+import {IGenericButtonswapRouter} from "../../src/interfaces/IButtonswapRouter/IGenericButtonswapRouter.sol";
+import {IGenericButtonswapRouterErrors} from "../../src/interfaces/IButtonswapRouter/IGenericButtonswapRouterErrors.sol";
+import {GenericButtonswapRouter} from "../../src/GenericButtonswapRouter.sol";
 import {ButtonswapFactory} from "buttonswap-periphery_buttonswap-core/ButtonswapFactory.sol";
 import {MockRebasingERC20} from "buttonswap-periphery_mock-contracts/MockRebasingERC20.sol";
-import {ButtonswapLibrary} from "../src/libraries/ButtonswapLibrary.sol";
-import {ButtonswapOperations} from "../src/libraries/ButtonswapOperations.sol";
+import {ButtonswapLibrary} from "../../src/libraries/ButtonswapLibrary.sol";
+import {ButtonswapOperations} from "../../src/libraries/ButtonswapOperations.sol";
 import {PairMath} from "buttonswap-periphery_buttonswap-core/libraries/PairMath.sol";
-import {IWETH} from "../src/interfaces/IWETH.sol";
-import {MockWeth} from "./mocks/MockWeth.sol";
-import {MockButtonToken} from "./mocks/MockButtonToken.sol";
+import {IWETH} from "../../src/interfaces/IWETH.sol";
+import {MockWeth} from "./../mocks/MockWeth.sol";
+import {MockButtonToken} from "./../mocks/MockButtonToken.sol";
 import {console} from "buttonswap-periphery_forge-std/console.sol";
 import {IButtonswapPairErrors} from
     "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPairErrors.sol";

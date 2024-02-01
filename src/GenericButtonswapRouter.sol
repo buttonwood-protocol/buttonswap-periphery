@@ -153,6 +153,23 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
     }
 
+    // ToDo: Encapsulating the swap logic into a separate internal function
+    function _swapExactTokensForTokens(
+        address tokenIn,
+        uint256 amountIn,
+        SwapStep[] calldata swapSteps
+    ) internal returns (uint256[] memory amounts, address tokenOut, uint256 amountOut) {
+        tokenOut = tokenIn;
+        amountOut = amountIn;
+        amounts = new uint256[](swapSteps.length + 1);
+        amounts[0] = amountIn;
+
+        for (uint256 i = 0; i < swapSteps.length; i++) {
+            (tokenOut, amountOut) = _swapStep(tokenIn, amountIn, swapSteps[i]);
+            amounts[i + 1] = amountOut;
+        }
+    }
+
     // **** External Functions **** //
     function swapExactTokensForTokens(
         address tokenIn,
@@ -167,21 +184,15 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amountIn);
         }
 
-        amounts = new uint256[](swapSteps.length + 1);
-        amounts[0] = amountIn;
+        // Doing the swaps one-by-one and re-using tokenIn/amountIn as tokenOut/amountOut
+        (amounts, tokenIn, amountIn) = _swapExactTokensForTokens(tokenIn, amountIn, swapSteps);
 
-        for (uint256 i = 0; i < swapSteps.length; i++) {
-            (tokenIn, amountIn) = _swapStep(tokenIn, amountIn, swapSteps[i]);
-            amounts[i + 1] = amountIn;
-        }
-
-        // The final value of amountIn is the last amountOut from the last _swapStep execution
+        // Confirm that the final amountOut is greater than or equal to the amountOutMin
         if (amountIn < amountOutMin) {
             revert InsufficientOutputAmount(amountOutMin, amountIn);
         }
 
         // Transferring out final amount if the last swapStep is not unwrap-weth
-        // The final value of amountIn is the last amountOut from the last _swapStep execution
         if (swapSteps[swapSteps.length - 1].operation != ButtonswapOperations.Swap.UNWRAP_WETH) {
             TransferHelper.safeTransfer(tokenIn, to, amountIn);
         } else {
@@ -395,38 +406,31 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         );
     }
 
-    // ToDo: Rewrite this to just use swapExactTokenForTokens
     function addLiquidity(
         AddLiquidityStep calldata addLiquidityStep,
         address to,
         uint256 deadline //ToDo: Ensure the deadline
-    ) external payable returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
+    ) external payable returns (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) {
         // Create the pair if it doesn't exist yet
         address pair = _addLiquidityGetPair(addLiquidityStep);
 
         // Calculating how much of tokenA and tokenB to take from user
-        (amountA, amountB) = _addLiquidity(addLiquidityStep, pair);
+        (uint256 amountA, uint256 amountB) = _addLiquidity(addLiquidityStep, pair);
         address tokenA = addLiquidityStep.tokenA;
         address tokenB = addLiquidityStep.tokenB;
         // Transferring in tokenA from user if first swapStepsA is not wrap-weth
-        if (addLiquidityStep.swapStepsA[0].operation != ButtonswapOperations.Swap.WRAP_WETH) {
+        if (addLiquidityStep.swapStepsA.length == 0 || addLiquidityStep.swapStepsA[0].operation != ButtonswapOperations.Swap.WRAP_WETH) {
             TransferHelper.safeTransferFrom(tokenA, msg.sender, address(this), amountA);
         }
         // Transferring in tokenB from user if first swapStepsB is not wrap-weth
-        if (addLiquidityStep.swapStepsB[0].operation != ButtonswapOperations.Swap.WRAP_WETH) {
+        if (addLiquidityStep.swapStepsB.length == 0 || addLiquidityStep.swapStepsB[0].operation != ButtonswapOperations.Swap.WRAP_WETH) {
             TransferHelper.safeTransferFrom(tokenB, msg.sender, address(this), amountB);
         }
-        {
-            uint256 i = 0;
-            // Doing all of swapStepsA
-            for (i = 0; i < addLiquidityStep.swapStepsA.length; i++) {
-                (tokenA, amountA) = _swapStep(tokenA, amountA, addLiquidityStep.swapStepsA[i]);
-            }
-            // Doing all of swapStepsB
-            for (i = 0; i < addLiquidityStep.swapStepsB.length; i++) {
-                (tokenB, amountB) = _swapStep(tokenB, amountB, addLiquidityStep.swapStepsB[i]);
-            }
-        }
+
+        // Reusing tokenA/amountA as finalTokenA/finalAmountA and likewise for tokenB
+        (amountsA,tokenA,amountA) = _swapExactTokensForTokens(tokenA, amountA, addLiquidityStep.swapStepsA);
+        (amountsB,tokenB,amountB) = _swapExactTokensForTokens(tokenB, amountB, addLiquidityStep.swapStepsB);
+
         // Approving final tokenA for transfer to pair
         TransferHelper.safeApprove(tokenA, pair, amountA);
         // Approving final tokenB for transfer to pair
