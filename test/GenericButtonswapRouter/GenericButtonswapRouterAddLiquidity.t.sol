@@ -535,24 +535,23 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
 
     // Swapping A->C, then adding liquidity C+B
     function test_addLiquidity_existingPairSingleSwapA(uint256 poolA, uint256 poolC0, uint256 poolC1, uint poolB, uint256 amountADesired, uint256 amountBDesired) public {
-        // Creating an existing pair for the swap
+        // Creating an existing A-C pair for the swap
         poolA = bound(poolA, 10000, type(uint112).max);
         poolC0 = bound(poolC0, 10000, type(uint112).max);
         createAndInitializePair(tokenA, tokenC, poolA, poolC0);
 
-        // Creating A-B pair with at least minimum liquidity
+        // Creating a C-B pair with at least minimum liquidity
         poolC1 = bound(poolC1, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
         (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenC, tokenB, poolC1, poolB);
 
         // Minting enough for sufficient-output requirement but not too much to mess up the A->C swap
         amountADesired = bound(amountADesired, 1, poolA - 1);
-        uint256 amountC = ButtonswapLibrary.getAmountOut(amountADesired, poolA, poolC0); // Calculate the amount of C from amountADesired
-        vm.assume(ButtonswapLibrary.getAmountOut(amountADesired, poolA, poolC0) >= poolC1/100);
         amountBDesired = bound(amountBDesired, poolB/100, type(uint112).max);
-        vm.assume(amountC < type(uint112).max - poolC1); // Making sure C-B pair doesn't have overflowing balance of tokenC
-        vm.assume(amountC >= poolC1/100);
-        amountBDesired = bound(amountBDesired, poolB/100, type(uint112).max);
+        uint256 amountCFromA = ButtonswapLibrary.getAmountOut(amountADesired, poolA, poolC0);
+        uint256 amountCFromB = ButtonswapLibrary.quote(amountBDesired, poolB, poolC1);
+        vm.assume(amountCFromA < poolC0 && amountCFromB < poolC0); // amountC < amount of C in B-C pair
+        vm.assume(amountCFromA >= poolC1/100 && amountCFromB >= poolC1/100);
 
         tokenA.mint(address(this), amountADesired);
         tokenA.approve(address(genericButtonswapRouter), amountADesired);
@@ -571,7 +570,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.amountBDesired = amountBDesired;
         addLiquidityStep.amountAMin = 0;
         addLiquidityStep.amountBMin = 0;
-        addLiquidityStep.movingAveragePrice0ThresholdBps = 1;
+        addLiquidityStep.movingAveragePrice0ThresholdBps = 1; // Giving it 1 basis-point of slack because rounding from the 2**112 conversion
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -585,7 +584,54 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
     }
 
     // Swapping B->C, then adding liquidity A+C
-//    function test_addLiquidity_existingPairSingleSwapB(uint256 poolB, uint256 poolC, uint256 amountADesired, uint256 amountBDesired) public {}
+    function test_addLiquidity_existingPairSingleSwapB(uint256 poolB, uint256 poolC0, uint256 poolA, uint poolC1, uint256 amountADesired, uint256 amountBDesired) public {
+        // Creating an existing B-C pair for the swap
+        poolB = bound(poolB, 10000, type(uint112).max);
+        poolC0 = bound(poolC0, 10000, type(uint112).max);
+        createAndInitializePair(tokenB, tokenC, poolB, poolC0);
+
+        // Creating an A-C pair with at least minimum liquidity
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolC1 = bound(poolC1, 10000, type(uint112).max);
+        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenA, tokenC, poolA, poolC1);
+
+        // Minting enough for sufficient-output requirement but not too much to mess up the B->C swap
+        amountADesired = bound(amountADesired, poolA/100, type(uint112).max);
+        amountBDesired = bound(amountBDesired, 1, poolB - 1);
+        uint256 amountCFromA = ButtonswapLibrary.quote(amountADesired, poolA, poolC1);
+        uint256 amountCFromB = ButtonswapLibrary.getAmountOut(amountBDesired, poolB, poolC0);
+        vm.assume(amountCFromA < poolC0 && amountCFromB < poolC0); // amountC < amount of C in B-C pair
+        vm.assume(amountCFromA >= poolC1/100 && amountCFromB >= poolC1/100);
+
+        tokenA.mint(address(this), amountADesired);
+        tokenA.approve(address(genericButtonswapRouter), amountADesired);
+        tokenB.mint(address(this), amountBDesired);
+        tokenB.approve(address(genericButtonswapRouter), amountBDesired);
+
+        // Creating the addLiquidityStep
+        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.tokenA = address(tokenA);
+        addLiquidityStep.tokenB = address(tokenB);
+//        addLiquidityStep.swapStepsA; // Default to []
+        addLiquidityStep.swapStepsB.push();
+        addLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.SWAP;
+        addLiquidityStep.swapStepsB[0].tokenOut = address(tokenC);
+        addLiquidityStep.amountADesired = amountADesired;
+        addLiquidityStep.amountBDesired = amountBDesired;
+        addLiquidityStep.amountAMin = 0;
+        addLiquidityStep.amountBMin = 0;
+        addLiquidityStep.movingAveragePrice0ThresholdBps = 1; // Giving it 1 basis-point of slack because rounding from the 2**112 conversion
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        // Adding liquidity to the pair
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+
+        assertTrue(
+            (amountsA[0] == amountADesired && amountsB[0] <= amountBDesired)
+            || (amountsA[0] <= amountADesired && amountsB[0] == amountBDesired),
+            "(AmountsA[0] = amountADesired and AmountsB[0] <= amountBDesired) OR (AmountsA[0] <= amountADesired and AmountsB[0] == amountBDesired)");
+    }
 
     // Wrapping A->bA, then adding liquidity bA+B
 //    function test_addLiquidity_existingPairSingleWrapButtonA(uint256 amountADesired, uint256 amountBDesired) public {}
