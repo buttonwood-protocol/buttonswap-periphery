@@ -516,7 +516,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         assertEq(liquidity, MathExtended.sqrt(amountsA[0] * amountsB[1]) - 1000, "Liquidity should be equal geometric mean - 1000");
     }
 
-    // singleUnwrapWeth not a viable test-cases since pairs can't accept raw-ETH
+    // addLiquidity_singleUnwrapWeth not a viable test-cases since pairs can't accept raw-ETH
 
 //    function test_addLiquidity_existingPairNoHops(uint256 amountADesired, uint256 amountBDesired) public {}
     function test_addLiquidity_pairExistsNoHops(uint256 poolA, uint256 poolB, uint256 amountADesired, uint256 amountBDesired) public {
@@ -899,4 +899,1044 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
             || (amountsA[0] <= amountADesired && amountsB[0] == amountETHDesired),
             "(AmountsA[0] = amountADesired and AmountsB[0] <= amountETHDesired) OR (AmountsA[0] <= amountADesired and AmountsB[0] == amountETHDesired)");
     }
+
+    function test_addLiquidityWithReservoir_revertWhenPairDoesNotExist() public {
+        // Creating new tokens to ensure the pair does not exist
+        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18);
+        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
+
+        // Creating the addLiquidityStep
+        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.tokenA = address(tokenA);
+        addLiquidityStep.tokenB = address(tokenB);
+//        addLiquidityStep.swapStepsA; // Default to []
+//        addLiquidityStep.swapStepsB; // Default to []
+        addLiquidityStep.amountADesired = 0;
+        addLiquidityStep.amountBDesired = 0;
+        addLiquidityStep.amountAMin = 0;
+        addLiquidityStep.amountBMin = 0;
+        addLiquidityStep.movingAveragePrice0ThresholdBps = 0;
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        // Validate the pair does not exist yet
+        assertEq(buttonswapFactory.getPair(address(tokenA), address(tokenB)), address(0), "Pair should not exist yet");
+
+        // Attempting to addLiquidityWithReservoir to the pair
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGenericButtonswapRouterErrors.PairDoesNotExist.selector, address(tokenA), address(tokenB)
+            )
+        );
+        genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+    }
+
+    function test_addLiquidityWithReservoir_revertWhenPairIsNotInitialized(address addressTokenA1, address addressTokenB1) public {
+        // Creating new tokens to ensure the pair does not exist
+        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18);
+        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
+
+        // Creating A-B pair without initializing
+        address pair = buttonswapFactory.createPair(address(tokenA), address(tokenB));
+
+        // Creating the addLiquidityStep
+        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.tokenA = address(tokenA);
+        addLiquidityStep.tokenB = address(tokenB);
+//        addLiquidityStep.swapStepsA; // Default to []
+//        addLiquidityStep.swapStepsB; // Default to []
+        addLiquidityStep.amountADesired = 0;
+        addLiquidityStep.amountBDesired = 0;
+        addLiquidityStep.amountAMin = 0;
+        addLiquidityStep.amountBMin = 0;
+        addLiquidityStep.movingAveragePrice0ThresholdBps = 0;
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        // Validate the pair does not exist yet
+        assertNotEq(buttonswapFactory.getPair(address(tokenA), address(tokenB)), address(0), "Pair should exist");
+
+        // Attempting to addLiquidityWithReservoir to the pair
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGenericButtonswapRouterErrors.NotInitialized.selector
+            )
+        );
+        genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+    }
+
+    function test_addLiquidityWithReservoir_revertWhenReservoirDoesNotExist(uint256 poolA, uint256 poolB) public {
+        // Creating A-B pair with at least minimum liquidity
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolB = bound(poolB, 10000, type(uint112).max);
+        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
+
+        // Creating the addLiquidityStep
+        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.tokenA = address(tokenA);
+        addLiquidityStep.tokenB = address(tokenB);
+//        addLiquidityStep.swapStepsA; // Default to []
+//        addLiquidityStep.swapStepsB; // Default to []
+        addLiquidityStep.amountADesired = 0;
+        addLiquidityStep.amountBDesired = 0;
+        addLiquidityStep.amountAMin = 0;
+        addLiquidityStep.amountBMin = 0;
+        addLiquidityStep.movingAveragePrice0ThresholdBps = 0;
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        // Attempting to addLiquidityWithReservoir to the pair
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGenericButtonswapRouterErrors.NoReservoir.selector
+            )
+        );
+        genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+    }
+
+    function test_addLiquidityWithReservoir_revertWhenReservoirAIsInsufficient(uint256 poolA, uint256 poolB, uint256 amountBDesired) public {
+        // Creating A-B pair with at least minimum liquidity
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolB = bound(poolB, 10000, type(uint112).max);
+        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
+
+        // Rebasing tokenA up by 10% to create a reservoir of `reservoirA = poolA/10`
+        tokenA.applyMultiplier(11,10);
+        // Ensuring that amountBDesired is <= 10% of poolB
+        amountBDesired = bound(amountBDesired, 1, poolB/10 - 1);
+
+        // Making amountAMin > amountAOptimal so that the reservoirA is insufficient
+        (,uint256 amountAOptimal) = ButtonswapLibrary.getMintSwappedAmounts(
+            address(buttonswapFactory),
+            address(tokenB),
+            address(tokenA),
+            amountBDesired
+        );
+        uint256 amountAMin =  amountAOptimal + 1;
+
+        // Creating the addLiquidityStep
+        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.tokenA = address(tokenA);
+        addLiquidityStep.tokenB = address(tokenB);
+//        addLiquidityStep.swapStepsA; // Default to []
+//        addLiquidityStep.swapStepsB; // Default to []
+        addLiquidityStep.amountADesired = 0;
+        addLiquidityStep.amountBDesired = amountBDesired;
+        addLiquidityStep.amountAMin = amountAMin;
+        addLiquidityStep.amountBMin = 0;
+        addLiquidityStep.movingAveragePrice0ThresholdBps = 0;
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        // Attempting to addLiquidityWithReservoir to the pair
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGenericButtonswapRouterErrors.InsufficientTokenAmount.selector, address(tokenA), amountAOptimal, amountAMin
+            )
+        );
+        genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+    }
+
+    function test_addLiquidityWithReservoir_revertWhenReservoirBIsInsufficient(uint256 poolA, uint256 poolB, uint256 amountADesired) public {
+        // Creating A-B pair with at least minimum liquidity
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolB = bound(poolB, 10000, type(uint112).max);
+        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
+
+        // Rebasing tokenB up by 10% to create a reservoir of `reservoirB = poolB/10`
+        tokenB.applyMultiplier(11,10);
+        // Ensuring that amountADesired is <= 10% of poolA
+        amountADesired = bound(amountADesired, 1, poolA/10 - 1);
+
+        // Making amountBMin > amountBOptimal so that the reservoirB is insufficient
+        (,uint256 amountBOptimal) = ButtonswapLibrary.getMintSwappedAmounts(
+            address(buttonswapFactory),
+            address(tokenA),
+            address(tokenB),
+            amountADesired
+        );
+        uint256 amountBMin =  amountBOptimal + 1;
+
+        // Creating the addLiquidityStep
+        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.tokenA = address(tokenA);
+        addLiquidityStep.tokenB = address(tokenB);
+//        addLiquidityStep.swapStepsA; // Default to []
+//        addLiquidityStep.swapStepsB; // Default to []
+        addLiquidityStep.amountADesired = amountADesired;
+        addLiquidityStep.amountBDesired = 0;
+        addLiquidityStep.amountAMin = 0;
+        addLiquidityStep.amountBMin = amountBMin;
+        addLiquidityStep.movingAveragePrice0ThresholdBps = 0;
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        // Attempting to addLiquidityWithReservoir to the pair
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGenericButtonswapRouterErrors.InsufficientTokenAmount.selector, address(tokenB), amountBOptimal, amountBMin
+            )
+        );
+        genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+    }
+
+    function test_addLiquidityWithReservoir_noHopsReservoirA(
+        uint256 poolA,
+        uint256 poolB,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator,
+        uint112 amountBDesired
+    ) public {
+        // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolB = bound(poolB, 10000, type(uint112).max);
+        (IButtonswapPair pair,) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
+
+        // Ensuring it's a positive rebase that isn't too big
+        vm.assume(rebaseDenominator > 0);
+        vm.assume(rebaseNumerator > rebaseDenominator);
+        vm.assume(poolA < (type(uint112).max / rebaseNumerator) * rebaseDenominator);
+
+        // Rebasing tokenA positively up to create a tokenA reservoir
+        tokenA.applyMultiplier(rebaseNumerator, rebaseDenominator);
+
+        // Getting reservoir size
+        uint256 reservoirA;
+        (poolA, poolB, reservoirA,) =
+        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+
+        // Estimating how much of amountBDesired will be converted to A-tokens, and how much of the reservoir will be used
+        uint256 liquidityOut;
+        uint256 tokenBToSwap;
+        uint256 swappedReservoirAmountA;
+        (tokenBToSwap, swappedReservoirAmountA) = ButtonswapLibrary.getMintSwappedAmounts(
+            address(buttonswapFactory), address(tokenB), address(tokenA), amountBDesired
+        );
+
+        // Making sure poolA doesn't get Overflowed
+        vm.assume(poolA + swappedReservoirAmountA < type(uint112).max);
+        // Making sure poolB doesn't get Overflowed
+        vm.assume(poolB + amountBDesired < type(uint112).max);
+        // Making sure reservoirA is not exceeded
+        vm.assume(swappedReservoirAmountA < reservoirA);
+        // Making sure the rest of reservoirA can absorb the ephemeral sync that happens from the tokenBToSwap transfer-in
+        vm.assume((poolB + amountBDesired) * poolA <= (poolA + reservoirA) * poolB);
+
+        // Estimating how much liquidity will be minted
+        liquidityOut = PairMath.getDualSidedMintLiquidityOutAmount(
+            pair.totalSupply(),
+            swappedReservoirAmountA,
+            amountBDesired - tokenBToSwap,
+            poolA + reservoirA - swappedReservoirAmountA,
+            poolB + tokenBToSwap
+        );
+
+        // Making sure minimum liquidity requirement is met
+        vm.assume(liquidityOut > 0);
+        // Making sure swappableReservoirLimit is not exceeded
+        vm.assume(swappedReservoirAmountA < pair.getSwappableReservoirLimit());
+
+        // Minting and approving enough tokenB to the router
+        tokenB.mint(address(this), amountBDesired);
+        tokenB.approve(address(genericButtonswapRouter), amountBDesired);
+
+        // Creating the addLiquidityStep
+        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.tokenA = address(tokenA);
+        addLiquidityStep.tokenB = address(tokenB);
+//        addLiquidityStep.swapStepsA; // Default to []
+//        addLiquidityStep.swapStepsB; // Default to []
+        addLiquidityStep.amountADesired = 0;
+        addLiquidityStep.amountBDesired = amountBDesired;
+        addLiquidityStep.amountAMin = 0;
+        addLiquidityStep.amountBMin = 0;
+        addLiquidityStep.movingAveragePrice0ThresholdBps = 0;
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+
+        assertEq(amountsA.length, 0, "AmountsA should be empty since tokenA was untouched");
+        assertEq(amountsB[0], amountBDesired, "AmountsB[0] should be amountBDesired");
+        assertEq(liquidity, liquidityOut, "Liquidity should be equal to estimated liquidityOut");
+    }
+
+    function test_addLiquidityWithReservoir_noHopsReservoirB(
+        uint256 poolA,
+        uint256 poolB,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator,
+        uint112 amountADesired
+    ) public {
+        // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolB = bound(poolB, 10000, type(uint112).max);
+        (IButtonswapPair pair,) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
+
+        // Ensuring it's a positive rebase that isn't too big
+        vm.assume(rebaseDenominator > 0);
+        vm.assume(rebaseNumerator > rebaseDenominator);
+        vm.assume(poolB < (type(uint112).max / rebaseNumerator) * rebaseDenominator);
+
+        // Rebasing tokenB positively up to create a tokenB reservoir
+        tokenB.applyMultiplier(rebaseNumerator, rebaseDenominator);
+
+        // Getting reservoir size
+        uint256 reservoirB;
+        (poolA, poolB,, reservoirB) =
+        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+
+        // Estimating how much of amountBDesired will be converted to B-tokens, and how much of the reservoir will be used
+        uint256 liquidityOut;
+        uint256 tokenAToSwap;
+        uint256 swappedReservoirAmountB;
+        (tokenAToSwap, swappedReservoirAmountB) = ButtonswapLibrary.getMintSwappedAmounts(
+            address(buttonswapFactory), address(tokenA), address(tokenB), amountADesired
+        );
+
+        // Making sure poolB doesn't get Overflowed
+        vm.assume(poolB + swappedReservoirAmountB < type(uint112).max);
+        // Making sure poolA doesn't get Overflowed
+        vm.assume(poolA + amountADesired < type(uint112).max);
+        // Making sure reservoirB is not exceeded
+        vm.assume(swappedReservoirAmountB < reservoirB);
+        // Making sure the rest of reservoirB can absorb the ephemeral sync that happens from the tokenAToSwap transfer-in
+        vm.assume((poolA + amountADesired) * poolB <= (poolB + reservoirB) * poolA);
+
+        // Estimating how much liquidity will be minted
+        liquidityOut = PairMath.getDualSidedMintLiquidityOutAmount(
+            pair.totalSupply(),
+            amountADesired - tokenAToSwap,
+            swappedReservoirAmountB,
+            poolA + tokenAToSwap,
+            poolB + reservoirB - swappedReservoirAmountB
+        );
+
+        // Making sure minimum liquidity requirement is met
+        vm.assume(liquidityOut > 0);
+        // Making sure swappableReservoirLimit is not exceeded
+        vm.assume(swappedReservoirAmountB < pair.getSwappableReservoirLimit());
+
+        // Minting and approving enough tokenA to the router
+        tokenA.mint(address(this), amountADesired);
+        tokenA.approve(address(genericButtonswapRouter), amountADesired);
+
+        // Creating the addLiquidityStep
+        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.tokenA = address(tokenA);
+        addLiquidityStep.tokenB = address(tokenB);
+//        addLiquidityStep.swapStepsA; // Default to []
+//        addLiquidityStep.swapStepsB; // Default to []
+        addLiquidityStep.amountADesired = amountADesired;
+        addLiquidityStep.amountBDesired = 0;
+        addLiquidityStep.amountAMin = 0;
+        addLiquidityStep.amountBMin = 0;
+        addLiquidityStep.movingAveragePrice0ThresholdBps = 0;
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+
+        assertEq(amountsA[0], amountADesired, "AmountsA[0] should be amountADesired");
+        assertEq(amountsB.length, 0, "AmountsB should be empty since tokenB was untouched");
+        assertEq(liquidity, liquidityOut, "Liquidity should be equal to estimated liquidityOut");
+    }
+
+    // Swapping B->C and then adding liquidity to the A-C pair opposite reservoirA
+    function test_addLiquidityWithReservoir_singleSwapReservoirA(
+        uint256 poolA,
+        uint256 poolCA,
+        uint256 poolB,
+        uint256 poolCB,
+        uint112 amountBDesired
+    ) public {
+        // Creating A-C pair with at least minimum liquidity and poolA:poolCA price ratio
+        poolA = bound(poolA, 10000, (type(uint112).max / 11) * 10); // Going to rebase tokenA up by 10%, so need to ensure poolA doesn't overflow
+        poolCA = bound(poolCA, 10000, type(uint112).max);
+        (IButtonswapPair pair,) = createAndInitializePair(tokenA, tokenC, poolA, poolCA);
+
+        // Creating B-C pair with at least minimum liquidity and poolB:poolCB price ratio
+        poolB = bound(poolB, 10000, type(uint112).max);
+        poolCB = bound(poolCB, 10000, type(uint112).max);
+        createAndInitializePair(tokenB, tokenC, poolB, poolCB);
+
+        // Rebasing tokenA up positively by 10% to create a reservoirA
+        tokenA.applyMultiplier(11,10);
+
+        // Ensuring amountBDesired is non-negative
+//        vm.assume(amountBDesired > 0);
+        amountBDesired = uint112(bound(amountBDesired, 1, poolB - 1));
+
+        // Getting reservoir size
+        uint256 reservoirA;
+        (poolA, poolCA, reservoirA,) =
+        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenC));
+
+        // Calculating amountC from amountBDesired
+        // This doesn't fit with IR issues so it's just calculated each time
+//        uint256 amountC = ButtonswapLibrary.getAmountOut(amountBDesired, poolB, poolCB);
+
+        // Estimating how much of amountC will be converted to A-tokens, and how much of the reservoir will be used
+        uint256 liquidityOut;
+        uint256 tokenCToSwap;
+        uint256 swappedReservoirAmountA;
+        (tokenCToSwap, swappedReservoirAmountA) = ButtonswapLibrary.getMintSwappedAmounts(
+            address(buttonswapFactory), address(tokenC), address(tokenA), ButtonswapLibrary.getAmountOut(amountBDesired, poolB, poolCB)
+        );
+
+        // Making sure B->C swap doesn't overflow poolB in B-C pair
+        vm.assume(poolB + amountBDesired < type(uint112).max);
+        // Making sure depositing swappedReservoirAmountA doesn't overflow poolA in A-C pair
+        vm.assume(poolA + swappedReservoirAmountA < type(uint112).max);
+        // Making sure depositing amountC doesn't overflow poolCA in in A-C pair
+        vm.assume(poolCA + ButtonswapLibrary.getAmountOut(amountBDesired, poolB, poolCB) < type(uint112).max);
+        // Making sure reservoirA is not exceeded
+        vm.assume(swappedReservoirAmountA < reservoirA);
+        // Making sure the rest of reservoirA can absorb the ephemeral sync that happens from the tokenCToSwap transfer-in
+        vm.assume((poolCA + ButtonswapLibrary.getAmountOut(amountBDesired, poolB, poolCB)) * poolA <= (poolA + reservoirA) * poolCA);
+
+        // Estimating how much liquidity will be minted
+        liquidityOut = PairMath.getDualSidedMintLiquidityOutAmount(
+            pair.totalSupply(),
+            swappedReservoirAmountA,
+            ButtonswapLibrary.getAmountOut(amountBDesired, poolB, poolCB) - tokenCToSwap,
+            poolA + reservoirA - swappedReservoirAmountA,
+            poolCA + tokenCToSwap
+        );
+
+        // Making sure minimum liquidity-out requirement is met
+        vm.assume(liquidityOut > 0);
+        // Making sure swappableReservoirLimit is not exceeded
+        vm.assume(swappedReservoirAmountA < pair.getSwappableReservoirLimit());
+
+        // Minting and approving enough tokenB to the router
+        tokenB.mint(address(this), amountBDesired);
+        tokenB.approve(address(genericButtonswapRouter), amountBDesired);
+
+        // Creating the addLiquidityStep
+        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.tokenA = address(tokenA);
+        addLiquidityStep.tokenB = address(tokenB);
+//        addLiquidityStep.swapStepsA; // Default to []
+        addLiquidityStep.swapStepsB.push();
+        addLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.SWAP;
+        addLiquidityStep.swapStepsB[0].tokenOut = address(tokenC);
+        addLiquidityStep.amountADesired = 0;
+        addLiquidityStep.amountBDesired = amountBDesired;
+        addLiquidityStep.amountAMin = 0;
+        addLiquidityStep.amountBMin = 0;
+        addLiquidityStep.movingAveragePrice0ThresholdBps = 0;
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+
+        assertEq(amountsA.length, 0, "AmountsA should be empty since tokenA was untouched");
+        assertEq(amountsB[0], amountBDesired, "AmountsB[0] should be amountBDesired");
+        assertEq(liquidity, liquidityOut, "Liquidity should be equal to estimated liquidityOut");
+    }
+
+    // Swapping A->C and then adding liquidity to the B-C pair opposite reservoirB
+    function test_addLiquidityWithReservoir_singleSwapReservoirB(
+        uint256 poolA,
+        uint256 poolCA,
+        uint256 poolB,
+        uint256 poolCB,
+        uint112 amountADesired
+    ) public {
+        // Creating A-C pair with at least minimum liquidity and poolA:poolCA price ratio
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolCA = bound(poolCA, 10000, type(uint112).max);
+        createAndInitializePair(tokenA, tokenC, poolA, poolCA);
+
+        // Creating B-C pair with at least minimum liquidity and poolB:poolCB price ratio
+        poolB = bound(poolB, 10000, (type(uint112).max / 11) * 10); // Going to rebase tokenB up by 10%, so need to ensure poolB doesn't overflow
+        poolCB = bound(poolCB, 10000, type(uint112).max);
+        (IButtonswapPair pair,) = createAndInitializePair(tokenB, tokenC, poolB, poolCB);
+
+        // Rebasing tokenB up positively by 10% to create a reservoirB
+        tokenB.applyMultiplier(11,10);
+
+        // Ensuring amountADesired is non-negative
+//        vm.assume(amountADesired > 0);
+        amountADesired = uint112(bound(amountADesired, 1, poolA - 1));
+
+        // Getting reservoir size
+        uint256 reservoirB;
+        (poolB, poolCB, reservoirB,) =
+        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenB), address(tokenC));
+
+        // Calculating amountC from amountADesired
+        // This doesn't fit with IR issues so it's just calculated each time
+//        uint256 amountC = ButtonswapLibrary.getAmountOut(amountADesired, poolA, poolCA);
+
+        // Estimating how much of amountC will be converted to B-tokens, and how much of the reservoir will be used
+        uint256 liquidityOut;
+        uint256 tokenCToSwap;
+        uint256 swappedReservoirAmountB;
+        (tokenCToSwap, swappedReservoirAmountB) = ButtonswapLibrary.getMintSwappedAmounts(
+            address(buttonswapFactory), address(tokenC), address(tokenB), ButtonswapLibrary.getAmountOut(amountADesired, poolA, poolCA)
+        );
+
+        // Making sure A->C swap doesn't overflow poolA in A-C pair
+        vm.assume(poolA + amountADesired < type(uint112).max);
+        // Making sure depositing swappedReservoirAmountB doesn't overflow poolA in B-C pair
+        vm.assume(poolB + swappedReservoirAmountB < type(uint112).max);
+        // Making sure depositing amountC doesn't overflow poolCB in in B-C pair
+        vm.assume(poolCB + ButtonswapLibrary.getAmountOut(amountADesired, poolA, poolCA) < type(uint112).max);
+        // Making sure reservoirB is not exceeded
+        vm.assume(swappedReservoirAmountB < reservoirB);
+        // Making sure the rest of reservoirB can absorb the ephemeral sync that happens from the tokenCToSwap transfer-in
+        vm.assume((poolCB + ButtonswapLibrary.getAmountOut(amountADesired, poolA, poolCA)) * poolB <= (poolB + reservoirB) * poolCB);
+
+        // Estimating how much liquidity will be minted
+        liquidityOut = PairMath.getDualSidedMintLiquidityOutAmount(
+            pair.totalSupply(),
+            swappedReservoirAmountB,
+            ButtonswapLibrary.getAmountOut(amountADesired, poolA, poolCA) - tokenCToSwap,
+            poolB + reservoirB - swappedReservoirAmountB,
+            poolCB + tokenCToSwap
+        );
+
+        // Making sure minimum liquidity-out requirement is met
+        vm.assume(liquidityOut > 0);
+        // Making sure swappableReservoirLimit is not exceeded
+        vm.assume(swappedReservoirAmountB < pair.getSwappableReservoirLimit());
+
+        // Minting and approving enough tokenA to the router
+        tokenA.mint(address(this), amountADesired);
+        tokenA.approve(address(genericButtonswapRouter), amountADesired);
+
+        // Creating the addLiquidityStep
+        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.tokenA = address(tokenA);
+        addLiquidityStep.tokenB = address(tokenB);
+        addLiquidityStep.swapStepsA.push();
+        addLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.SWAP;
+        addLiquidityStep.swapStepsA[0].tokenOut = address(tokenC);
+//        addLiquidityStep.swapStepsB; // Default to []
+        addLiquidityStep.amountADesired = amountADesired;
+        addLiquidityStep.amountBDesired = 0;
+        addLiquidityStep.amountAMin = 0;
+        addLiquidityStep.amountBMin = 0;
+        addLiquidityStep.movingAveragePrice0ThresholdBps = 0;
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+
+        assertEq(amountsA[0], amountADesired, "AmountsA[0] should be amountADesired");
+        assertEq(amountsB.length, 0, "AmountsB should be empty since tokenB was untouched");
+        assertEq(liquidity, liquidityOut, "Liquidity should be equal to estimated liquidityOut");
+    }
+
+    // Button-wrapping B->bB and then adding liquidity to the A-bB pair opposite reservoirA
+    function test_addLiquidityWithReservoir_singleWrapButtonReservoirA(
+        uint256 poolA,
+        uint256 poolButtonB,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator,
+        uint112 amountBDesired
+    ) public {
+        // Creating A-bB pair with at least minimum liquidity and poolA:poolButtonB price ratio
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolButtonB = bound(poolButtonB, 10000, type(uint112).max);
+        (IButtonswapPair pair,) = createAndInitializePairButton(tokenA, buttonTokenB, poolA, poolButtonB);
+
+        // Ensuring it's a positive rebase that isn't too big
+        vm.assume(rebaseDenominator > 0);
+        vm.assume(rebaseNumerator > rebaseDenominator);
+        vm.assume(poolA < (type(uint112).max / rebaseNumerator) * rebaseDenominator);
+
+        // Rebasing tokenA positively up to create a tokenA reservoir
+        tokenA.applyMultiplier(rebaseNumerator, rebaseDenominator);
+
+        // Getting reservoir size
+        uint256 reservoirA;
+        (poolA, poolButtonB, reservoirA,) =
+        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(buttonTokenB));
+
+        // Estimating how much of buttonTokenB will be converted to A-tokens, and how much of the reservoir will be used
+        uint256 liquidityOut;
+        uint256 buttonTokenBToSwap;
+        uint256 swappedReservoirAmountA;
+        (buttonTokenBToSwap, swappedReservoirAmountA) = ButtonswapLibrary.getMintSwappedAmounts(
+            address(buttonswapFactory), address(buttonTokenB), address(tokenA), buttonTokenB.underlyingToWrapper(amountBDesired)
+        );
+
+        // Making sure poolA doesn't get Overflowed
+        vm.assume(poolA + swappedReservoirAmountA < type(uint112).max);
+        // Making sure poolButtonB doesn't get Overflowed
+        vm.assume(poolButtonB + buttonTokenB.underlyingToWrapper(amountBDesired) < type(uint112).max);
+        // Making sure reservoirA is not exceeded
+        vm.assume(swappedReservoirAmountA < reservoirA);
+        // Making sure the rest of reservoirA can absorb the ephemeral sync that happens from the tokenBToSwap transfer-in
+        vm.assume((poolButtonB + buttonTokenB.underlyingToWrapper(amountBDesired)) * poolA <= (poolA + reservoirA) * poolButtonB);
+
+        // Estimating how much liquidity will be minted
+        liquidityOut = PairMath.getDualSidedMintLiquidityOutAmount(
+            pair.totalSupply(),
+            swappedReservoirAmountA,
+            buttonTokenB.underlyingToWrapper(amountBDesired) - buttonTokenBToSwap,
+            poolA + reservoirA - swappedReservoirAmountA,
+            poolButtonB + buttonTokenBToSwap
+        );
+
+        // Making sure minimum liquidity requirement is met
+        vm.assume(liquidityOut > 0);
+        // Making sure swappableReservoirLimit is not exceeded
+        vm.assume(swappedReservoirAmountA < pair.getSwappableReservoirLimit());
+
+        // Minting and approving enough buttonTokenB to the router
+        tokenB.mint(address(this), amountBDesired);
+        tokenB.approve(address(genericButtonswapRouter), amountBDesired);
+
+        // Creating the addLiquidityStep
+        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.tokenA = address(tokenA);
+        addLiquidityStep.tokenB = address(tokenB);
+//        addLiquidityStep.swapStepsA; // Default to []
+        addLiquidityStep.swapStepsB.push();
+        addLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
+        addLiquidityStep.swapStepsB[0].tokenOut = address(buttonTokenB);
+        addLiquidityStep.amountADesired = 0;
+        addLiquidityStep.amountBDesired = amountBDesired;
+        addLiquidityStep.amountAMin = 0;
+        addLiquidityStep.amountBMin = 0;
+        addLiquidityStep.movingAveragePrice0ThresholdBps = 0;
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+
+        assertEq(amountsA.length, 0, "AmountsA should be empty since tokenA was untouched");
+        assertEq(amountsB[0], amountBDesired, "AmountsB[0] should be amountBDesired");
+        assertEq(liquidity, liquidityOut, "Liquidity should be equal to estimated liquidityOut");
+    }
+
+    // Button-wrapping A->bA and then adding liquidity to the bA-B pair opposite reservoirB
+    function test_addLiquidityWithReservoir_singleWrapButtonReservoirB(
+        uint256 poolButtonA,
+        uint256 poolB,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator,
+        uint112 amountADesired
+    ) public {
+        // Creating bA-B pair with at least minimum liquidity and poolButtonA:poolB price ratio
+        poolButtonA = bound(poolButtonA, 10000, type(uint112).max);
+        poolB = bound(poolB, 10000, type(uint112).max);
+        (IButtonswapPair pair,) = createAndInitializePairButton(tokenB, buttonTokenA, poolB, poolButtonA);
+
+        // Ensuring it's a positive rebase that isn't too big
+        vm.assume(rebaseDenominator > 0);
+        vm.assume(rebaseNumerator > rebaseDenominator);
+        vm.assume(poolB < (type(uint112).max / rebaseNumerator) * rebaseDenominator);
+
+        // Rebasing tokenB positively up to create a tokenB reservoir
+        tokenB.applyMultiplier(rebaseNumerator, rebaseDenominator);
+
+        // Getting reservoir size
+        uint256 reservoirB;
+        (poolButtonA, poolB,,reservoirB) =
+        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(buttonTokenA), address(tokenB));
+
+        // Estimating how much of buttonTokenA will be converted to B-tokens, and how much of the reservoir will be used
+        uint256 liquidityOut;
+        uint256 buttonTokenAToSwap;
+        uint256 swappedReservoirAmountB;
+        (buttonTokenAToSwap, swappedReservoirAmountB) = ButtonswapLibrary.getMintSwappedAmounts(
+            address(buttonswapFactory), address(buttonTokenA), address(tokenB), buttonTokenA.underlyingToWrapper(amountADesired)
+        );
+
+        // Making sure poolB doesn't get Overflowed
+        vm.assume(poolB + swappedReservoirAmountB < type(uint112).max);
+        // Making sure poolButtonA doesn't get Overflowed
+        vm.assume(poolButtonA + buttonTokenA.underlyingToWrapper(amountADesired) < type(uint112).max);
+        // Making sure reservoirB is not exceeded
+        vm.assume(swappedReservoirAmountB < reservoirB);
+        // Making sure the rest of reservoirB can absorb the ephemeral sync that happens from the tokenAToSwap transfer-in
+        vm.assume((poolButtonA + buttonTokenA.underlyingToWrapper(amountADesired)) * poolB <= (poolB + reservoirB) * poolButtonA);
+
+        // Estimating how much liquidity will be minted
+        liquidityOut = PairMath.getDualSidedMintLiquidityOutAmount(
+            pair.totalSupply(),
+            swappedReservoirAmountB,
+            buttonTokenA.underlyingToWrapper(amountADesired) - buttonTokenAToSwap,
+            poolB + reservoirB - swappedReservoirAmountB,
+            poolButtonA + buttonTokenAToSwap
+        );
+
+        // Making sure minimum liquidity requirement is met
+        vm.assume(liquidityOut > 0);
+        // Making sure swappableReservoirLimit is not exceeded
+        vm.assume(swappedReservoirAmountB < pair.getSwappableReservoirLimit());
+
+        // Minting and approving enough buttonTokenA to the router
+        tokenA.mint(address(this), amountADesired);
+        tokenA.approve(address(genericButtonswapRouter), amountADesired);
+
+        // Creating the addLiquidityStep
+        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.tokenA = address(tokenA);
+        addLiquidityStep.tokenB = address(tokenB);
+        addLiquidityStep.swapStepsA.push();
+        addLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
+        addLiquidityStep.swapStepsA[0].tokenOut = address(buttonTokenA);
+//        addLiquidityStep.swapStepsB; // Default to []
+        addLiquidityStep.amountADesired = amountADesired;
+        addLiquidityStep.amountBDesired = 0;
+        addLiquidityStep.amountAMin = 0;
+        addLiquidityStep.amountBMin = 0;
+        addLiquidityStep.movingAveragePrice0ThresholdBps = 0;
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+
+        assertEq(amountsA[0], amountADesired, "AmountsA[0] should be amountADesired");
+        assertEq(amountsB.length, 0, "AmountsB should be empty since tokenB was untouched");
+        assertEq(liquidity, liquidityOut, "Liquidity should be equal to estimated liquidityOut");
+    }
+
+    // Button-unwrapping bB->B and then adding liquidity to the A-B pair opposite reservoirA
+    function test_addLiquidityWithReservoir_singleUnwrapButtonReservoirA(
+        uint256 poolA,
+        uint256 poolB,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator,
+        uint112 amountButtonBDesired
+    ) public {
+        // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolB = bound(poolB, 10000, type(uint112).max);
+        (IButtonswapPair pair,) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
+
+        // Ensuring it's a positive rebase that isn't too big
+        vm.assume(rebaseDenominator > 0);
+        vm.assume(rebaseNumerator > rebaseDenominator);
+        vm.assume(poolA < (type(uint112).max / rebaseNumerator) * rebaseDenominator);
+
+        // Rebasing tokenA positively up to create a tokenA reservoir
+        tokenA.applyMultiplier(rebaseNumerator, rebaseDenominator);
+
+        // Getting reservoir size
+        uint256 reservoirA;
+        (poolA, poolB, reservoirA,) =
+        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+
+        // Estimating how much of buttonTokenB will be converted to A-tokens, and how much of the reservoir will be used
+        uint256 liquidityOut;
+        uint256 tokenBToSwap;
+        uint256 swappedReservoirAmountA;
+        (tokenBToSwap, swappedReservoirAmountA) = ButtonswapLibrary.getMintSwappedAmounts(
+            address(buttonswapFactory), address(tokenB), address(tokenA), buttonTokenB.wrapperToUnderlying(amountButtonBDesired)
+        );
+
+        // Making sure poolA doesn't get Overflowed
+        vm.assume(poolA + swappedReservoirAmountA < type(uint112).max);
+        // Making sure poolB doesn't get Overflowed
+        vm.assume(poolB + buttonTokenB.wrapperToUnderlying(amountButtonBDesired) < type(uint112).max);
+        // Making sure reservoirA is not exceeded
+        vm.assume(swappedReservoirAmountA < reservoirA);
+        // Making sure the rest of reservoirA can absorb the ephemeral sync that happens from the tokenBToSwap transfer-in
+        vm.assume((poolB + buttonTokenB.wrapperToUnderlying(amountButtonBDesired)) * poolA <= (poolA + reservoirA) * poolB);
+
+        // Estimating how much liquidity will be minted
+        liquidityOut = PairMath.getDualSidedMintLiquidityOutAmount(
+            pair.totalSupply(),
+            swappedReservoirAmountA,
+            buttonTokenB.wrapperToUnderlying(amountButtonBDesired) - tokenBToSwap,
+            poolA + reservoirA - swappedReservoirAmountA,
+            poolB + tokenBToSwap
+        );
+
+        // Making sure minimum liquidity requirement is met
+        vm.assume(liquidityOut > 0);
+        // Making sure swappableReservoirLimit is not exceeded
+        vm.assume(swappedReservoirAmountA < pair.getSwappableReservoirLimit());
+
+        // Minting and approving enough buttonTokenB to the router
+        tokenB.mint(address(this), buttonTokenB.wrapperToUnderlying(amountButtonBDesired));
+        tokenB.approve(address(buttonTokenB), buttonTokenB.wrapperToUnderlying(amountButtonBDesired));
+        buttonTokenB.mint(amountButtonBDesired);
+        buttonTokenB.approve(address(genericButtonswapRouter), amountButtonBDesired);
+
+
+        // Creating the addLiquidityStep
+        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.tokenA = address(tokenA);
+        addLiquidityStep.tokenB = address(buttonTokenB);
+//        addLiquidityStep.swapStepsA; // Default to []
+        addLiquidityStep.swapStepsB.push();
+        addLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
+        addLiquidityStep.swapStepsB[0].tokenOut = address(tokenB);
+        addLiquidityStep.amountADesired = 0;
+        addLiquidityStep.amountBDesired = amountButtonBDesired;
+        addLiquidityStep.amountAMin = 0;
+        addLiquidityStep.amountBMin = 0;
+        addLiquidityStep.movingAveragePrice0ThresholdBps = 0;
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+
+        assertEq(amountsA.length, 0, "AmountsA should be empty since tokenA was untouched");
+        assertEq(amountsB[0], amountButtonBDesired, "AmountsB[0] should be amountButtonBDesired");
+        assertEq(liquidity, liquidityOut, "Liquidity should be equal to estimated liquidityOut");
+    }
+
+    // Button-unwrapping bA->A and then adding liquidity to the A-B pair opposite reservoirB
+    function test_addLiquidityWithReservoir_singleUnwrapButtonReservoirB(
+        uint256 poolA,
+        uint256 poolB,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator,
+        uint112 amountButtonADesired
+    ) public {
+        // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolB = bound(poolB, 10000, type(uint112).max);
+        (IButtonswapPair pair,) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
+
+        // Ensuring it's a positive rebase that isn't too big
+        vm.assume(rebaseDenominator > 0);
+        vm.assume(rebaseNumerator > rebaseDenominator);
+        vm.assume(poolB < (type(uint112).max / rebaseNumerator) * rebaseDenominator);
+
+        // Rebasing tokenB positively up to create a tokenB reservoir
+        tokenB.applyMultiplier(rebaseNumerator, rebaseDenominator);
+
+        // Getting reservoir size
+        uint256 reservoirB;
+        (poolA, poolB,,reservoirB) =
+        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+
+        // Estimating how much of buttonTokenB will be converted to A-tokens, and how much of the reservoir will be used
+        uint256 liquidityOut;
+        uint256 tokenAToSwap;
+        uint256 swappedReservoirAmountB;
+        (tokenAToSwap, swappedReservoirAmountB) = ButtonswapLibrary.getMintSwappedAmounts(
+            address(buttonswapFactory), address(tokenA), address(tokenB), buttonTokenA.wrapperToUnderlying(amountButtonADesired)
+        );
+
+        // Making sure poolB doesn't get Overflowed
+        vm.assume(poolB + swappedReservoirAmountB < type(uint112).max);
+        // Making sure poolA doesn't get Overflowed
+        vm.assume(poolA + buttonTokenA.wrapperToUnderlying(amountButtonADesired) < type(uint112).max);
+        // Making sure reservoirB is not exceeded
+        vm.assume(swappedReservoirAmountB < reservoirB);
+        // Making sure the rest of reservoirB can absorb the ephemeral sync that happens from the tokenAToSwap transfer-in
+        vm.assume((poolA + buttonTokenA.wrapperToUnderlying(amountButtonADesired)) * poolB <= (poolB + reservoirB) * poolA);
+
+        // Estimating how much liquidity will be minted
+        liquidityOut = PairMath.getDualSidedMintLiquidityOutAmount(
+            pair.totalSupply(),
+            swappedReservoirAmountB,
+            buttonTokenA.wrapperToUnderlying(amountButtonADesired) - tokenAToSwap,
+            poolB + reservoirB - swappedReservoirAmountB,
+            poolA + tokenAToSwap
+        );
+
+        // Making sure minimum liquidity requirement is met
+        vm.assume(liquidityOut > 0);
+        // Making sure swappableReservoirLimit is not exceeded
+        vm.assume(swappedReservoirAmountB < pair.getSwappableReservoirLimit());
+
+        // Minting and approving enough buttonTokenA to the router
+        tokenA.mint(address(this), buttonTokenA.wrapperToUnderlying(amountButtonADesired));
+        tokenA.approve(address(buttonTokenA), buttonTokenA.wrapperToUnderlying(amountButtonADesired));
+        buttonTokenA.mint(amountButtonADesired);
+        buttonTokenA.approve(address(genericButtonswapRouter), amountButtonADesired);
+
+
+        // Creating the addLiquidityStep
+        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.tokenA = address(buttonTokenA);
+        addLiquidityStep.tokenB = address(tokenB);
+        addLiquidityStep.swapStepsA.push();
+        addLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
+        addLiquidityStep.swapStepsA[0].tokenOut = address(tokenA);
+//        addLiquidityStep.swapStepsB; // Default to []
+        addLiquidityStep.amountADesired = amountButtonADesired;
+        addLiquidityStep.amountBDesired = 0;
+        addLiquidityStep.amountAMin = 0;
+        addLiquidityStep.amountBMin = 0;
+        addLiquidityStep.movingAveragePrice0ThresholdBps = 0;
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+
+        assertEq(amountsA[0], amountButtonADesired, "AmountsA[0] should be amountButtonADesired");
+        assertEq(amountsB.length, 0, "AmountsB should be empty since tokenB was untouched");
+        assertEq(liquidity, liquidityOut, "Liquidity should be equal to estimated liquidityOut");
+    }
+
+    // Wrapping ETH->WETH and then adding liquidity to the A-WETH pair opposite reservoirA
+    function test_addLiquidityWithReservoir_singleWrapWethReservoirA(
+        uint256 poolA,
+        uint256 poolWETH,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator,
+        uint112 amountETHDesired
+    ) public {
+        // Creating A-WETH pair with at least minimum liquidity and poolA:poolB price ratio
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolWETH = bound(poolWETH, 10000, type(uint112).max);
+        (IButtonswapPair pair,) = createAndInitializePairETH(tokenA, poolA, poolWETH);
+
+        // Ensuring it's a positive rebase that isn't too big
+        vm.assume(rebaseDenominator > 0);
+        vm.assume(rebaseNumerator > rebaseDenominator);
+        vm.assume(poolA < (type(uint112).max / rebaseNumerator) * rebaseDenominator);
+
+        // Rebasing tokenA positively up to create a tokenA reservoir
+        tokenA.applyMultiplier(rebaseNumerator, rebaseDenominator);
+
+        // Getting reservoir size
+        uint256 reservoirA;
+        (poolA, poolWETH, reservoirA,) =
+        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(weth));
+
+        // Estimating how much of weth will be converted to A-tokens, and how much of the reservoir will be used
+        uint256 liquidityOut;
+        uint256 wethToSwap;
+        uint256 swappedReservoirAmountA;
+        (wethToSwap, swappedReservoirAmountA) = ButtonswapLibrary.getMintSwappedAmounts(
+            address(buttonswapFactory), address(weth), address(tokenA), amountETHDesired
+        );
+
+        // Making sure poolA doesn't get Overflowed
+        vm.assume(poolA + swappedReservoirAmountA < type(uint112).max);
+        // Making sure poolWETH doesn't get Overflowed
+        vm.assume(poolWETH + amountETHDesired < type(uint112).max);
+        // Making sure reservoirA is not exceeded
+        vm.assume(swappedReservoirAmountA < reservoirA);
+        // Making sure the rest of reservoirA can absorb the ephemeral sync that happens from the wethToSwap transfer-in
+        vm.assume((poolWETH + amountETHDesired) * poolA <= (poolA + reservoirA) * poolWETH);
+
+        // Estimating how much liquidity will be minted
+        liquidityOut = PairMath.getDualSidedMintLiquidityOutAmount(
+            pair.totalSupply(),
+            swappedReservoirAmountA,
+            amountETHDesired - wethToSwap,
+            poolA + reservoirA - swappedReservoirAmountA,
+            poolWETH + wethToSwap
+        );
+
+        // Making sure minimum liquidity requirement is met
+        vm.assume(liquidityOut > 0);
+        // Making sure swappableReservoirLimit is not exceeded
+        vm.assume(swappedReservoirAmountA < pair.getSwappableReservoirLimit());
+
+        // Dealing enough eth for using the router
+        vm.deal(address(this), amountETHDesired);
+
+        // Creating the addLiquidityStep
+        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.tokenA = address(tokenA);
+        addLiquidityStep.tokenB = address(0);
+//        addLiquidityStep.swapStepsA; // Default to []
+        addLiquidityStep.swapStepsB.push();
+        addLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.WRAP_WETH;
+        addLiquidityStep.swapStepsB[0].tokenOut = address(weth);
+        addLiquidityStep.amountADesired = 0;
+        addLiquidityStep.amountBDesired = amountETHDesired;
+        addLiquidityStep.amountAMin = 0;
+        addLiquidityStep.amountBMin = 0;
+        addLiquidityStep.movingAveragePrice0ThresholdBps = 0;
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity{value: amountETHDesired}(addLiquidityStep, to, deadline);
+
+        assertEq(amountsA.length, 0, "AmountsA should be empty since tokenA was untouched");
+        assertEq(amountsB[0], amountETHDesired, "AmountsB[0] should be amountETHDesired");
+        assertEq(liquidity, liquidityOut, "Liquidity should be equal to estimated liquidityOut");
+    }
+
+    // Wrapping ETH->WETH and then adding liquidity to the WETH-B pair opposite reservoirB
+    function test_addLiquidityWithReservoir_singleWrapWethReservoirB(
+        uint256 poolWETH,
+        uint256 poolB,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator,
+        uint112 amountETHDesired
+    ) public {
+        // Creating A-B pair with at least minimum liquidity and poolA:poolWETH price ratio
+        poolWETH = bound(poolWETH, 10000, type(uint112).max);
+        poolB = bound(poolB, 10000, type(uint112).max);
+        (IButtonswapPair pair,) = createAndInitializePairETH(tokenB, poolB, poolWETH);
+
+        // Ensuring it's a positive rebase that isn't too big
+        vm.assume(rebaseDenominator > 0);
+        vm.assume(rebaseNumerator > rebaseDenominator);
+        vm.assume(poolB < (type(uint112).max / rebaseNumerator) * rebaseDenominator);
+
+        // Rebasing tokenB positively up to create a tokenB reservoir
+        tokenB.applyMultiplier(rebaseNumerator, rebaseDenominator);
+
+        // Getting reservoir size
+        uint256 reservoirB;
+        (poolWETH, poolB,, reservoirB) =
+        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(weth), address(tokenB));
+
+        // Estimating how much of weth will be converted to B-tokens, and how much of the reservoir will be used
+        uint256 liquidityOut;
+        uint256 wethToSwap;
+        uint256 swappedReservoirAmountB;
+        (wethToSwap, swappedReservoirAmountB) = ButtonswapLibrary.getMintSwappedAmounts(
+            address(buttonswapFactory), address(weth), address(tokenB), amountETHDesired
+        );
+
+        // Making sure poolB doesn't get Overflowed
+        vm.assume(poolB + swappedReservoirAmountB < type(uint112).max);
+        // Making sure poolWETH doesn't get Overflowed
+        vm.assume(poolWETH + amountETHDesired < type(uint112).max);
+        // Making sure reservoirB is not exceeded
+        vm.assume(swappedReservoirAmountB < reservoirB);
+        // Making sure the rest of reservoirB can absorb the ephemeral sync that happens from the wethToSwap transfer-in
+        vm.assume((poolWETH + amountETHDesired) * poolB <= (poolB + reservoirB) * poolWETH);
+
+        // Estimating how much liquidity will be minted
+        liquidityOut = PairMath.getDualSidedMintLiquidityOutAmount(
+            pair.totalSupply(),
+            swappedReservoirAmountB,
+            amountETHDesired - wethToSwap,
+            poolB + reservoirB - swappedReservoirAmountB,
+            poolWETH + wethToSwap
+        );
+
+        // Making sure minimum liquidity requirement is met
+        vm.assume(liquidityOut > 0);
+        // Making sure swappableReservoirLimit is not exceeded
+        vm.assume(swappedReservoirAmountB < pair.getSwappableReservoirLimit());
+
+        // Dealing enough eth for using the router
+        vm.deal(address(this), amountETHDesired);
+
+        // Creating the addLiquidityStep
+        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.tokenA = address(0);
+        addLiquidityStep.tokenB = address(tokenB);
+        addLiquidityStep.swapStepsA.push();
+        addLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.WRAP_WETH;
+        addLiquidityStep.swapStepsA[0].tokenOut = address(weth);
+//        addLiquidityStep.swapStepsB; // Default to []
+        addLiquidityStep.amountADesired = amountETHDesired;
+        addLiquidityStep.amountBDesired = 0;
+        addLiquidityStep.amountAMin = 0;
+        addLiquidityStep.amountBMin = 0;
+        addLiquidityStep.movingAveragePrice0ThresholdBps = 0;
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity{value: amountETHDesired}(addLiquidityStep, to, deadline);
+
+        assertEq(amountsA[0], amountETHDesired, "AmountsA[0] should be amountETHDesired");
+        assertEq(amountsB.length, 0, "AmountsB should be empty since tokenB was untouched");
+        assertEq(liquidity, liquidityOut, "Liquidity should be equal to estimated liquidityOut");
+    }
+
+    // addLiquidityWithReservoir_singleUnwrapWethReservoir not a viable test-cases since pairs can't accept raw-ETH
 }

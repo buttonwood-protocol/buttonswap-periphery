@@ -78,4 +78,23 @@ interface IGenericButtonswapRouterErrors {
     * @param requiredAmount The amount of token required
     */
     error InsufficientTokenAmount(address token, uint256 amount, uint256 requiredAmount);
+
+    /**
+    * @notice Pair does not exist
+    * @param tokenA The address of tokenA
+    * @param tokenB The address of tokenB
+    */
+    error PairDoesNotExist(address tokenA, address tokenB);
+
+    // ToDo: Add params
+    /**
+    * @notice Pair has not yet been initialized
+    */
+    error NotInitialized();
+
+    // ToDo: Add params
+    /**
+    * @notice Neither token in the pool has a non-empty reservoir
+    */
+    error NoReservoir();
 }
