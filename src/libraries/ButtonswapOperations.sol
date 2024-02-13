@@ -11,15 +11,16 @@ library ButtonswapOperations {
         UNWRAP_WETH
     }
 
+    // ToDo: Refactor these to just say "Liquidity" and re-use them. Dual + Single.
     // ToDo: Potentially redundant
     enum AddLiquidity {
-        ADD_LIQUIDITY,
+        ADD_LIQUIDITY, // ToDo: Rename to dual/single
         ADD_LIQUIDITY_WITH_RESERVOIR
     }
 
     // ToDo: Potentially redundant
     enum RemoveLiquidity {
-        BURN_LIQUIDITY,
-        BURN_LIQUIDITY_WITH_RESERVOIR
+        REMOVE_LIQUIDITY, // ToDo: Rename to dual/single
+        REMOVE_LIQUIDITY_WITH_RESERVOIR
     }
 }

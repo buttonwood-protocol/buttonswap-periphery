@@ -40,6 +40,8 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
         ButtonswapOperations.RemoveLiquidity operation;
         address tokenA;
         address tokenB;
+        SwapStep[] swapStepsA;
+        SwapStep[] swapStepsB;
         uint256 liquidity;
         uint256 amountAMin;
         uint256 amountBMin;
@@ -138,9 +140,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
     // RemoveLiquidity
     function removeLiquidity(
         RemoveLiquidityStep calldata removeLiquidityStep,
-        SwapStep[] calldata swapStepsA,
-        SwapStep[] calldata swapStepsB,
         address to,
         uint256 deadline
-    ) external returns (uint256 amountA, uint256 amountB);
+    ) external returns (uint256[] memory amountsA, uint256[] memory amountsB);
 }

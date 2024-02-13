@@ -516,7 +516,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         assertEq(liquidity, MathExtended.sqrt(amountsA[0] * amountsB[1]) - 1000, "Liquidity should be equal geometric mean - 1000");
     }
 
-    // addLiquidity_singleUnwrapWeth not a viable test-cases since pairs can't accept raw-ETH
+    // test_addLiquidity_singleUnwrapWeth not a viable test-cases since pairs can't accept raw-ETH
 
 //    function test_addLiquidity_existingPairNoHops(uint256 amountADesired, uint256 amountBDesired) public {}
     function test_addLiquidity_pairExistsNoHops(uint256 poolA, uint256 poolB, uint256 amountADesired, uint256 amountBDesired) public {
@@ -1938,5 +1938,5 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         assertEq(liquidity, liquidityOut, "Liquidity should be equal to estimated liquidityOut");
     }
 
-    // addLiquidityWithReservoir_singleUnwrapWethReservoir not a viable test-cases since pairs can't accept raw-ETH
+    // test_addLiquidityWithReservoir_singleUnwrapWethReservoir not a viable test-cases since pairs can't accept raw-ETH
 }

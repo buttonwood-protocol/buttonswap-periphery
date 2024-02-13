@@ -610,16 +610,104 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
 
     }
 
-    function removeLiquidity(
+    function removeLiquidityDual(
         RemoveLiquidityStep calldata removeLiquidityStep,
-        SwapStep[] calldata swapStepsA,
-        SwapStep[] calldata swapStepsB,
         address to,
         uint256 deadline
-    ) external returns (uint256 amountA, uint256 amountB) {}
+    ) internal returns (uint256[] memory amountsA, uint256[] memory amountsB) {
+        // Fetch the pair
+        address pair = ButtonswapLibrary.pairFor(factory, removeLiquidityStep.tokenA, removeLiquidityStep.tokenB); // ToDo: Throw error if it doesn't exist?
 
-    // ToDo: addLiquidity
-    // ToDo: addLiquidityWithReservoir
-    // ToDo: removeLiquidity
-    // ToDo: removeLiquidityFromReservoir
+        // Transfer pair-tokens to the router from msg.sender
+        IButtonswapPair(pair).transferFrom(msg.sender, address(this), removeLiquidityStep.liquidity);
+
+        // Burn the pair-tokens for amountA of tokenA and amountB of tokenB
+        (address token0,) = ButtonswapLibrary.sortTokens(removeLiquidityStep.tokenA, removeLiquidityStep.tokenB);
+        uint256 amountA; uint256 amountB;
+        if (removeLiquidityStep.tokenA == token0) {
+            (amountA, amountB) = IButtonswapPair(pair).burn(removeLiquidityStep.liquidity, address(this));
+        } else {
+            (amountB, amountA) = IButtonswapPair(pair).burn(removeLiquidityStep.liquidity, address(this));
+        }
+
+        // ToDo: Take this code block and re-use as internal function? (probably don't have to re-use addliquidity-parts)
+        // Re-using amountA/amountB to calculate final output amount of tokenA/tokenB (after all the swaps)
+        address finalTokenA; address finalTokenB;
+        (amountsA,finalTokenA,amountA) = _swapExactTokensForTokens(removeLiquidityStep.tokenA, amountA, removeLiquidityStep.swapStepsA);
+        (amountsB,finalTokenB,amountB) = _swapExactTokensForTokens(removeLiquidityStep.tokenB, amountB, removeLiquidityStep.swapStepsB);
+        // ToDo: Up to here
+
+        // Validate that enough of tokenA/B (after all the swaps) was received
+        if (amountA < removeLiquidityStep.amountAMin) {
+            revert InsufficientTokenAmount(finalTokenA, amountA, removeLiquidityStep.amountAMin);
+        }
+        if (amountB < removeLiquidityStep.amountBMin) {
+            revert InsufficientTokenAmount(finalTokenB, amountB, removeLiquidityStep.amountBMin);
+        }
+
+        // Transfer finalTokenA/finalTokenB to the user
+        TransferHelper.safeTransfer(finalTokenA, to, amountA);
+        TransferHelper.safeTransfer(finalTokenB, to, amountB);
+    }
+
+    function removeLiquidityWithReservoir(
+        RemoveLiquidityStep calldata removeLiquidityStep,
+        address to,
+        uint256 deadline
+    ) internal returns (uint256[] memory amountsA, uint256[] memory amountsB) {
+        // ToDo: Move this logic up the chain
+        // Fetch the pair
+        address pair = ButtonswapLibrary.pairFor(factory, removeLiquidityStep.tokenA, removeLiquidityStep.tokenB); // ToDo: Throw error if it doesn't exist?
+
+        // Transfer pair-tokens to the router from msg.sender
+        IButtonswapPair(pair).transferFrom(msg.sender, address(this), removeLiquidityStep.liquidity);
+        // ToDo: Up until here
+
+        // Burn the pair-tokens for amountA of tokenA and amountB of tokenB
+        (address token0,) = ButtonswapLibrary.sortTokens(removeLiquidityStep.tokenA, removeLiquidityStep.tokenB);
+        uint256 amountA; uint256 amountB;
+        if (removeLiquidityStep.tokenA == token0) {
+            (amountA, amountB) = IButtonswapPair(pair).burnFromReservoir(removeLiquidityStep.liquidity, address(this));
+        } else {
+            (amountB, amountA) = IButtonswapPair(pair).burnFromReservoir(removeLiquidityStep.liquidity, address(this));
+        }
+
+        // ToDo: Take this code block and re-use as internal function? (probably don't have to re-use addliquidity-parts)
+        // Re-using amountA/amountB to calculate final output amount of tokenA/tokenB (after all the swaps)
+        address finalTokenA; address finalTokenB;
+        if (amountA > 0) {
+            (amountsA,finalTokenA,amountA) = _swapExactTokensForTokens(removeLiquidityStep.tokenA, amountA, removeLiquidityStep.swapStepsA);
+            finalTokenB = removeLiquidityStep.tokenB;
+        } else {
+            (amountsB,finalTokenB,amountB) = _swapExactTokensForTokens(removeLiquidityStep.tokenB, amountB, removeLiquidityStep.swapStepsB);
+            finalTokenA = removeLiquidityStep.tokenA;
+        }
+
+        // Validate that enough of tokenA/B (after all the swaps) was received
+        if (amountA < removeLiquidityStep.amountAMin) {
+            revert InsufficientTokenAmount(finalTokenA, amountA, removeLiquidityStep.amountAMin);
+        }
+        if (amountB < removeLiquidityStep.amountBMin) {
+            revert InsufficientTokenAmount(finalTokenB, amountB, removeLiquidityStep.amountBMin);
+        }
+
+        // Transfer finalTokenA/finalTokenB to the user
+        TransferHelper.safeTransfer(finalTokenA, to, amountA);
+        TransferHelper.safeTransfer(finalTokenB, to, amountB);
+        // ToDo: Can probably move most this logic up the chain
+    }
+
+    function removeLiquidity(
+        RemoveLiquidityStep calldata removeLiquidityStep,
+        address to,
+        uint256 deadline //ToDo: Ensure the deadline
+    ) external returns (uint256[] memory amountsA, uint256[] memory amountsB) {
+        if (removeLiquidityStep.operation == ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY) {
+            return removeLiquidityDual(removeLiquidityStep, to, deadline);
+        } else if (removeLiquidityStep.operation == ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY_WITH_RESERVOIR) {
+            return removeLiquidityWithReservoir(removeLiquidityStep, to, deadline);
+        }
+    }
+
+    // ToDo: removeLiquidityWithPermit
 }
