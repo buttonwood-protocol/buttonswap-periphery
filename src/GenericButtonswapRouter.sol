@@ -611,23 +611,18 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     }
 
     function removeLiquidityDual(
+        IButtonswapPair pair,
         RemoveLiquidityStep calldata removeLiquidityStep,
         address to,
         uint256 deadline
     ) internal returns (uint256[] memory amountsA, uint256[] memory amountsB) {
-        // Fetch the pair
-        address pair = ButtonswapLibrary.pairFor(factory, removeLiquidityStep.tokenA, removeLiquidityStep.tokenB); // ToDo: Throw error if it doesn't exist?
-
-        // Transfer pair-tokens to the router from msg.sender
-        IButtonswapPair(pair).transferFrom(msg.sender, address(this), removeLiquidityStep.liquidity);
-
         // Burn the pair-tokens for amountA of tokenA and amountB of tokenB
         (address token0,) = ButtonswapLibrary.sortTokens(removeLiquidityStep.tokenA, removeLiquidityStep.tokenB);
         uint256 amountA; uint256 amountB;
         if (removeLiquidityStep.tokenA == token0) {
-            (amountA, amountB) = IButtonswapPair(pair).burn(removeLiquidityStep.liquidity, address(this));
+            (amountA, amountB) = pair.burn(removeLiquidityStep.liquidity, address(this));
         } else {
-            (amountB, amountA) = IButtonswapPair(pair).burn(removeLiquidityStep.liquidity, address(this));
+            (amountB, amountA) = pair.burn(removeLiquidityStep.liquidity, address(this));
         }
 
         // ToDo: Take this code block and re-use as internal function? (probably don't have to re-use addliquidity-parts)
@@ -651,25 +646,18 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     }
 
     function removeLiquidityWithReservoir(
+        IButtonswapPair pair,
         RemoveLiquidityStep calldata removeLiquidityStep,
         address to,
         uint256 deadline
     ) internal returns (uint256[] memory amountsA, uint256[] memory amountsB) {
-        // ToDo: Move this logic up the chain
-        // Fetch the pair
-        address pair = ButtonswapLibrary.pairFor(factory, removeLiquidityStep.tokenA, removeLiquidityStep.tokenB); // ToDo: Throw error if it doesn't exist?
-
-        // Transfer pair-tokens to the router from msg.sender
-        IButtonswapPair(pair).transferFrom(msg.sender, address(this), removeLiquidityStep.liquidity);
-        // ToDo: Up until here
-
         // Burn the pair-tokens for amountA of tokenA and amountB of tokenB
         (address token0,) = ButtonswapLibrary.sortTokens(removeLiquidityStep.tokenA, removeLiquidityStep.tokenB);
         uint256 amountA; uint256 amountB;
         if (removeLiquidityStep.tokenA == token0) {
-            (amountA, amountB) = IButtonswapPair(pair).burnFromReservoir(removeLiquidityStep.liquidity, address(this));
+            (amountA, amountB) = pair.burnFromReservoir(removeLiquidityStep.liquidity, address(this));
         } else {
-            (amountB, amountA) = IButtonswapPair(pair).burnFromReservoir(removeLiquidityStep.liquidity, address(this));
+            (amountB, amountA) = pair.burnFromReservoir(removeLiquidityStep.liquidity, address(this));
         }
 
         // ToDo: Take this code block and re-use as internal function? (probably don't have to re-use addliquidity-parts)
@@ -697,17 +685,50 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         // ToDo: Can probably move most this logic up the chain
     }
 
+    //ToDo: Ensure the deadline
+    function _removeLiquidity(
+        IButtonswapPair pair,
+        RemoveLiquidityStep calldata removeLiquidityStep,
+        address to,
+        uint256 deadline //ToDo: Ensure the deadline
+    ) internal returns (uint256[] memory amountsA, uint256[] memory amountsB) {
+        // Transfer pair-tokens to the router from msg.sender
+        pair.transferFrom(msg.sender, address(this), removeLiquidityStep.liquidity);
+
+        // Route to the appropriate internal removeLiquidity function based on the operation
+        if (removeLiquidityStep.operation == ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY) {
+            return removeLiquidityDual(pair, removeLiquidityStep, to, deadline);
+        } else if (removeLiquidityStep.operation == ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY_WITH_RESERVOIR) {
+            return removeLiquidityWithReservoir(pair, removeLiquidityStep, to, deadline);
+        }
+    }
+
     function removeLiquidity(
         RemoveLiquidityStep calldata removeLiquidityStep,
         address to,
         uint256 deadline //ToDo: Ensure the deadline
     ) external returns (uint256[] memory amountsA, uint256[] memory amountsB) {
-        if (removeLiquidityStep.operation == ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY) {
-            return removeLiquidityDual(removeLiquidityStep, to, deadline);
-        } else if (removeLiquidityStep.operation == ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY_WITH_RESERVOIR) {
-            return removeLiquidityWithReservoir(removeLiquidityStep, to, deadline);
-        }
+        // Fetch the pair
+        IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, removeLiquidityStep.tokenA, removeLiquidityStep.tokenB)); // ToDo: Throw error if it doesn't exist?
+        // Remove liquidity
+        return _removeLiquidity(pair, removeLiquidityStep, to, deadline);
     }
 
-    // ToDo: removeLiquidityWithPermit
+    function removeLiquidityWithPermit(
+        RemoveLiquidityStep calldata removeLiquidityStep,
+        address to,
+        uint256 deadline,
+        bool approveMax,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external returns (uint256[] memory amountsA, uint256[] memory amountsB) {
+        // Fetch the pair
+        IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, removeLiquidityStep.tokenA, removeLiquidityStep.tokenB)); // ToDo: Throw error if it doesn't exist?
+        // Call permit on the pair
+        uint256 value = approveMax ? type(uint256).max : removeLiquidityStep.liquidity;
+        pair.permit(msg.sender, address(this), value, deadline, v, r, s);
+        // Remove liquidity
+        return _removeLiquidity(pair, removeLiquidityStep, to, deadline);
+    }
 }

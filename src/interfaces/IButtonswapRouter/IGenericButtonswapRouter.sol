@@ -58,7 +58,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      */
     function WETH() external view returns (address WETH);
 
-    // Swap
+    // ToDo: Add docs
     function swapExactTokensForTokens(
         address tokenIn,
         uint256 amountIn,
@@ -82,6 +82,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * );
      */
 
+    // ToDo: Add docs
     function swapTokensForExactTokens(
         address tokenIn,
         uint256 amountOut,
@@ -105,7 +106,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * );
      */
 
-    // AddLiquidity
+    // ToDo: Add docs
     function addLiquidity(
         AddLiquidityStep calldata addLiquidityStep,
 //        SwapStep[] calldata swapStepsA,
@@ -137,10 +138,21 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * );
      */
 
-    // RemoveLiquidity
+    // ToDo: Add docs
     function removeLiquidity(
         RemoveLiquidityStep calldata removeLiquidityStep,
         address to,
         uint256 deadline
+    ) external returns (uint256[] memory amountsA, uint256[] memory amountsB);
+
+    // ToDo: Add docs
+    function removeLiquidityWithPermit(
+        RemoveLiquidityStep calldata removeLiquidityStep,
+        address to,
+        uint256 deadline,
+        bool approveMax,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
     ) external returns (uint256[] memory amountsA, uint256[] memory amountsB);
 }

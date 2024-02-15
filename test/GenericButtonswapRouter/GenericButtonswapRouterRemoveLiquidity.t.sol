@@ -105,23 +105,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         }
     }
 
-    //    // Utility function for testing functions that use Permit
-    //    function generateUserAPermitSignature(IButtonswapPair pair, uint256 liquidity, uint256 deadline)
-    //        private
-    //        view
-    //        returns (uint8 v, bytes32 r, bytes32 s)
-    //    {
-    //        bytes32 permitDigest = keccak256(
-    //            abi.encodePacked(
-    //                "\x19\x01",
-    //                pair.DOMAIN_SEPARATOR(),
-    //                keccak256(
-    //                    abi.encode(pair.PERMIT_TYPEHASH(), userA, address(basicButtonswapRouter), liquidity, 0, deadline)
-    //                )
-    //            )
-    //        );
-    //        return vm.sign(userAPrivateKey, permitDigest);
-    //    }
+    // Utility function for testing functions that use Permit
+    function generateUserPermitSignature(address user, uint256 userPrivateKey, IButtonswapPair pair, uint256 liquidity, uint256 deadline)
+        private
+        view
+        returns (uint8 v, bytes32 r, bytes32 s)
+    {
+        bytes32 permitDigest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                pair.DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(pair.PERMIT_TYPEHASH(), user, address(genericButtonswapRouter), liquidity, 0, deadline)
+                )
+            )
+        );
+        return vm.sign(userPrivateKey, permitDigest);
+    }
 
     // Required function for receiving ETH refunds
     receive() external payable {}
@@ -1469,5 +1469,101 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         assertEq(amountsA.length, 0, "amountsA should be empty");
         assertEq(amountsB[0], tokenOutWETH, "amountsB[0] should equal tokenOutWETH in WETH");
         assertEq(amountsB[1], tokenOutWETH, "amountsB[1] should equal tokenOutWETH in ETH");
+    }
+
+    function test_removeLiquidityWithPermit_specificPermission(uint256 poolA, uint256 poolB, uint256 liquidity) public {
+        // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolB = bound(poolB, 10000, type(uint112).max);
+        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
+
+        // Transferring pair liquidity to userA to test out the permit functionality
+        pair.transfer(userA, liquidityOut);
+
+        // Bound liquidity to be within the range of any pair's liquidity
+        liquidity = bound(liquidity, 1, liquidityOut);
+
+        // Estimating amountA/amountB returned from removing liquidity
+        uint256 expectedAmountA = (poolA * liquidity) / pair.totalSupply();
+        uint256 expectedAmountB = (poolB * liquidity) / pair.totalSupply();
+
+        // Creating the removeLiquidityStep
+        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY;
+        removeLiquidityStep.tokenA = address(tokenA);
+        removeLiquidityStep.tokenB = address(tokenB);
+//        removeLiquidityStep.swapStepsA; // Default to []
+//        removeLiquidityStep.swapStepsB; // Default to []
+        removeLiquidityStep.liquidity = liquidity;
+        removeLiquidityStep.amountAMin = 0;
+        removeLiquidityStep.amountBMin = 0;
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        // Generating the v,r,s signature for userA to allow access to the pair
+        (uint8 v, bytes32 r, bytes32 s) = generateUserPermitSignature(userA, userAPrivateKey, pair, liquidity, deadline);
+
+        // Removing liquidity as userA
+        vm.prank(userA);
+        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidityWithPermit(
+            removeLiquidityStep,
+            to,
+            deadline,
+            false,
+            v,
+            r,
+            s
+        );
+
+        // Validating the amountA/amountB returned
+        assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
+        assertEq(amountsB[0], expectedAmountB, "AmountsB[0] should equal expectedAmountB");
+    }
+
+    function test_removeLiquidityWithPermit_MaxPermission(uint256 poolA, uint256 poolB, uint256 liquidity) public {
+        // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
+        poolA = bound(poolA, 10000, type(uint112).max);
+        poolB = bound(poolB, 10000, type(uint112).max);
+        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
+
+        // Transferring pair liquidity to userA to test out the permit functionality
+        pair.transfer(userA, liquidityOut);
+
+        // Bound liquidity to be within the range of any pair's liquidity
+        liquidity = bound(liquidity, 1, liquidityOut);
+
+        // Estimating amountA/amountB returned from removing liquidity
+        uint256 expectedAmountA = (poolA * liquidity) / pair.totalSupply();
+        uint256 expectedAmountB = (poolB * liquidity) / pair.totalSupply();
+
+        // Creating the removeLiquidityStep
+        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY;
+        removeLiquidityStep.tokenA = address(tokenA);
+        removeLiquidityStep.tokenB = address(tokenB);
+//        removeLiquidityStep.swapStepsA; // Default to []
+//        removeLiquidityStep.swapStepsB; // Default to []
+        removeLiquidityStep.liquidity = liquidity;
+        removeLiquidityStep.amountAMin = 0;
+        removeLiquidityStep.amountBMin = 0;
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        // Generating the v,r,s signature for userA to allow access to the pair
+        (uint8 v, bytes32 r, bytes32 s) = generateUserPermitSignature(userA, userAPrivateKey, pair, type(uint256).max, deadline);
+
+        // Removing liquidity as userA
+        vm.prank(userA);
+        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidityWithPermit(
+            removeLiquidityStep,
+            to,
+            deadline,
+            true,
+            v,
+            r,
+            s
+        );
+
+        // Validating the amountA/amountB returned
+        assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
+        assertEq(amountsB[0], expectedAmountB, "AmountsB[0] should equal expectedAmountB");
     }
 }
