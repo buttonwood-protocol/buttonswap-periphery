@@ -11,19 +11,8 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
         address tokenOut;
     }
 
-    // ToDo: Fold back into function signature (unless needs IR)
-//    struct AddLiquidityStep {
-//        ButtonswapOperations.AddLiquidity operation;
-//        address tokenA;
-//        address tokenB;
-//        uint256 amountADesired;
-//        uint256 amountBDesired;
-//        uint256 amountAMin;
-//        uint256 amountBMin;
-//        uint16 movingAveragePrice0ThresholdBps;
-//    }
     struct AddLiquidityStep {
-        ButtonswapOperations.AddLiquidity operation; // Potentially just separate out the function
+        ButtonswapOperations.Liquidity operation; // Potentially just separate out the function
         address tokenA;
         address tokenB;
         SwapStep[] swapStepsA;
@@ -35,9 +24,8 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
         uint16 movingAveragePrice0ThresholdBps;
     }
 
-    // ToDo: Fold back into function signature (unless need IR)
     struct RemoveLiquidityStep {
-        ButtonswapOperations.RemoveLiquidity operation;
+        ButtonswapOperations.Liquidity operation;
         address tokenA;
         address tokenB;
         SwapStep[] swapStepsA;
@@ -82,7 +70,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * );
      */
 
-    // ToDo: Add docs
+    // ToDo: Add docs and update example
     function swapTokensForExactTokens(
         address tokenIn,
         uint256 amountOut,
@@ -106,7 +94,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * );
      */
 
-    // ToDo: Add docs
+    // ToDo: Add docs and update example
     function addLiquidity(
         AddLiquidityStep calldata addLiquidityStep,
 //        SwapStep[] calldata swapStepsA,

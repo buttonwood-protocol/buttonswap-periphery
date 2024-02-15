@@ -152,7 +152,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         assertEq(buttonswapFactory.getPair(address(tokenA1), address(tokenB1)), address(0), "Pair should not exist");
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA1);
         removeLiquidityStep.tokenB = address(tokenB1);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -186,7 +186,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -224,7 +224,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -261,7 +261,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -310,7 +310,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -372,7 +372,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
         removeLiquidityStep.swapStepsA.push();
@@ -437,7 +437,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -482,7 +482,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
         removeLiquidityStep.swapStepsA.push();
@@ -527,7 +527,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -574,7 +574,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(buttonTokenA);
         removeLiquidityStep.tokenB = address(tokenB);
         removeLiquidityStep.swapStepsA.push();
@@ -621,7 +621,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(buttonTokenB);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -668,7 +668,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(weth);
         removeLiquidityStep.tokenB = address(tokenB);
         removeLiquidityStep.swapStepsA.push();
@@ -713,7 +713,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(weth);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -741,7 +741,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         assertEq(buttonswapFactory.getPair(address(tokenA1), address(tokenB1)), address(0), "Pair should not exist");
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY_WITH_RESERVOIR;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA1);
         removeLiquidityStep.tokenB = address(tokenB1);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -767,7 +767,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidityOut);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY_WITH_RESERVOIR;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -818,7 +818,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY_WITH_RESERVOIR;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -887,7 +887,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY_WITH_RESERVOIR;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -956,7 +956,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY_WITH_RESERVOIR;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -1010,7 +1010,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY_WITH_RESERVOIR;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -1069,7 +1069,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY_WITH_RESERVOIR;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
         removeLiquidityStep.swapStepsA.push();
@@ -1131,7 +1131,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY_WITH_RESERVOIR;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -1182,7 +1182,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY_WITH_RESERVOIR;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
         removeLiquidityStep.swapStepsA.push();
@@ -1233,7 +1233,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY_WITH_RESERVOIR;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -1287,7 +1287,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY_WITH_RESERVOIR;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(buttonTokenA);
         removeLiquidityStep.tokenB = address(tokenB);
         removeLiquidityStep.swapStepsA.push();
@@ -1341,7 +1341,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY_WITH_RESERVOIR;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(buttonTokenB);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -1396,7 +1396,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY_WITH_RESERVOIR;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(weth);
         removeLiquidityStep.tokenB = address(tokenB);
         removeLiquidityStep.swapStepsA.push();
@@ -1449,7 +1449,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         pair.approve(address(genericButtonswapRouter), liquidity);
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY_WITH_RESERVOIR;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(weth);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -1488,7 +1488,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 expectedAmountB = (poolB * liquidity) / pair.totalSupply();
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
 //        removeLiquidityStep.swapStepsA; // Default to []
@@ -1536,7 +1536,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 expectedAmountB = (poolB * liquidity) / pair.totalSupply();
 
         // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY;
+        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
 //        removeLiquidityStep.swapStepsA; // Default to []

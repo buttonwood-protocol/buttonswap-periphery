@@ -357,7 +357,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
     }
 
-    function _addLiquidityDual(
+    function _calculateDualSidedAddAmounts(
         AddLiquidityStep calldata addLiquidityStep,
         address pair,
         bool aToken0
@@ -419,7 +419,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         );
     }
 
-    function addLiquidityDual(
+    function _addLiquidityDual(
         AddLiquidityStep calldata addLiquidityStep,
         address to,
         uint256 deadline //ToDo: Ensure the deadline
@@ -428,7 +428,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         (address pair, bool aToken0) = _addLiquidityGetOrCreatePair(addLiquidityStep);
 
         // Calculating how much of tokenA and tokenB to take from user
-        (uint256 amountA, uint256 amountB) = _addLiquidityDual(addLiquidityStep, pair, aToken0);
+        (uint256 amountA, uint256 amountB) = _calculateDualSidedAddAmounts(addLiquidityStep, pair, aToken0);
 
         // ToDo: Take this code block and re-use as internal function?
         address tokenA = addLiquidityStep.tokenA;
@@ -528,7 +528,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
     }
 
-    function _addLiquidityWithReservoir(
+    function _calculateSingleSidedAddAmounts(
         AddLiquidityStep calldata addLiquidityStep,
         address pair,
         bool aToken0
@@ -559,7 +559,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         );
     }
 
-    function addLiquidityWithReservoir(
+    function _addLiquiditySingle(
         AddLiquidityStep calldata addLiquidityStep,
         address to,
         uint256 deadline //ToDo: Ensure the deadline
@@ -568,7 +568,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         (address pair, bool aToken0) = _addLiquidityGetPair(addLiquidityStep);
 
         // Calculating how much of tokenA and tokenB to take from user
-        (uint256 amountA, uint256 amountB) = _addLiquidityWithReservoir(addLiquidityStep, pair, aToken0);
+        (uint256 amountA, uint256 amountB) = _calculateSingleSidedAddAmounts(addLiquidityStep, pair, aToken0);
 
         if (amountA > 0) {
             address tokenA = addLiquidityStep.tokenA;
@@ -602,15 +602,15 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         address to,
         uint256 deadline //ToDo: Ensure the deadline
     ) external payable returns (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) {
-        if (addLiquidityStep.operation == ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY) {
-            return addLiquidityDual(addLiquidityStep, to, deadline);
-        } else if (addLiquidityStep.operation == ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR) {
-            return addLiquidityWithReservoir(addLiquidityStep, to, deadline);
+        if (addLiquidityStep.operation == ButtonswapOperations.Liquidity.DUAL) {
+            return _addLiquidityDual(addLiquidityStep, to, deadline);
+        } else if (addLiquidityStep.operation == ButtonswapOperations.Liquidity.SINGLE) {
+            return _addLiquiditySingle(addLiquidityStep, to, deadline);
         }
 
     }
 
-    function removeLiquidityDual(
+    function _removeLiquidityDual(
         IButtonswapPair pair,
         RemoveLiquidityStep calldata removeLiquidityStep,
         address to,
@@ -645,7 +645,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         TransferHelper.safeTransfer(finalTokenB, to, amountB);
     }
 
-    function removeLiquidityWithReservoir(
+    function _removeLiquiditySingle(
         IButtonswapPair pair,
         RemoveLiquidityStep calldata removeLiquidityStep,
         address to,
@@ -696,10 +696,10 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         pair.transferFrom(msg.sender, address(this), removeLiquidityStep.liquidity);
 
         // Route to the appropriate internal removeLiquidity function based on the operation
-        if (removeLiquidityStep.operation == ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY) {
-            return removeLiquidityDual(pair, removeLiquidityStep, to, deadline);
-        } else if (removeLiquidityStep.operation == ButtonswapOperations.RemoveLiquidity.REMOVE_LIQUIDITY_WITH_RESERVOIR) {
-            return removeLiquidityWithReservoir(pair, removeLiquidityStep, to, deadline);
+        if (removeLiquidityStep.operation == ButtonswapOperations.Liquidity.DUAL) {
+            return _removeLiquidityDual(pair, removeLiquidityStep, to, deadline);
+        } else if (removeLiquidityStep.operation == ButtonswapOperations.Liquidity.SINGLE) {
+            return _removeLiquiditySingle(pair, removeLiquidityStep, to, deadline);
         }
     }
 

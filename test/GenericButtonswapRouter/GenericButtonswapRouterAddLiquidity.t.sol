@@ -153,7 +153,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB.approve(address(genericButtonswapRouter), amountBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -198,7 +198,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB.approve(address(genericButtonswapRouter), amountBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
         addLiquidityStep.swapStepsA.push();
@@ -245,7 +245,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB.approve(address(genericButtonswapRouter), amountBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -285,7 +285,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB.approve(address(genericButtonswapRouter), amountBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
         addLiquidityStep.swapStepsA.push();
@@ -325,7 +325,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB.approve(address(genericButtonswapRouter), amountBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -367,7 +367,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB.approve(address(genericButtonswapRouter), amountBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(buttonTokenA);
         addLiquidityStep.tokenB = address(tokenB);
         addLiquidityStep.swapStepsA.push();
@@ -409,7 +409,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         buttonTokenB.approve(address(genericButtonswapRouter), amountBBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(buttonTokenB);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -448,7 +448,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB.approve(address(genericButtonswapRouter), amountBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(0);
         addLiquidityStep.tokenB = address(tokenB);
         addLiquidityStep.swapStepsA.push();
@@ -487,7 +487,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         vm.deal(address(this), amountETHDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(0);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -534,7 +534,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB.approve(address(genericButtonswapRouter), amountBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -582,7 +582,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB.approve(address(genericButtonswapRouter), amountBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
         addLiquidityStep.swapStepsA.push();
@@ -632,7 +632,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB.approve(address(genericButtonswapRouter), amountBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -672,7 +672,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB.approve(address(genericButtonswapRouter), amountBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
         addLiquidityStep.swapStepsA.push();
@@ -712,7 +712,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB.approve(address(genericButtonswapRouter), amountBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -755,7 +755,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB.approve(address(genericButtonswapRouter), amountBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(buttonTokenA);
         addLiquidityStep.tokenB = address(tokenB);
         addLiquidityStep.swapStepsA.push();
@@ -798,7 +798,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         buttonTokenB.approve(address(genericButtonswapRouter), amountButtonBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(buttonTokenB);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -837,7 +837,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB.approve(address(genericButtonswapRouter), amountBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(0);
         addLiquidityStep.tokenB = address(tokenB);
         addLiquidityStep.swapStepsA.push();
@@ -876,7 +876,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         vm.deal(address(this), amountETHDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY; // Potentially just separate out the function
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(0);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -906,7 +906,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -940,7 +940,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         address pair = buttonswapFactory.createPair(address(tokenA), address(tokenB));
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -972,7 +972,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -1015,7 +1015,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 amountAMin =  amountAOptimal + 1;
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -1058,7 +1058,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 amountBMin =  amountBOptimal + 1;
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -1141,7 +1141,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB.approve(address(genericButtonswapRouter), amountBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -1222,7 +1222,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenA.approve(address(genericButtonswapRouter), amountADesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -1314,7 +1314,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB.approve(address(genericButtonswapRouter), amountBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -1408,7 +1408,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenA.approve(address(genericButtonswapRouter), amountADesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
         addLiquidityStep.swapStepsA.push();
@@ -1492,7 +1492,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB.approve(address(genericButtonswapRouter), amountBDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -1576,7 +1576,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenA.approve(address(genericButtonswapRouter), amountADesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
         addLiquidityStep.swapStepsA.push();
@@ -1663,7 +1663,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
 
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(buttonTokenB);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -1750,7 +1750,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
 
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(buttonTokenA);
         addLiquidityStep.tokenB = address(tokenB);
         addLiquidityStep.swapStepsA.push();
@@ -1833,7 +1833,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         vm.deal(address(this), amountETHDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(0);
 //        addLiquidityStep.swapStepsA; // Default to []
@@ -1916,7 +1916,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         vm.deal(address(this), amountETHDesired);
 
         // Creating the addLiquidityStep
-        addLiquidityStep.operation = ButtonswapOperations.AddLiquidity.ADD_LIQUIDITY_WITH_RESERVOIR;
+        addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(0);
         addLiquidityStep.tokenB = address(tokenB);
         addLiquidityStep.swapStepsA.push();
