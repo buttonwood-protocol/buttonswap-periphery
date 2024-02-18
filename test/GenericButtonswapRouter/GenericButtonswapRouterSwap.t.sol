@@ -18,7 +18,7 @@ import {console} from "buttonswap-periphery_forge-std/console.sol";
 import {IButtonswapPairErrors} from
     "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPairErrors.sol";
 
-contract GenericButtonswapRouterTest is Test, IGenericButtonswapRouterErrors {
+contract GenericButtonswapRouterSwapTest is Test, IGenericButtonswapRouterErrors {
     uint256 constant BPS = 10_000;
 
     address public feeToSetter;

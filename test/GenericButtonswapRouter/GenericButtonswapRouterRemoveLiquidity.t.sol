@@ -19,7 +19,6 @@ import {IButtonswapPairErrors} from
     "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPairErrors.sol";
 import {MathExtended}  from "../utils/MathExtended.sol";
 import {MockERC20} from "buttonswap-periphery_mock-contracts/MockERC20.sol";
-import {MockERC20} from "buttonswap-periphery_mock-contracts/MockERC20.sol";
 import {console} from "buttonswap-periphery_forge-std/console.sol";
 
 contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapRouterErrors {
@@ -181,7 +180,11 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Attempting to remove liquidity from a non-existent pair
-        vm.expectRevert(); // ToDo: Throw PairDoesNotExist error
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGenericButtonswapRouterErrors.PairDoesNotExist.selector, address(tokenA1), address(tokenB1)
+            )
+        );
         genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
     }
 
@@ -770,7 +773,11 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Attempting to remove liquidity from a non-existent pair
-        vm.expectRevert(); // ToDo: Throw PairDoesNotExist error
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGenericButtonswapRouterErrors.PairDoesNotExist.selector, address(tokenA1), address(tokenB1)
+            )
+        );
         genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
     }
 
