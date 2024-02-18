@@ -86,15 +86,13 @@ interface IGenericButtonswapRouterErrors {
     */
     error PairDoesNotExist(address tokenA, address tokenB);
 
-    // ToDo: Add params
     /**
     * @notice Pair has not yet been initialized
     */
-    error NotInitialized();
+    error NotInitialized(address pair);
 
-    // ToDo: Add params
     /**
-    * @notice Neither token in the pool has a non-empty reservoir
+    * @notice Neither token in the pair has a non-empty reservoir
     */
-    error NoReservoir();
+    error NoReservoir(address pair);
 }

@@ -143,6 +143,23 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         genericButtonswapRouter = new GenericButtonswapRouter(address(buttonswapFactory), address(weth));
     }
 
+    function test_addLiquidity_expiredDeadline(uint256 timestamp, uint256 deadline) public {
+        // Skipping block.timestamp to after the deadline
+        vm.assume(timestamp > deadline);
+        vm.warp(timestamp);
+        address to = address(this);
+
+        // Don't need to build any parameters since deadline is the first check that should fail
+
+        // Attempting to add liquidity with an expired deadline
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGenericButtonswapRouterErrors.Expired.selector, deadline, block.timestamp
+            )
+        );
+        genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+    }
+
     function test_addLiquidity_createPairNoHops(uint256 amountADesired, uint256 amountBDesired) public {
         // Minting enough for minimum liquidity requirement
         amountADesired = bound(amountADesired, 10000, type(uint112).max);
@@ -523,7 +540,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Creating A-B pair with at least minimum liquidity
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
-        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
+        createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Minting enough for depositing liquidity (minting at least 1/100th the existing liquidity)
         amountADesired = bound(amountADesired, poolA/100, type(uint112).max);
@@ -548,7 +565,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Adding liquidity to the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB,) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertTrue(
             (amountsA[0] == amountADesired && amountsB[0] <= amountBDesired)
@@ -566,7 +583,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Creating a C-B pair with at least minimum liquidity
         poolC1 = bound(poolC1, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
-        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenC, tokenB, poolC1, poolB);
+        createAndInitializePair(tokenC, tokenB, poolC1, poolB);
 
         // Minting enough for sufficient-output requirement but not too much to mess up the A->C swap
         amountADesired = bound(amountADesired, 1, poolA - 1);
@@ -598,7 +615,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Adding liquidity to the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB,) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertTrue(
             (amountsA[0] == amountADesired && amountsB[0] <= amountBDesired)
@@ -616,7 +633,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Creating an A-C pair with at least minimum liquidity
         poolA = bound(poolA, 10000, type(uint112).max);
         poolC1 = bound(poolC1, 10000, type(uint112).max);
-        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenA, tokenC, poolA, poolC1);
+        createAndInitializePair(tokenA, tokenC, poolA, poolC1);
 
         // Minting enough for sufficient-output requirement but not too much to mess up the B->C swap
         amountADesired = bound(amountADesired, poolA/100, type(uint112).max);
@@ -648,7 +665,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Adding liquidity to the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB,) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertTrue(
             (amountsA[0] == amountADesired && amountsB[0] <= amountBDesired)
@@ -661,7 +678,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Creating bA-B pair with at least minimum liquidity
         poolButtonA = bound(poolButtonA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
-        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePairButton(tokenB, buttonTokenA, poolB, poolButtonA);
+        createAndInitializePairButton(tokenB, buttonTokenA, poolB, poolButtonA);
 
         // Minting enough for depositing liquidity (minting at least 1/100th of the existing liquidity)
         amountADesired = bound(amountADesired, buttonTokenA.wrapperToUnderlying(poolButtonA)/100, type(uint112).max);
@@ -688,7 +705,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Adding liquidity to the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB,) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertTrue(
             (amountsA[0] == amountADesired && amountsB[0] <= amountBDesired)
@@ -701,7 +718,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Creating A-bB pair with at least minimum liquidity
         poolA = bound(poolA, 10000, type(uint112).max);
         poolButtonB = bound(poolButtonB, 10000, type(uint112).max);
-        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePairButton(tokenA, buttonTokenB, poolA, poolButtonB);
+        createAndInitializePairButton(tokenA, buttonTokenB, poolA, poolButtonB);
 
         // Minting enough for depositing liquidity (minting at least 1/100th of the existing liquidity)
         amountADesired = bound(amountADesired, poolA/100, type(uint112).max);
@@ -728,7 +745,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Adding liquidity to the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB,) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertTrue(
             (amountsA[0] == amountADesired && amountsB[0] <= amountBDesired)
@@ -741,7 +758,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Creating A-B pair with at least minimum liquidity
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
-        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
+        createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Minting enough for depositing liquidity (minting at least 1/100th of the existing liquidity)
         amountButtonADesired = bound(amountButtonADesired, buttonTokenA.underlyingToWrapper(poolA)/100, type(uint112).max);
@@ -771,7 +788,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Adding liquidity to the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB,) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertTrue(
             (amountsA[0] == amountButtonADesired && amountsB[0] <= amountBDesired)
@@ -784,7 +801,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Creating A-B pair with at least minimum liquidity
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
-        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
+        createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Minting enough for depositing liquidity (minting at least 1/100th of the existing liquidity)
         amountADesired = bound(amountADesired, poolA/100, type(uint112).max);
@@ -814,7 +831,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Adding liquidity to the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB,) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertTrue(
             (amountsA[0] == amountADesired && amountsB[0] <= amountButtonBDesired)
@@ -827,7 +844,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Creating bA-B pair with at least minimum liquidity
         poolWETH = bound(poolWETH, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
-        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePairETH(tokenB, poolB, poolWETH);
+        createAndInitializePairETH(tokenB, poolB, poolWETH);
 
         // Minting enough for depositing liquidity (minting at least 1/100th of the existing liquidity)
         amountETHDesired = bound(amountETHDesired, poolWETH/100, type(uint112).max);
@@ -853,7 +870,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Adding liquidity to the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity{value: amountETHDesired}(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB,) = genericButtonswapRouter.addLiquidity{value: amountETHDesired}(addLiquidityStep, to, deadline);
 
         assertTrue(
             (amountsA[0] == amountETHDesired && amountsB[0] <= amountBDesired)
@@ -866,7 +883,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Creating bA-B pair with at least minimum liquidity
         poolA = bound(poolA, 10000, type(uint112).max);
         poolWETH = bound(poolWETH, 10000, type(uint112).max);
-        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePairETH(tokenA, poolA, poolWETH);
+        createAndInitializePairETH(tokenA, poolA, poolWETH);
 
         // Minting enough for depositing liquidity (minting at least 1/100th of the existing liquidity)
         amountADesired = bound(amountADesired, poolA/100, type(uint112).max);
@@ -892,7 +909,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Adding liquidity to the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity{value: amountETHDesired}(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB,) = genericButtonswapRouter.addLiquidity{value: amountETHDesired}(addLiquidityStep, to, deadline);
 
         assertTrue(
             (amountsA[0] == amountADesired && amountsB[0] <= amountETHDesired)
@@ -931,12 +948,12 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
     }
 
-    function test_addLiquidityWithReservoir_revertWhenPairIsNotInitialized(address addressTokenA1, address addressTokenB1) public {
-        // Creating new tokens to ensure the pair does not exist
-        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18);
-        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
+    function test_addLiquidityWithReservoir_revertWhenPairIsNotInitialized(bytes32 saltA, bytes32 saltB) public {
+        // Re-assigning tokenA and tokenB to ensure random new pair
+        tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
+        tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
 
-        // Creating A-B pair without initializing
+        // Creating random A1-B1 pair without initializing
         address pair = buttonswapFactory.createPair(address(tokenA), address(tokenB));
 
         // Creating the addLiquidityStep
@@ -953,13 +970,13 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
-        // Validate the pair does not exist yet
+        // Validate the pair does exist now
         assertNotEq(buttonswapFactory.getPair(address(tokenA), address(tokenB)), address(0), "Pair should exist");
 
         // Attempting to addLiquidityWithReservoir to the pair
         vm.expectRevert(
             abi.encodeWithSelector(
-                IGenericButtonswapRouterErrors.NotInitialized.selector
+                IGenericButtonswapRouterErrors.NotInitialized.selector, pair
             )
         );
         genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
@@ -969,7 +986,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Creating A-B pair with at least minimum liquidity
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
-        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
+        (IButtonswapPair pair,) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Creating the addLiquidityStep
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
@@ -988,7 +1005,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Attempting to addLiquidityWithReservoir to the pair
         vm.expectRevert(
             abi.encodeWithSelector(
-                IGenericButtonswapRouterErrors.NoReservoir.selector
+                IGenericButtonswapRouterErrors.NoReservoir.selector, address(pair)
             )
         );
         genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
@@ -998,7 +1015,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Creating A-B pair with at least minimum liquidity
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
-        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
+        createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Rebasing tokenA up by 10% to create a reservoir of `reservoirA = poolA/10`
         tokenA.applyMultiplier(11,10);
@@ -1041,7 +1058,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Creating A-B pair with at least minimum liquidity
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
-        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePair(tokenA, tokenB, poolA, poolB);
+        createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Rebasing tokenB up by 10% to create a reservoir of `reservoirB = poolB/10`
         tokenB.applyMultiplier(11,10);

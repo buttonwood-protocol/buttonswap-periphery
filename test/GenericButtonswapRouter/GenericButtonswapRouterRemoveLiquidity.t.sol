@@ -144,6 +144,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         genericButtonswapRouter = new GenericButtonswapRouter(address(buttonswapFactory), address(weth));
     }
 
+    function test_removeLiquidity_expiredDeadline(uint256 timestamp, uint256 deadline) public {
+        // Skipping block.timestamp to after the deadline
+        vm.assume(timestamp > deadline);
+        vm.warp(timestamp);
+        address to = address(this);
+
+        // Don't need to build any parameters since deadline is the first check that should fail
+
+        // Attempting to add liquidity with an expired deadline
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGenericButtonswapRouterErrors.Expired.selector, deadline, block.timestamp
+            )
+        );
+        genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+    }
+
     function test_removeLiquidity_pairDoesNotExist(address tokenA1, address tokenB1, uint256 liquidity) public {
         // Bound liquidity to be within the range of any pair's liquidity
         liquidity = bound(liquidity, 0, type(uint112).max);
@@ -849,7 +866,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
                 )
             );
         }
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
     }
 
     function test_removeLiquidityFromReservoir_reservoirBInsufficientTokenAmount(uint256 poolA, uint256 poolB, uint256 liquidity, uint8 rebaseNumerator, uint8 rebaseDenominator, bool insufficientAOrB) public {
@@ -918,7 +935,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
                 )
             );
         }
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
     }
 
     function test_removeLiquidityFromReservoir_reservoirANoHops(uint256 poolA, uint256 poolB, uint256 liquidity, uint8 rebaseNumerator, uint8 rebaseDenominator) public {
