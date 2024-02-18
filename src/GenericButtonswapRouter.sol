@@ -323,37 +323,22 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
     }
 
-    // ToDo: Refactor this mess to be simpler and less redundant. Move to a library function?
+    // ToDo: Move to a library function?
     function _validateMovingAveragePrice0Threshold(
-        AddLiquidityStep calldata addLiquidityStep,
-        uint256 poolA,
-        uint256 poolB,
+        uint16 movingAveragePrice0ThresholdBps,
+        uint256 pool0,
+        uint256 pool1,
         address pair
     ) internal view {
-        address pairTokenA = addLiquidityStep.swapStepsA.length > 0 ? addLiquidityStep.swapStepsA[addLiquidityStep.swapStepsA.length - 1].tokenOut : addLiquidityStep.tokenA;
-        address pairTokenB = addLiquidityStep.swapStepsB.length > 0 ? addLiquidityStep.swapStepsB[addLiquidityStep.swapStepsB.length - 1].tokenOut : addLiquidityStep.tokenB;
-
         // Validate that the moving average price is within the threshold for pairs that exist
-        if (poolA > 0 && poolB > 0) {
+        if (pool0 > 0 && pool1 > 0) {
             uint256 movingAveragePrice0 = IButtonswapPair(pair).movingAveragePrice0();
-            if (pairTokenA < pairTokenB) {
-                // pairTokenA is token0
-                uint256 cachedTerm = Math.mulDiv(movingAveragePrice0, poolA * BPS, 2 ** 112);
-                if (
-                    poolB * (BPS - addLiquidityStep.movingAveragePrice0ThresholdBps) > cachedTerm
-                    || poolB * (BPS + addLiquidityStep.movingAveragePrice0ThresholdBps) < cachedTerm
-                ) {
-                    revert MovingAveragePriceOutOfBounds(poolA, poolB, movingAveragePrice0, addLiquidityStep.movingAveragePrice0ThresholdBps);
-                }
-            } else {
-                // pairTokenB is token0
-                uint256 cachedTerm = Math.mulDiv(movingAveragePrice0, poolB * BPS, 2 ** 112);
-                if (
-                    poolA * (BPS - addLiquidityStep.movingAveragePrice0ThresholdBps) > cachedTerm
-                    || poolA * (BPS + addLiquidityStep.movingAveragePrice0ThresholdBps) < cachedTerm
-                ) {
-                    revert MovingAveragePriceOutOfBounds(poolB, poolA, movingAveragePrice0, addLiquidityStep.movingAveragePrice0ThresholdBps);
-                }
+            uint256 cachedTerm = Math.mulDiv(movingAveragePrice0, pool0 * BPS, 2 ** 112);
+            if (
+                pool1 * (BPS - movingAveragePrice0ThresholdBps) > cachedTerm
+                || pool1 * (BPS + movingAveragePrice0ThresholdBps) < cachedTerm
+            ) {
+                revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
             }
         }
     }
@@ -413,9 +398,9 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
 
         // Validate that the moving average price is within the threshold for pairs that already existed
         _validateMovingAveragePrice0Threshold(
-            addLiquidityStep,
-            poolA,
-            poolB,
+            addLiquidityStep.movingAveragePrice0ThresholdBps,
+            aToken0 ? poolA : poolB,
+            aToken0 ? poolB : poolA,
             pair
         );
     }
