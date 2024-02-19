@@ -113,6 +113,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
 
     /**
     * @notice Given an ordered array of tokens, performs consecutive swaps/transformation operations from the first token to a specific amount of the last token in the swapSteps array.
+    * @dev Note: If there is excess balance stored in the contract, it will be transferred out. Thus the actual amount received may be more than the `amountOut` specified.
     * @param tokenIn The address of the input token
     * @param amountOut The amount of the last token to receive from the swap.
     * @param amountInMax The maximum amount of the first token to swap.

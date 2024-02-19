@@ -49,8 +49,9 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     // **** TransformOperations **** //
 
     // Swap
-    function _swap(address tokenIn, address tokenOut, uint256 amountIn) internal virtual returns (uint256 amountOut) {
+    function _swap(address tokenIn, address tokenOut) internal virtual returns (uint256 amountOut) {
         IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, tokenIn, tokenOut));
+        uint256 amountIn = IERC20(tokenIn).balanceOf(address(this));
 
         (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, tokenOut);
         amountOut = ButtonswapLibrary.getAmountOut(amountIn, poolIn, poolOut);
@@ -64,40 +65,35 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     }
 
     // Wrap-Button
-    function _wrapButton(address tokenIn, address tokenOut, uint256 amountIn)
+    function _wrapButton(address tokenIn, address tokenOut)
         internal
         virtual
         returns (uint256 amountOut)
     {
         if (IButtonToken(tokenOut).underlying() != tokenIn) {
-            // ToDo: Remove check?
-            revert IncorrectButtonUnderlying(tokenOut, IButtonToken(tokenOut).underlying(), tokenIn);
+            revert IncorrectButtonPairing(tokenIn, tokenOut);
         }
-        // ToDo: Maybe approve/deposit the entire balance?
+        // Approving/depositing the entire balance of the router
+        uint256 amountIn = IERC20(tokenIn).balanceOf(address(this));
         TransferHelper.safeApprove(tokenIn, tokenOut, amountIn);
         amountOut = IButtonToken(tokenOut).deposit(amountIn);
     }
 
     // Unwrap-Button
-    function _unwrapButton(address tokenIn, address tokenOut, uint256 amountIn)
+    function _unwrapButton(address tokenIn, address tokenOut)
         internal
         virtual
         returns (uint256 amountOut)
     {
         if (IButtonToken(tokenIn).underlying() != tokenOut) {
-            // ToDo: Remove check?
-            revert IncorrectButtonUnderlying(tokenIn, IButtonToken(tokenIn).underlying(), tokenOut);
+            revert IncorrectButtonPairing(tokenOut, tokenIn);
         }
-        if (IERC20(tokenIn).balanceOf(address(this)) != amountIn) {
-            // ToDo: Remove check?
-            revert IncorrectBalance(tokenIn, IERC20(tokenIn).balanceOf(address(this)), amountIn);
-        }
-        // ToDo: Maybe withdraw the entire balance?
+        // Burning the entire balance of the router
         amountOut = IButtonToken(tokenIn).burnAll();
     }
 
     // Wrap-WETH
-    function _wrapWETH(address tokenIn, address tokenOut, uint256 amountIn)
+    function _wrapWETH(address tokenIn, address tokenOut)
         internal
         virtual
         returns (uint256 amountOut)
@@ -108,17 +104,14 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         if (tokenOut != address(WETH)) {
             revert NonWethToken(WETH, tokenOut);
         }
-        // ToDo: No need for this check. Always transfer entire router balance
-        //        if (amountIn != address(this).balance) {
-        //            // ToDo: Remove check? Maybe just deposit the entire balance of the router so it's always empty.
-        //            revert IncorrectBalance();
-        //        }
+        // Depositing the entire balance of the router
+        uint256 amountIn = address(this).balance;
         IWETH(WETH).deposit{value: amountIn}();
-        amountOut = IERC20(WETH).balanceOf(address(this));
+        amountOut = amountIn;
     }
 
     // Unwrap-WETH
-    function _unwrapWETH(address tokenIn, address tokenOut, uint256 amountIn)
+    function _unwrapWETH(address tokenIn, address tokenOut)
         internal
         virtual
         returns (uint256 amountOut)
@@ -129,30 +122,30 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         if (tokenOut != address(0)) {
             revert NonEthToken(tokenOut);
         }
-        IWETH(WETH).withdraw(amountIn); // ToDo: Maybe just withdraw the entire balance?
+        uint256 amountIn = IWETH(WETH).balanceOf(address(this));
+        IWETH(WETH).withdraw(amountIn);
         amountOut = address(this).balance;
     }
 
-    function _swapStep(address tokenIn, uint256 amountIn, SwapStep calldata swapStep)
+    function _swapStep(address tokenIn, SwapStep calldata swapStep)
         internal
         virtual
         returns (address tokenOut, uint256 amountOut)
     {
         tokenOut = swapStep.tokenOut;
         if (swapStep.operation == ButtonswapOperations.Swap.SWAP) {
-            amountOut = _swap(tokenIn, tokenOut, amountIn);
+            amountOut = _swap(tokenIn, tokenOut);
         } else if (swapStep.operation == ButtonswapOperations.Swap.WRAP_BUTTON) {
-            amountOut = _wrapButton(tokenIn, tokenOut, amountIn);
+            amountOut = _wrapButton(tokenIn, tokenOut);
         } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_BUTTON) {
-            amountOut = _unwrapButton(tokenIn, tokenOut, amountIn);
+            amountOut = _unwrapButton(tokenIn, tokenOut);
         } else if (swapStep.operation == ButtonswapOperations.Swap.WRAP_WETH) {
-            amountOut = _wrapWETH(tokenIn, tokenOut, amountIn);
+            amountOut = _wrapWETH(tokenIn, tokenOut);
         } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_WETH) {
-            amountOut = _unwrapWETH(tokenIn, tokenOut, amountIn);
+            amountOut = _unwrapWETH(tokenIn, tokenOut);
         }
     }
 
-    // ToDo: Encapsulating the swap logic into a separate internal function
     function _swapExactTokensForTokens(
         address tokenIn,
         uint256 amountIn,
@@ -164,12 +157,11 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         amounts[0] = amountIn;
 
         for (uint256 i = 0; i < swapSteps.length; i++) {
-            (tokenOut, amountOut) = _swapStep(tokenIn, amountIn, swapSteps[i]);
+            (tokenOut, amountOut) = _swapStep(tokenIn, swapSteps[i]);
             amounts[i + 1] = amountOut;
         }
     }
 
-    // **** External Functions **** //
     function swapExactTokensForTokens(
         address tokenIn,
         uint256 amountIn,
@@ -191,11 +183,11 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             revert InsufficientOutputAmount(amountOutMin, amountIn);
         }
 
-        // Transferring out final amount if the last swapStep is not unwrap-weth
+        // Transferring out the entire balance of the last token if the last swapStep is not unwrap-weth
         if (swapSteps[swapSteps.length - 1].operation != ButtonswapOperations.Swap.UNWRAP_WETH) {
-            TransferHelper.safeTransfer(tokenIn, to, amountIn);
+            TransferHelper.safeTransfer(tokenIn, to, IERC20(tokenIn).balanceOf(address(this)));
         } else {
-            payable(to).transfer(amountIn);
+            payable(to).transfer(address(this).balance);
         }
     }
 
@@ -235,21 +227,6 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
     }
 
-    // ToDo: Potentially move into it's own library
-    function _getAmountsIn(address firstTokenIn, uint256 amountOut, SwapStep[] calldata swapSteps)
-        internal
-        virtual
-        returns (uint256[] memory amounts)
-    {
-        amounts = new uint256[](swapSteps.length + 1);
-        amounts[amounts.length - 1] = amountOut;
-        for (uint256 i = amounts.length - 2; i > 1; i--) {
-            // ToDo: Fix the fact that this isn't updating any array values in amounts
-            amountOut = _getAmountIn(swapSteps[i - 1].tokenOut, amountOut, swapSteps[i]);
-        }
-        amounts[0] = _getAmountIn(firstTokenIn, amountOut, swapSteps[0]);
-    }
-
     // ToDo: Standardize with amountIn-functions and potentially move into it's own library
     function _getAmountOut(address tokenIn, uint256 amountIn, SwapStep calldata swapStep) internal virtual returns (uint256 amountOut) {
         if (swapStep.operation == ButtonswapOperations.Swap.SWAP) {
@@ -282,28 +259,36 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         address to,
         uint256 deadline
     ) external payable override ensure(deadline) returns (uint256[] memory amounts) {
-        amounts = _getAmountsIn(tokenIn, amountOut, swapSteps);
-        if (amounts[0] > amountInMax) {
-            revert ExcessiveInputAmount(amountInMax, amounts[0]);
-        }
-        // Transferring in the initial amount if the first swapStep is not wrap-weth
-        if (swapSteps[0].operation != ButtonswapOperations.Swap.WRAP_WETH) {
-            TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amounts[0]);
+//        amounts = _getAmountsIn(tokenIn, amountOut, swapSteps);
+        uint256 amountIn = _getAmountIn(tokenIn, amountOut, swapSteps);
+
+        if (amountIn > amountInMax) {
+            revert ExcessiveInputAmount(amountInMax, amountIn);
         }
 
-        for (uint256 i = 0; i < swapSteps.length; i++) {
-            (tokenIn, amountOut) = _swapStep(tokenIn, amounts[i], swapSteps[i]);
-            if (amountOut < amounts[i + 1]) {
-                // ToDo: Consider using a different error for better clarity. This might not even be a necessary error
-                revert InsufficientOutputAmount(amounts[i + 1], amountOut);
-            }
+        // ToDo: re-use this part
+        // Transferring in the initial amount if the first swapStep is not wrap-weth
+        if (swapSteps[0].operation != ButtonswapOperations.Swap.WRAP_WETH) {
+            TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amountIn);
+        } else if (amountIn < amountInMax) {
+            // Refund the surplus input ETH to the user if the first swapStep is wrap-weth
+            payable(msg.sender).transfer(amountInMax - amountIn);
         }
-        // Transferring out final amount if the last swapStep is not unwrap-weth
-        // The final value of amountIn is the last amountOut from the last _swapStep execution
+
+        // Reusing tokenIn/amountIn as finalTokenIn/finalAmountIn
+        (amounts,tokenIn,amountIn) = _swapExactTokensForTokens(tokenIn, amountIn, swapSteps);
+        // ToDo: Up to here
+
+        // Validate that sufficient output was returned
+        if (amountIn < amountOut) {
+            revert InsufficientOutputAmount(amountOut, amountIn);
+        }
+
+        // Transferring out the entire balance of the last token if the last swapStep is not unwrap-weth
         if (swapSteps[swapSteps.length - 1].operation != ButtonswapOperations.Swap.UNWRAP_WETH) {
-            TransferHelper.safeTransfer(tokenIn, to, amountOut);
+            TransferHelper.safeTransfer(tokenIn, to, IERC20(tokenIn).balanceOf(address(this)));
         } else {
-            payable(to).transfer(amountOut);
+            payable(to).transfer(address(this).balance);
         }
     }
 

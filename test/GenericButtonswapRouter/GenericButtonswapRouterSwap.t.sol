@@ -235,6 +235,34 @@ contract GenericButtonswapRouterSwapTest is Test, IGenericButtonswapRouterErrors
         );
     }
 
+    function test_swapExactTokensForTokens_singleWrapButtonIncorrectButtonPairing(uint256 amountIn, uint256 amountOutMin) public {
+        // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
+        amountIn = bound(amountIn, 0, tokenA.mintableBalance());
+
+        // Estimating how much output a wrap-button would give
+        uint256 expectedAmountOut = amountIn;
+        // Ensuring amountOutMin bounded below expectedAmountOut
+        amountOutMin = bound(amountOutMin, 0, expectedAmountOut);
+
+        // Creating swapSteps for single wrap-button with wrong buttonToken
+        IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.WRAP_BUTTON, address(buttonTokenA));
+
+        // Approving the router to take at most amountIn tokenB
+        tokenB.mint(address(this), amountIn);
+        tokenB.approve(address(genericButtonswapRouter), amountIn);
+
+        // Attempting to wrap-button with wrong output buttonToken
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGenericButtonswapRouterErrors.IncorrectButtonPairing.selector, address(tokenB), address(buttonTokenA)
+            )
+        );
+        genericButtonswapRouter.swapExactTokensForTokens(
+            address(tokenB), amountIn, amountOutMin, swapSteps, address(this), block.timestamp + 1
+        );
+    }
+
     function test_swapExactTokensForTokens_singleWrapButton(uint256 amountIn, uint256 amountOutMin) public {
         // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
         amountIn = bound(amountIn, 0, tokenA.mintableBalance());
@@ -284,6 +312,36 @@ contract GenericButtonswapRouterSwapTest is Test, IGenericButtonswapRouterErrors
         vm.expectRevert(
             abi.encodeWithSelector(
                 IGenericButtonswapRouterErrors.InsufficientOutputAmount.selector, amountOutMin, amountIn
+            )
+        );
+        genericButtonswapRouter.swapExactTokensForTokens(
+            address(buttonTokenA), amountIn, amountOutMin, swapSteps, address(this), block.timestamp + 1
+        );
+    }
+
+    function test_swapExactTokensForTokens_singleUnwrapButtonIncorrectButtonPairing(uint256 amountIn, uint256 amountOutMin) public {
+        // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
+        amountIn = bound(amountIn, 0, tokenA.mintableBalance());
+
+        // Estimating how much output an unwrap-button would give
+        uint256 expectedAmountOut = amountIn;
+        // Ensuring amountOutMin bounded below expectedAmountOut
+        amountOutMin = bound(amountOutMin, 0, expectedAmountOut);
+
+        // Creating swapSteps for single unwrap-button with wrong underlying
+        IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.UNWRAP_BUTTON, address(tokenB));
+
+        // Approving the router to take at most amountIn buttonTokenA
+        tokenA.mint(address(this), amountIn);
+        tokenA.approve(address(buttonTokenA), amountIn);
+        buttonTokenA.deposit(amountIn);
+        buttonTokenA.approve(address(genericButtonswapRouter), amountIn);
+
+        // Attempting to wrap-button with wrong output underlying
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGenericButtonswapRouterErrors.IncorrectButtonPairing.selector, address(tokenB), address(buttonTokenA)
             )
         );
         genericButtonswapRouter.swapExactTokensForTokens(
@@ -501,7 +559,10 @@ contract GenericButtonswapRouterSwapTest is Test, IGenericButtonswapRouterErrors
 
         // Validating the correct amounts
         assertEq(amounts[0], expectedAmountIn, "First amount should be expectedAmountIn");
-        assertEq(amounts[1], amountOut, "Last amount should be amountOut");
+        // Need to use `Ge()` instead of `Eq()`.
+        // On this test, there is no extraneous input, but precision loss of uint112s can cause: getAmountOut(getAmountIn(amountOut)) > amountOut
+        // Thus the amount received will actually be greater than or equal to amountOut
+        assertGe(amounts[1], amountOut, "Last amount should be [AT LEAST] amountOut");
     }
 
     function test_swapTokensForExactTokens_singleWrapButtonWithExcessiveInputAmount(uint256 amountOut) public {
@@ -656,7 +717,7 @@ contract GenericButtonswapRouterSwapTest is Test, IGenericButtonswapRouterErrors
 
         // Validating the correct amounts
         assertEq(amounts[0], expectedAmountIn, "First amount should be expectedAmountIn");
-        assertEq(amounts[1], amountOut, "Last amount should be amountOut");
+        assertEq(amounts[1], amountOut, "Last amount should be [AT LEAST] amountOut");
     }
 
     function test_swapTokensForExactTokens_singleUnwrapWethWithExcessiveInputAmount(uint256 amountOut) public {

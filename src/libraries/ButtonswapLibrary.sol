@@ -251,7 +251,7 @@ library ButtonswapLibrary {
         }
         uint256 numerator = poolIn * amountOut * 1000;
         uint256 denominator = (poolOut - amountOut) * 997;
-        amountIn = (numerator / denominator) + 1;
+        amountIn = ((numerator + denominator - 1)/ denominator);
     }
 
     /**

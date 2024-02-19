@@ -26,11 +26,10 @@ interface IGenericButtonswapRouterErrors {
     // **** Button Errors **** //
     /**
      * @notice Thrown when the underlying token doesn't match that of the buttonToken
-     * @param buttonToken The address of the buttonToken
      * @param underlyingToken The address of the underlying token
-     * @param token The address of the token provided
+     * @param buttonToken The address of the buttonToken
      */
-    error IncorrectButtonUnderlying(address buttonToken, address underlyingToken, address token);
+    error IncorrectButtonPairing(address underlyingToken, address buttonToken);
 
     // **** IERC20 Errors **** //
     /**
