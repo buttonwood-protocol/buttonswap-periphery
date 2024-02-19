@@ -16,7 +16,7 @@ import {MockWeth} from "./../mocks/MockWeth.sol";
 import {MockButtonToken} from "./../mocks/MockButtonToken.sol";
 import {IButtonswapPairErrors} from
     "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPairErrors.sol";
-import {MathExtended}  from "../utils/MathExtended.sol";
+import {MathExtended} from "../utils/MathExtended.sol";
 import {MockERC20} from "buttonswap-periphery_mock-contracts/MockERC20.sol";
 import {console} from "buttonswap-periphery_forge-std/console.sol";
 
@@ -81,10 +81,12 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
     }
 
     // Utility function for creating and initializing button-pairs with poolButtonA:poolB price ratio. Does not use ButtonwoodRouter
-    function createAndInitializePairButton(MockRebasingERC20 tokenA1, MockButtonToken buttonTokenB1, uint256 poolA, uint256 poolButtonB)
-    private
-    returns (IButtonswapPair pair, uint256 liquidityOut)
-    {
+    function createAndInitializePairButton(
+        MockRebasingERC20 tokenA1,
+        MockButtonToken buttonTokenB1,
+        uint256 poolA,
+        uint256 poolButtonB
+    ) private returns (IButtonswapPair pair, uint256 liquidityOut) {
         pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA1), address(buttonTokenB1)));
 
         tokenA1.mint(address(this), poolA);
@@ -94,7 +96,6 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         tokenB1.approve(address(buttonTokenB1), poolButtonB);
         buttonTokenB1.mint(poolButtonB);
         buttonTokenB1.approve(address(pair), poolButtonB);
-
 
         if (pair.token0() == address(tokenA1)) {
             liquidityOut = pair.mint(poolA, poolButtonB, address(this));
@@ -137,8 +138,9 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         buttonTokenA = new MockButtonToken(address(tokenA));
         buttonTokenB = new MockButtonToken(address(tokenB));
         weth = new MockWeth();
-        buttonswapFactory =
-        new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "Token Name", "SYMBOL");
+        buttonswapFactory = new ButtonswapFactory(
+            feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "Token Name", "SYMBOL"
+        );
         genericButtonswapRouter = new GenericButtonswapRouter(address(buttonswapFactory), address(weth));
     }
 
@@ -152,9 +154,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
 
         // Attempting to add liquidity with an expired deadline
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IGenericButtonswapRouterErrors.Expired.selector, deadline, block.timestamp
-            )
+            abi.encodeWithSelector(IGenericButtonswapRouterErrors.Expired.selector, deadline, block.timestamp)
         );
         genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
     }
@@ -172,8 +172,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
-//        addLiquidityStep.swapStepsA; // Default to []
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = amountADesired;
         addLiquidityStep.amountBDesired = amountBDesired;
         addLiquidityStep.amountAMin = 0;
@@ -186,18 +186,28 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         assertEq(buttonswapFactory.getPair(address(tokenA), address(tokenB)), address(0), "Pair should not exist yet");
 
         // Creating the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         // Validating state
         address pairAddress = buttonswapFactory.getPair(address(tokenA), address(tokenB));
         assertNotEq(pairAddress, address(0), "Pair should now exist");
         assertEq(amountsA[0], amountADesired, "AmountsA[0] should be equal to amountADesired");
         assertEq(amountsB[0], amountBDesired, "AmountsB[0] should be equal to amountBDesired");
-        assertEq(liquidity, MathExtended.sqrt(amountADesired * amountBDesired) - 1000, "Liquidity should be equal geometric mean - 1000");
+        assertEq(
+            liquidity,
+            MathExtended.sqrt(amountADesired * amountBDesired) - 1000,
+            "Liquidity should be equal geometric mean - 1000"
+        );
     }
 
     // Swapping A->C, then adding liquidity C+B
-    function test_addLiquidity_createPairSingleSwapA(uint256 poolA, uint256 poolC, uint256 amountADesired, uint256 amountBDesired) public {
+    function test_addLiquidity_createPairSingleSwapA(
+        uint256 poolA,
+        uint256 poolC,
+        uint256 amountADesired,
+        uint256 amountBDesired
+    ) public {
         // Creating an existing pair for the swap
         poolA = bound(poolA, 10000, type(uint112).max);
         poolC = bound(poolC, 10000, type(uint112).max);
@@ -220,7 +230,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.swapStepsA.push();
         addLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.SWAP;
         addLiquidityStep.swapStepsA[0].tokenOut = address(tokenC);
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = amountADesired;
         addLiquidityStep.amountBDesired = amountBDesired;
         addLiquidityStep.amountAMin = 0;
@@ -233,18 +243,28 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         assertEq(buttonswapFactory.getPair(address(tokenC), address(tokenB)), address(0), "Pair should not exist yet");
 
         // Creating the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         // Validating state
         address pairAddress = buttonswapFactory.getPair(address(tokenC), address(tokenB));
         assertNotEq(pairAddress, address(0), "Pair should now exist");
         assertEq(amountsA[0], amountADesired, "AmountsA[0] should be equal to amountADesired");
         assertEq(amountsB[0], amountBDesired, "AmountsB[0] should be equal to amountBDesired");
-        assertEq(liquidity, MathExtended.sqrt(amountsA[1] * amountsB[0]) - 1000, "Liquidity should be equal geometric mean - 1000");
+        assertEq(
+            liquidity,
+            MathExtended.sqrt(amountsA[1] * amountsB[0]) - 1000,
+            "Liquidity should be equal geometric mean - 1000"
+        );
     }
 
     // Swapping B->C, then adding liquidity A+C
-    function test_addLiquidity_createPairSingleSwapB(uint256 poolB, uint256 poolC, uint256 amountADesired, uint256 amountBDesired) public {
+    function test_addLiquidity_createPairSingleSwapB(
+        uint256 poolB,
+        uint256 poolC,
+        uint256 amountADesired,
+        uint256 amountBDesired
+    ) public {
         // Creating an existing pair for the swap
         poolB = bound(poolB, 10000, type(uint112).max);
         poolC = bound(poolC, 10000, type(uint112).max);
@@ -264,7 +284,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
-//        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
         addLiquidityStep.swapStepsB.push();
         addLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.SWAP;
         addLiquidityStep.swapStepsB[0].tokenOut = address(tokenC);
@@ -280,14 +300,19 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         assertEq(buttonswapFactory.getPair(address(tokenA), address(tokenC)), address(0), "Pair should not exist yet");
 
         // Creating the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         // Validating state
         address pairAddress = buttonswapFactory.getPair(address(tokenC), address(tokenB));
         assertNotEq(pairAddress, address(0), "Pair should now exist");
         assertEq(amountsA[0], amountADesired, "AmountsA[0] should be equal to amountADesired");
         assertEq(amountsB[0], amountBDesired, "AmountsB[0] should be equal to amountBDesired");
-        assertEq(liquidity, MathExtended.sqrt(amountsA[0] * amountsB[1]) - 1000, "Liquidity should be equal geometric mean - 1000");
+        assertEq(
+            liquidity,
+            MathExtended.sqrt(amountsA[0] * amountsB[1]) - 1000,
+            "Liquidity should be equal geometric mean - 1000"
+        );
     }
 
     // Wrapping A->bA, then adding liquidity bA+B
@@ -307,7 +332,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.swapStepsA.push();
         addLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
         addLiquidityStep.swapStepsA[0].tokenOut = address(buttonTokenA);
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = amountADesired;
         addLiquidityStep.amountBDesired = amountBDesired;
         addLiquidityStep.amountAMin = 0;
@@ -317,17 +342,24 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Validate the pair does not exist yet
-        assertEq(buttonswapFactory.getPair(address(buttonTokenA), address(tokenB)), address(0), "Pair should not exist yet");
+        assertEq(
+            buttonswapFactory.getPair(address(buttonTokenA), address(tokenB)), address(0), "Pair should not exist yet"
+        );
 
         // Creating the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         // Validating state
         address pairAddress = buttonswapFactory.getPair(address(buttonTokenA), address(tokenB));
         assertNotEq(pairAddress, address(0), "Pair should now exist");
         assertEq(amountsA[0], amountADesired, "AmountsA[0] should be equal to amountADesired");
         assertEq(amountsB[0], amountBDesired, "AmountsB[0] should be equal to amountBDesired");
-        assertEq(liquidity, MathExtended.sqrt(amountsA[1] * amountsB[0]) - 1000, "Liquidity should be equal geometric mean - 1000");
+        assertEq(
+            liquidity,
+            MathExtended.sqrt(amountsA[1] * amountsB[0]) - 1000,
+            "Liquidity should be equal geometric mean - 1000"
+        );
     }
 
     // Wrapping B->bB, then adding liquidity A+bB
@@ -344,7 +376,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
-//        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
         addLiquidityStep.swapStepsB.push();
         addLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
         addLiquidityStep.swapStepsB[0].tokenOut = address(buttonTokenB);
@@ -357,17 +389,24 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Validate the pair does not exist yet
-        assertEq(buttonswapFactory.getPair(address(tokenA), address(buttonTokenB)), address(0), "Pair should not exist yet");
+        assertEq(
+            buttonswapFactory.getPair(address(tokenA), address(buttonTokenB)), address(0), "Pair should not exist yet"
+        );
 
         // Creating the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         // Validating state
         address pairAddress = buttonswapFactory.getPair(address(tokenA), address(buttonTokenB));
         assertNotEq(pairAddress, address(0), "Pair should now exist");
         assertEq(amountsA[0], amountADesired, "AmountsA[0] should be equal to amountADesired");
         assertEq(amountsB[0], amountBDesired, "AmountsB[0] should be equal to amountBDesired");
-        assertEq(liquidity, MathExtended.sqrt(amountsA[0] * amountsB[1]) - 1000, "Liquidity should be equal geometric mean - 1000");
+        assertEq(
+            liquidity,
+            MathExtended.sqrt(amountsA[0] * amountsB[1]) - 1000,
+            "Liquidity should be equal geometric mean - 1000"
+        );
     }
 
     // Unwrapping bA->A, then adding liquidity A+B
@@ -389,7 +428,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.swapStepsA.push();
         addLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
         addLiquidityStep.swapStepsA[0].tokenOut = address(tokenA);
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = amountBADesired;
         addLiquidityStep.amountBDesired = amountBDesired;
         addLiquidityStep.amountAMin = 0;
@@ -402,14 +441,19 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         assertEq(buttonswapFactory.getPair(address(tokenA), address(tokenB)), address(0), "Pair should not exist yet");
 
         // Creating the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         // Validating state
         address pairAddress = buttonswapFactory.getPair(address(tokenA), address(tokenB));
         assertNotEq(pairAddress, address(0), "Pair should now exist");
         assertEq(amountsA[0], amountBADesired, "AmountsA[0] should be equal to amountBADesired");
         assertEq(amountsB[0], amountBDesired, "AmountsB[0] should be equal to amountBDesired");
-        assertEq(liquidity, MathExtended.sqrt(amountsA[1] * amountsB[0]) - 1000, "Liquidity should be equal geometric mean - 1000");
+        assertEq(
+            liquidity,
+            MathExtended.sqrt(amountsA[1] * amountsB[0]) - 1000,
+            "Liquidity should be equal geometric mean - 1000"
+        );
     }
 
     // Unwrapping bB->B, then adding liquidity A+B
@@ -428,7 +472,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(buttonTokenB);
-//        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
         addLiquidityStep.swapStepsB.push();
         addLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
         addLiquidityStep.swapStepsB[0].tokenOut = address(tokenB);
@@ -444,14 +488,19 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         assertEq(buttonswapFactory.getPair(address(tokenA), address(tokenB)), address(0), "Pair should not exist yet");
 
         // Creating the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         // Validating state
         address pairAddress = buttonswapFactory.getPair(address(tokenA), address(tokenB));
         assertNotEq(pairAddress, address(0), "Pair should now exist");
         assertEq(amountsA[0], amountADesired, "AmountsA[0] should be equal to amountADesired");
         assertEq(amountsB[0], amountBBDesired, "AmountsB[0] should be equal to amountBBDesired");
-        assertEq(liquidity, MathExtended.sqrt(amountsA[0] * amountsB[1]) - 1000, "Liquidity should be equal geometric mean - 1000");
+        assertEq(
+            liquidity,
+            MathExtended.sqrt(amountsA[0] * amountsB[1]) - 1000,
+            "Liquidity should be equal geometric mean - 1000"
+        );
     }
 
     // Wrapping ETH->WETH, then adding liquidity WETH+B
@@ -470,7 +519,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.swapStepsA.push();
         addLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.WRAP_WETH;
         addLiquidityStep.swapStepsA[0].tokenOut = address(weth);
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = amountETHDesired;
         addLiquidityStep.amountBDesired = amountBDesired;
         addLiquidityStep.amountAMin = 0;
@@ -483,14 +532,19 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         assertEq(buttonswapFactory.getPair(address(weth), address(tokenB)), address(0), "Pair should not exist yet");
 
         // Creating the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity{value: amountETHDesired}(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity{value: amountETHDesired}(addLiquidityStep, to, deadline);
 
         // Validating state
         address pairAddress = buttonswapFactory.getPair(address(weth), address(tokenB));
         assertNotEq(pairAddress, address(0), "Pair should now exist");
         assertEq(amountsA[0], amountETHDesired, "AmountsA[0] should be equal to amountETHDesired");
         assertEq(amountsB[0], amountBDesired, "AmountsB[0] should be equal to amountBDesired");
-        assertEq(liquidity, MathExtended.sqrt(amountsA[1] * amountsB[0]) - 1000, "Liquidity should be equal geometric mean - 1000");
+        assertEq(
+            liquidity,
+            MathExtended.sqrt(amountsA[1] * amountsB[0]) - 1000,
+            "Liquidity should be equal geometric mean - 1000"
+        );
     }
 
     // Wrapping ETH->WETH, then adding liquidity A+WETH
@@ -506,7 +560,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(0);
-//        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
         addLiquidityStep.swapStepsB.push();
         addLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.WRAP_WETH;
         addLiquidityStep.swapStepsB[0].tokenOut = address(weth);
@@ -522,28 +576,38 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         assertEq(buttonswapFactory.getPair(address(tokenA), address(weth)), address(0), "Pair should not exist yet");
 
         // Creating the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity{value: amountETHDesired}(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity{value: amountETHDesired}(addLiquidityStep, to, deadline);
 
         // Validating state
         address pairAddress = buttonswapFactory.getPair(address(tokenA), address(weth));
         assertNotEq(pairAddress, address(0), "Pair should now exist");
         assertEq(amountsA[0], amountADesired, "AmountsA[0] should be equal to amountADesired");
         assertEq(amountsB[0], amountETHDesired, "AmountsB[0] should be equal to amountETHDesired");
-        assertEq(liquidity, MathExtended.sqrt(amountsA[0] * amountsB[1]) - 1000, "Liquidity should be equal geometric mean - 1000");
+        assertEq(
+            liquidity,
+            MathExtended.sqrt(amountsA[0] * amountsB[1]) - 1000,
+            "Liquidity should be equal geometric mean - 1000"
+        );
     }
 
     // test_addLiquidity_singleUnwrapWeth not a viable test-cases since pairs can't accept raw-ETH
 
-//    function test_addLiquidity_existingPairNoHops(uint256 amountADesired, uint256 amountBDesired) public {}
-    function test_addLiquidity_pairExistsNoHops(uint256 poolA, uint256 poolB, uint256 amountADesired, uint256 amountBDesired) public {
+    //    function test_addLiquidity_existingPairNoHops(uint256 amountADesired, uint256 amountBDesired) public {}
+    function test_addLiquidity_pairExistsNoHops(
+        uint256 poolA,
+        uint256 poolB,
+        uint256 amountADesired,
+        uint256 amountBDesired
+    ) public {
         // Creating A-B pair with at least minimum liquidity
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
         createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Minting enough for depositing liquidity (minting at least 1/100th the existing liquidity)
-        amountADesired = bound(amountADesired, poolA/100, type(uint112).max);
-        amountBDesired = bound(amountBDesired, poolB/100, type(uint112).max);
+        amountADesired = bound(amountADesired, poolA / 100, type(uint112).max);
+        amountBDesired = bound(amountBDesired, poolB / 100, type(uint112).max);
         tokenA.mint(address(this), amountADesired);
         tokenA.approve(address(genericButtonswapRouter), amountADesired);
         tokenB.mint(address(this), amountBDesired);
@@ -553,8 +617,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
-//        addLiquidityStep.swapStepsA; // Default to []
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = amountADesired;
         addLiquidityStep.amountBDesired = amountBDesired;
         addLiquidityStep.amountAMin = 0;
@@ -564,16 +628,25 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Adding liquidity to the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB,) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB,) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertTrue(
             (amountsA[0] == amountADesired && amountsB[0] <= amountBDesired)
-            || (amountsA[0] <= amountADesired && amountsB[0] == amountBDesired),
-            "(AmountsA[0] = amountADesired and AmountsB[0] <= amountBDesired) OR (AmountsA[0] <= amountADesired and AmountsB[0] == amountBDesired)");
+                || (amountsA[0] <= amountADesired && amountsB[0] == amountBDesired),
+            "(AmountsA[0] = amountADesired and AmountsB[0] <= amountBDesired) OR (AmountsA[0] <= amountADesired and AmountsB[0] == amountBDesired)"
+        );
     }
 
     // Swapping A->C, then adding liquidity C+B
-    function test_addLiquidity_existingPairSingleSwapA(uint256 poolA, uint256 poolC0, uint256 poolC1, uint poolB, uint256 amountADesired, uint256 amountBDesired) public {
+    function test_addLiquidity_existingPairSingleSwapA(
+        uint256 poolA,
+        uint256 poolC0,
+        uint256 poolC1,
+        uint256 poolB,
+        uint256 amountADesired,
+        uint256 amountBDesired
+    ) public {
         // Creating an existing A-C pair for the swap
         poolA = bound(poolA, 10000, type(uint112).max);
         poolC0 = bound(poolC0, 10000, type(uint112).max);
@@ -586,11 +659,11 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
 
         // Minting enough for sufficient-output requirement but not too much to mess up the A->C swap
         amountADesired = bound(amountADesired, 1, poolA - 1);
-        amountBDesired = bound(amountBDesired, poolB/100, type(uint112).max);
+        amountBDesired = bound(amountBDesired, poolB / 100, type(uint112).max);
         uint256 amountCFromA = ButtonswapLibrary.getAmountOut(amountADesired, poolA, poolC0);
         uint256 amountCFromB = ButtonswapLibrary.quote(amountBDesired, poolB, poolC1);
         vm.assume(amountCFromA < poolC0 && amountCFromB < poolC0); // amountC < amount of C in B-C pair
-        vm.assume(amountCFromA >= poolC1/100 && amountCFromB >= poolC1/100);
+        vm.assume(amountCFromA >= poolC1 / 100 && amountCFromB >= poolC1 / 100);
 
         tokenA.mint(address(this), amountADesired);
         tokenA.approve(address(genericButtonswapRouter), amountADesired);
@@ -604,7 +677,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.swapStepsA.push();
         addLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.SWAP;
         addLiquidityStep.swapStepsA[0].tokenOut = address(tokenC);
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = amountADesired;
         addLiquidityStep.amountBDesired = amountBDesired;
         addLiquidityStep.amountAMin = 0;
@@ -614,16 +687,25 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Adding liquidity to the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB,) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB,) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertTrue(
             (amountsA[0] == amountADesired && amountsB[0] <= amountBDesired)
-            || (amountsA[0] <= amountADesired && amountsB[0] == amountBDesired),
-            "(AmountsA[0] = amountADesired and AmountsB[0] <= amountBDesired) OR (AmountsA[0] <= amountADesired and AmountsB[0] == amountBDesired)");
+                || (amountsA[0] <= amountADesired && amountsB[0] == amountBDesired),
+            "(AmountsA[0] = amountADesired and AmountsB[0] <= amountBDesired) OR (AmountsA[0] <= amountADesired and AmountsB[0] == amountBDesired)"
+        );
     }
 
     // Swapping B->C, then adding liquidity A+C
-    function test_addLiquidity_existingPairSingleSwapB(uint256 poolB, uint256 poolC0, uint256 poolA, uint poolC1, uint256 amountADesired, uint256 amountBDesired) public {
+    function test_addLiquidity_existingPairSingleSwapB(
+        uint256 poolB,
+        uint256 poolC0,
+        uint256 poolA,
+        uint256 poolC1,
+        uint256 amountADesired,
+        uint256 amountBDesired
+    ) public {
         // Creating an existing B-C pair for the swap
         poolB = bound(poolB, 10000, type(uint112).max);
         poolC0 = bound(poolC0, 10000, type(uint112).max);
@@ -635,12 +717,12 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         createAndInitializePair(tokenA, tokenC, poolA, poolC1);
 
         // Minting enough for sufficient-output requirement but not too much to mess up the B->C swap
-        amountADesired = bound(amountADesired, poolA/100, type(uint112).max);
+        amountADesired = bound(amountADesired, poolA / 100, type(uint112).max);
         amountBDesired = bound(amountBDesired, 1, poolB - 1);
         uint256 amountCFromA = ButtonswapLibrary.quote(amountADesired, poolA, poolC1);
         uint256 amountCFromB = ButtonswapLibrary.getAmountOut(amountBDesired, poolB, poolC0);
         vm.assume(amountCFromA < poolC0 && amountCFromB < poolC0); // amountC < amount of C in B-C pair
-        vm.assume(amountCFromA >= poolC1/100 && amountCFromB >= poolC1/100);
+        vm.assume(amountCFromA >= poolC1 / 100 && amountCFromB >= poolC1 / 100);
 
         tokenA.mint(address(this), amountADesired);
         tokenA.approve(address(genericButtonswapRouter), amountADesired);
@@ -651,7 +733,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
-//        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
         addLiquidityStep.swapStepsB.push();
         addLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.SWAP;
         addLiquidityStep.swapStepsB[0].tokenOut = address(tokenC);
@@ -664,24 +746,31 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Adding liquidity to the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB,) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB,) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertTrue(
             (amountsA[0] == amountADesired && amountsB[0] <= amountBDesired)
-            || (amountsA[0] <= amountADesired && amountsB[0] == amountBDesired),
-            "(AmountsA[0] = amountADesired and AmountsB[0] <= amountBDesired) OR (AmountsA[0] <= amountADesired and AmountsB[0] == amountBDesired)");
+                || (amountsA[0] <= amountADesired && amountsB[0] == amountBDesired),
+            "(AmountsA[0] = amountADesired and AmountsB[0] <= amountBDesired) OR (AmountsA[0] <= amountADesired and AmountsB[0] == amountBDesired)"
+        );
     }
 
     // Wrapping A->bA, then adding liquidity bA+B
-    function test_addLiquidity_existingPairSingleWrapButtonA(uint256 poolButtonA, uint poolB, uint256 amountADesired, uint256 amountBDesired) public {
+    function test_addLiquidity_existingPairSingleWrapButtonA(
+        uint256 poolButtonA,
+        uint256 poolB,
+        uint256 amountADesired,
+        uint256 amountBDesired
+    ) public {
         // Creating bA-B pair with at least minimum liquidity
         poolButtonA = bound(poolButtonA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
         createAndInitializePairButton(tokenB, buttonTokenA, poolB, poolButtonA);
 
         // Minting enough for depositing liquidity (minting at least 1/100th of the existing liquidity)
-        amountADesired = bound(amountADesired, buttonTokenA.wrapperToUnderlying(poolButtonA)/100, type(uint112).max);
-        amountBDesired = bound(amountBDesired, poolB/100, type(uint112).max);
+        amountADesired = bound(amountADesired, buttonTokenA.wrapperToUnderlying(poolButtonA) / 100, type(uint112).max);
+        amountBDesired = bound(amountBDesired, poolB / 100, type(uint112).max);
         tokenA.mint(address(this), amountADesired);
         tokenA.approve(address(genericButtonswapRouter), amountADesired);
         tokenB.mint(address(this), amountBDesired);
@@ -694,7 +783,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.swapStepsA.push();
         addLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
         addLiquidityStep.swapStepsA[0].tokenOut = address(buttonTokenA);
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = amountADesired;
         addLiquidityStep.amountBDesired = amountBDesired;
         addLiquidityStep.amountAMin = 0;
@@ -704,24 +793,31 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Adding liquidity to the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB,) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB,) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertTrue(
             (amountsA[0] == amountADesired && amountsB[0] <= amountBDesired)
-            || (amountsA[0] <= amountADesired && amountsB[0] == amountBDesired),
-            "(AmountsA[0] = amountADesired and AmountsB[0] <= amountBDesired) OR (AmountsA[0] <= amountADesired and AmountsB[0] == amountBDesired)");
+                || (amountsA[0] <= amountADesired && amountsB[0] == amountBDesired),
+            "(AmountsA[0] = amountADesired and AmountsB[0] <= amountBDesired) OR (AmountsA[0] <= amountADesired and AmountsB[0] == amountBDesired)"
+        );
     }
 
     // Wrapping B->bB, then adding liquidity A+bB
-    function test_addLiquidity_existingPairSingleWrapButtonB(uint256 poolA, uint poolButtonB, uint256 amountADesired, uint256 amountBDesired) public {
+    function test_addLiquidity_existingPairSingleWrapButtonB(
+        uint256 poolA,
+        uint256 poolButtonB,
+        uint256 amountADesired,
+        uint256 amountBDesired
+    ) public {
         // Creating A-bB pair with at least minimum liquidity
         poolA = bound(poolA, 10000, type(uint112).max);
         poolButtonB = bound(poolButtonB, 10000, type(uint112).max);
         createAndInitializePairButton(tokenA, buttonTokenB, poolA, poolButtonB);
 
         // Minting enough for depositing liquidity (minting at least 1/100th of the existing liquidity)
-        amountADesired = bound(amountADesired, poolA/100, type(uint112).max);
-        amountBDesired = bound(amountBDesired, buttonTokenB.wrapperToUnderlying(poolButtonB)/100, type(uint112).max);
+        amountADesired = bound(amountADesired, poolA / 100, type(uint112).max);
+        amountBDesired = bound(amountBDesired, buttonTokenB.wrapperToUnderlying(poolButtonB) / 100, type(uint112).max);
         tokenA.mint(address(this), amountADesired);
         tokenA.approve(address(genericButtonswapRouter), amountADesired);
         tokenB.mint(address(this), amountBDesired);
@@ -731,7 +827,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
-//        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
         addLiquidityStep.swapStepsB.push();
         addLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
         addLiquidityStep.swapStepsB[0].tokenOut = address(buttonTokenB);
@@ -744,24 +840,32 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Adding liquidity to the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB,) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB,) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertTrue(
             (amountsA[0] == amountADesired && amountsB[0] <= amountBDesired)
-            || (amountsA[0] <= amountADesired && amountsB[0] == amountBDesired),
-            "(AmountsA[0] = amountADesired and AmountsB[0] <= amountBDesired) OR (AmountsA[0] <= amountADesired and AmountsB[0] == amountBDesired)");
+                || (amountsA[0] <= amountADesired && amountsB[0] == amountBDesired),
+            "(AmountsA[0] = amountADesired and AmountsB[0] <= amountBDesired) OR (AmountsA[0] <= amountADesired and AmountsB[0] == amountBDesired)"
+        );
     }
 
     // Unwrapping bA->A, then adding liquidity A+B
-    function test_addLiquidity_existingPairSingleUnwrapButtonA(uint256 poolA, uint poolB, uint256 amountButtonADesired, uint256 amountBDesired) public {
+    function test_addLiquidity_existingPairSingleUnwrapButtonA(
+        uint256 poolA,
+        uint256 poolB,
+        uint256 amountButtonADesired,
+        uint256 amountBDesired
+    ) public {
         // Creating A-B pair with at least minimum liquidity
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
         createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Minting enough for depositing liquidity (minting at least 1/100th of the existing liquidity)
-        amountButtonADesired = bound(amountButtonADesired, buttonTokenA.underlyingToWrapper(poolA)/100, type(uint112).max);
-        amountBDesired = bound(amountBDesired, poolB/100, type(uint112).max);
+        amountButtonADesired =
+            bound(amountButtonADesired, buttonTokenA.underlyingToWrapper(poolA) / 100, type(uint112).max);
+        amountBDesired = bound(amountBDesired, poolB / 100, type(uint112).max);
         uint256 amountTokenA = buttonTokenA.wrapperToUnderlying(amountButtonADesired);
         tokenA.mint(address(this), amountTokenA);
         tokenA.approve(address(buttonTokenA), amountTokenA);
@@ -777,7 +881,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.swapStepsA.push();
         addLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
         addLiquidityStep.swapStepsA[0].tokenOut = address(tokenA);
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = amountButtonADesired;
         addLiquidityStep.amountBDesired = amountBDesired;
         addLiquidityStep.amountAMin = 0;
@@ -787,24 +891,32 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Adding liquidity to the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB,) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB,) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertTrue(
             (amountsA[0] == amountButtonADesired && amountsB[0] <= amountBDesired)
-            || (amountsA[0] <= amountButtonADesired && amountsB[0] == amountBDesired),
-            "(AmountsA[0] = amountButtonADesired and AmountsB[0] <= amountBDesired) OR (AmountsA[0] <= amountButtonADesired and AmountsB[0] == amountBDesired)");
+                || (amountsA[0] <= amountButtonADesired && amountsB[0] == amountBDesired),
+            "(AmountsA[0] = amountButtonADesired and AmountsB[0] <= amountBDesired) OR (AmountsA[0] <= amountButtonADesired and AmountsB[0] == amountBDesired)"
+        );
     }
 
     // Unwrapping bB->B, then adding liquidity A+B
-    function test_addLiquidity_existingPairSingleUnwrapButtonB(uint256 poolA, uint poolB, uint256 amountADesired, uint256 amountButtonBDesired) public {
+    function test_addLiquidity_existingPairSingleUnwrapButtonB(
+        uint256 poolA,
+        uint256 poolB,
+        uint256 amountADesired,
+        uint256 amountButtonBDesired
+    ) public {
         // Creating A-B pair with at least minimum liquidity
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
         createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Minting enough for depositing liquidity (minting at least 1/100th of the existing liquidity)
-        amountADesired = bound(amountADesired, poolA/100, type(uint112).max);
-        amountButtonBDesired = bound(amountButtonBDesired, buttonTokenB.underlyingToWrapper(poolB)/100, type(uint112).max);
+        amountADesired = bound(amountADesired, poolA / 100, type(uint112).max);
+        amountButtonBDesired =
+            bound(amountButtonBDesired, buttonTokenB.underlyingToWrapper(poolB) / 100, type(uint112).max);
         tokenA.mint(address(this), amountADesired);
         tokenA.approve(address(genericButtonswapRouter), amountADesired);
         uint256 amountTokenB = buttonTokenB.wrapperToUnderlying(amountButtonBDesired);
@@ -817,7 +929,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(buttonTokenB);
-//        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
         addLiquidityStep.swapStepsB.push();
         addLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
         addLiquidityStep.swapStepsB[0].tokenOut = address(tokenB);
@@ -830,24 +942,31 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Adding liquidity to the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB,) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB,) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertTrue(
             (amountsA[0] == amountADesired && amountsB[0] <= amountButtonBDesired)
-            || (amountsA[0] <= amountADesired && amountsB[0] == amountButtonBDesired),
-            "(AmountsA[0] = amountADesired and AmountsB[0] <= amountButtonBDesired) OR (AmountsA[0] <= amountADesired and AmountsB[0] == amountButtonBDesired)");
+                || (amountsA[0] <= amountADesired && amountsB[0] == amountButtonBDesired),
+            "(AmountsA[0] = amountADesired and AmountsB[0] <= amountButtonBDesired) OR (AmountsA[0] <= amountADesired and AmountsB[0] == amountButtonBDesired)"
+        );
     }
 
     // Wrapping ETH->WETH, then adding liquidity WETH+B
-    function test_addLiquidity_existingPairSingleWrapWethA(uint256 poolWETH, uint poolB, uint256 amountETHDesired, uint256 amountBDesired) public {
+    function test_addLiquidity_existingPairSingleWrapWethA(
+        uint256 poolWETH,
+        uint256 poolB,
+        uint256 amountETHDesired,
+        uint256 amountBDesired
+    ) public {
         // Creating bA-B pair with at least minimum liquidity
         poolWETH = bound(poolWETH, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
         createAndInitializePairETH(tokenB, poolB, poolWETH);
 
         // Minting enough for depositing liquidity (minting at least 1/100th of the existing liquidity)
-        amountETHDesired = bound(amountETHDesired, poolWETH/100, type(uint112).max);
-        amountBDesired = bound(amountBDesired, poolB/100, type(uint112).max);
+        amountETHDesired = bound(amountETHDesired, poolWETH / 100, type(uint112).max);
+        amountBDesired = bound(amountBDesired, poolB / 100, type(uint112).max);
         vm.deal(address(this), amountETHDesired);
         tokenB.mint(address(this), amountBDesired);
         tokenB.approve(address(genericButtonswapRouter), amountBDesired);
@@ -859,7 +978,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.swapStepsA.push();
         addLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.WRAP_WETH;
         addLiquidityStep.swapStepsA[0].tokenOut = address(weth);
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = amountETHDesired;
         addLiquidityStep.amountBDesired = amountBDesired;
         addLiquidityStep.amountAMin = 0;
@@ -869,24 +988,31 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Adding liquidity to the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB,) = genericButtonswapRouter.addLiquidity{value: amountETHDesired}(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB,) =
+            genericButtonswapRouter.addLiquidity{value: amountETHDesired}(addLiquidityStep, to, deadline);
 
         assertTrue(
             (amountsA[0] == amountETHDesired && amountsB[0] <= amountBDesired)
-            || (amountsA[0] <= amountETHDesired && amountsB[0] == amountBDesired),
-            "(AmountsA[0] = amountETHDesired and AmountsB[0] <= amountBDesired) OR (AmountsA[0] <= amountETHDesired and AmountsB[0] == amountBDesired)");
+                || (amountsA[0] <= amountETHDesired && amountsB[0] == amountBDesired),
+            "(AmountsA[0] = amountETHDesired and AmountsB[0] <= amountBDesired) OR (AmountsA[0] <= amountETHDesired and AmountsB[0] == amountBDesired)"
+        );
     }
 
     // Wrapping ETH->WETH, then adding liquidity A+WETH
-    function test_addLiquidity_existingPairSingleWrapWethB(uint256 poolA, uint poolWETH, uint256 amountADesired, uint256 amountETHDesired) public {
+    function test_addLiquidity_existingPairSingleWrapWethB(
+        uint256 poolA,
+        uint256 poolWETH,
+        uint256 amountADesired,
+        uint256 amountETHDesired
+    ) public {
         // Creating bA-B pair with at least minimum liquidity
         poolA = bound(poolA, 10000, type(uint112).max);
         poolWETH = bound(poolWETH, 10000, type(uint112).max);
         createAndInitializePairETH(tokenA, poolA, poolWETH);
 
         // Minting enough for depositing liquidity (minting at least 1/100th of the existing liquidity)
-        amountADesired = bound(amountADesired, poolA/100, type(uint112).max);
-        amountETHDesired = bound(amountETHDesired, poolWETH/100, type(uint112).max);
+        amountADesired = bound(amountADesired, poolA / 100, type(uint112).max);
+        amountETHDesired = bound(amountETHDesired, poolWETH / 100, type(uint112).max);
         tokenA.mint(address(this), amountADesired);
         tokenA.approve(address(genericButtonswapRouter), amountADesired);
         vm.deal(address(this), amountETHDesired);
@@ -895,7 +1021,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(0);
-//        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
         addLiquidityStep.swapStepsB.push();
         addLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.WRAP_WETH;
         addLiquidityStep.swapStepsB[0].tokenOut = address(weth);
@@ -908,12 +1034,14 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Adding liquidity to the pair
-        (uint256[] memory amountsA, uint256[] memory amountsB,) = genericButtonswapRouter.addLiquidity{value: amountETHDesired}(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB,) =
+            genericButtonswapRouter.addLiquidity{value: amountETHDesired}(addLiquidityStep, to, deadline);
 
         assertTrue(
             (amountsA[0] == amountADesired && amountsB[0] <= amountETHDesired)
-            || (amountsA[0] <= amountADesired && amountsB[0] == amountETHDesired),
-            "(AmountsA[0] = amountADesired and AmountsB[0] <= amountETHDesired) OR (AmountsA[0] <= amountADesired and AmountsB[0] == amountETHDesired)");
+                || (amountsA[0] <= amountADesired && amountsB[0] == amountETHDesired),
+            "(AmountsA[0] = amountADesired and AmountsB[0] <= amountETHDesired) OR (AmountsA[0] <= amountADesired and AmountsB[0] == amountETHDesired)"
+        );
     }
 
     function test_addLiquidityWithReservoir_revertWhenPairDoesNotExist() public {
@@ -925,8 +1053,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
-//        addLiquidityStep.swapStepsA; // Default to []
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = 0;
         addLiquidityStep.amountBDesired = 0;
         addLiquidityStep.amountAMin = 0;
@@ -959,8 +1087,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
-//        addLiquidityStep.swapStepsA; // Default to []
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = 0;
         addLiquidityStep.amountBDesired = 0;
         addLiquidityStep.amountAMin = 0;
@@ -973,11 +1101,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         assertNotEq(buttonswapFactory.getPair(address(tokenA), address(tokenB)), address(0), "Pair should exist");
 
         // Attempting to addLiquidityWithReservoir to the pair
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IGenericButtonswapRouterErrors.NotInitialized.selector, pair
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(IGenericButtonswapRouterErrors.NotInitialized.selector, pair));
         genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
     }
 
@@ -991,8 +1115,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
-//        addLiquidityStep.swapStepsA; // Default to []
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = 0;
         addLiquidityStep.amountBDesired = 0;
         addLiquidityStep.amountAMin = 0;
@@ -1002,40 +1126,37 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 deadline = block.timestamp + 1000;
 
         // Attempting to addLiquidityWithReservoir to the pair
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IGenericButtonswapRouterErrors.NoReservoir.selector, address(pair)
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(IGenericButtonswapRouterErrors.NoReservoir.selector, address(pair)));
         genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
     }
 
-    function test_addLiquidityWithReservoir_revertWhenReservoirAIsInsufficient(uint256 poolA, uint256 poolB, uint256 amountBDesired) public {
+    function test_addLiquidityWithReservoir_revertWhenReservoirAIsInsufficient(
+        uint256 poolA,
+        uint256 poolB,
+        uint256 amountBDesired
+    ) public {
         // Creating A-B pair with at least minimum liquidity
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
         createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Rebasing tokenA up by 10% to create a reservoir of `reservoirA = poolA/10`
-        tokenA.applyMultiplier(11,10);
+        tokenA.applyMultiplier(11, 10);
         // Ensuring that amountBDesired is <= 10% of poolB
-        amountBDesired = bound(amountBDesired, 1, poolB/10 - 1);
+        amountBDesired = bound(amountBDesired, 1, poolB / 10 - 1);
 
         // Making amountAMin > amountAOptimal so that the reservoirA is insufficient
-        (,uint256 amountAOptimal) = ButtonswapLibrary.getMintSwappedAmounts(
-            address(buttonswapFactory),
-            address(tokenB),
-            address(tokenA),
-            amountBDesired
+        (, uint256 amountAOptimal) = ButtonswapLibrary.getMintSwappedAmounts(
+            address(buttonswapFactory), address(tokenB), address(tokenA), amountBDesired
         );
-        uint256 amountAMin =  amountAOptimal + 1;
+        uint256 amountAMin = amountAOptimal + 1;
 
         // Creating the addLiquidityStep
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
-//        addLiquidityStep.swapStepsA; // Default to []
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = 0;
         addLiquidityStep.amountBDesired = amountBDesired;
         addLiquidityStep.amountAMin = amountAMin;
@@ -1047,38 +1168,42 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Attempting to addLiquidityWithReservoir to the pair
         vm.expectRevert(
             abi.encodeWithSelector(
-                IGenericButtonswapRouterErrors.InsufficientTokenAmount.selector, address(tokenA), amountAOptimal, amountAMin
+                IGenericButtonswapRouterErrors.InsufficientTokenAmount.selector,
+                address(tokenA),
+                amountAOptimal,
+                amountAMin
             )
         );
         genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
     }
 
-    function test_addLiquidityWithReservoir_revertWhenReservoirBIsInsufficient(uint256 poolA, uint256 poolB, uint256 amountADesired) public {
+    function test_addLiquidityWithReservoir_revertWhenReservoirBIsInsufficient(
+        uint256 poolA,
+        uint256 poolB,
+        uint256 amountADesired
+    ) public {
         // Creating A-B pair with at least minimum liquidity
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
         createAndInitializePair(tokenA, tokenB, poolA, poolB);
 
         // Rebasing tokenB up by 10% to create a reservoir of `reservoirB = poolB/10`
-        tokenB.applyMultiplier(11,10);
+        tokenB.applyMultiplier(11, 10);
         // Ensuring that amountADesired is <= 10% of poolA
-        amountADesired = bound(amountADesired, 1, poolA/10 - 1);
+        amountADesired = bound(amountADesired, 1, poolA / 10 - 1);
 
         // Making amountBMin > amountBOptimal so that the reservoirB is insufficient
-        (,uint256 amountBOptimal) = ButtonswapLibrary.getMintSwappedAmounts(
-            address(buttonswapFactory),
-            address(tokenA),
-            address(tokenB),
-            amountADesired
+        (, uint256 amountBOptimal) = ButtonswapLibrary.getMintSwappedAmounts(
+            address(buttonswapFactory), address(tokenA), address(tokenB), amountADesired
         );
-        uint256 amountBMin =  amountBOptimal + 1;
+        uint256 amountBMin = amountBOptimal + 1;
 
         // Creating the addLiquidityStep
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
-//        addLiquidityStep.swapStepsA; // Default to []
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = amountADesired;
         addLiquidityStep.amountBDesired = 0;
         addLiquidityStep.amountAMin = 0;
@@ -1090,7 +1215,10 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Attempting to addLiquidityWithReservoir to the pair
         vm.expectRevert(
             abi.encodeWithSelector(
-                IGenericButtonswapRouterErrors.InsufficientTokenAmount.selector, address(tokenB), amountBOptimal, amountBMin
+                IGenericButtonswapRouterErrors.InsufficientTokenAmount.selector,
+                address(tokenB),
+                amountBOptimal,
+                amountBMin
             )
         );
         genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
@@ -1119,7 +1247,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Getting reservoir size
         uint256 reservoirA;
         (poolA, poolB, reservoirA,) =
-        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
 
         // Estimating how much of amountBDesired will be converted to A-tokens, and how much of the reservoir will be used
         uint256 liquidityOut;
@@ -1160,8 +1288,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
-//        addLiquidityStep.swapStepsA; // Default to []
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = 0;
         addLiquidityStep.amountBDesired = amountBDesired;
         addLiquidityStep.amountAMin = 0;
@@ -1170,7 +1298,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertEq(amountsA.length, 0, "AmountsA should be empty since tokenA was untouched");
         assertEq(amountsB[0], amountBDesired, "AmountsB[0] should be amountBDesired");
@@ -1200,7 +1329,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Getting reservoir size
         uint256 reservoirB;
         (poolA, poolB,, reservoirB) =
-        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
 
         // Estimating how much of amountBDesired will be converted to B-tokens, and how much of the reservoir will be used
         uint256 liquidityOut;
@@ -1241,8 +1370,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
-//        addLiquidityStep.swapStepsA; // Default to []
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = amountADesired;
         addLiquidityStep.amountBDesired = 0;
         addLiquidityStep.amountAMin = 0;
@@ -1251,7 +1380,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertEq(amountsA[0], amountADesired, "AmountsA[0] should be amountADesired");
         assertEq(amountsB.length, 0, "AmountsB should be empty since tokenB was untouched");
@@ -1277,27 +1407,30 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         createAndInitializePair(tokenB, tokenC, poolB, poolCB);
 
         // Rebasing tokenA up positively by 10% to create a reservoirA
-        tokenA.applyMultiplier(11,10);
+        tokenA.applyMultiplier(11, 10);
 
         // Ensuring amountBDesired is non-negative
-//        vm.assume(amountBDesired > 0);
+        //        vm.assume(amountBDesired > 0);
         amountBDesired = uint112(bound(amountBDesired, 1, poolB - 1));
 
         // Getting reservoir size
         uint256 reservoirA;
         (poolA, poolCA, reservoirA,) =
-        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenC));
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenC));
 
         // Calculating amountC from amountBDesired
         // This doesn't fit with IR issues so it's just calculated each time
-//        uint256 amountC = ButtonswapLibrary.getAmountOut(amountBDesired, poolB, poolCB);
+        //        uint256 amountC = ButtonswapLibrary.getAmountOut(amountBDesired, poolB, poolCB);
 
         // Estimating how much of amountC will be converted to A-tokens, and how much of the reservoir will be used
         uint256 liquidityOut;
         uint256 tokenCToSwap;
         uint256 swappedReservoirAmountA;
         (tokenCToSwap, swappedReservoirAmountA) = ButtonswapLibrary.getMintSwappedAmounts(
-            address(buttonswapFactory), address(tokenC), address(tokenA), ButtonswapLibrary.getAmountOut(amountBDesired, poolB, poolCB)
+            address(buttonswapFactory),
+            address(tokenC),
+            address(tokenA),
+            ButtonswapLibrary.getAmountOut(amountBDesired, poolB, poolCB)
         );
 
         // Making sure B->C swap doesn't overflow poolB in B-C pair
@@ -1309,7 +1442,10 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Making sure reservoirA is not exceeded
         vm.assume(swappedReservoirAmountA < reservoirA);
         // Making sure the rest of reservoirA can absorb the ephemeral sync that happens from the tokenCToSwap transfer-in
-        vm.assume((poolCA + ButtonswapLibrary.getAmountOut(amountBDesired, poolB, poolCB)) * poolA <= (poolA + reservoirA) * poolCA);
+        vm.assume(
+            (poolCA + ButtonswapLibrary.getAmountOut(amountBDesired, poolB, poolCB)) * poolA
+                <= (poolA + reservoirA) * poolCA
+        );
 
         // Estimating how much liquidity will be minted
         liquidityOut = PairMath.getDualSidedMintLiquidityOutAmount(
@@ -1333,7 +1469,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
-//        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
         addLiquidityStep.swapStepsB.push();
         addLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.SWAP;
         addLiquidityStep.swapStepsB[0].tokenOut = address(tokenC);
@@ -1345,7 +1481,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertEq(amountsA.length, 0, "AmountsA should be empty since tokenA was untouched");
         assertEq(amountsB[0], amountBDesired, "AmountsB[0] should be amountBDesired");
@@ -1371,27 +1508,30 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         (IButtonswapPair pair,) = createAndInitializePair(tokenB, tokenC, poolB, poolCB);
 
         // Rebasing tokenB up positively by 10% to create a reservoirB
-        tokenB.applyMultiplier(11,10);
+        tokenB.applyMultiplier(11, 10);
 
         // Ensuring amountADesired is non-negative
-//        vm.assume(amountADesired > 0);
+        //        vm.assume(amountADesired > 0);
         amountADesired = uint112(bound(amountADesired, 1, poolA - 1));
 
         // Getting reservoir size
         uint256 reservoirB;
         (poolB, poolCB, reservoirB,) =
-        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenB), address(tokenC));
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenB), address(tokenC));
 
         // Calculating amountC from amountADesired
         // This doesn't fit with IR issues so it's just calculated each time
-//        uint256 amountC = ButtonswapLibrary.getAmountOut(amountADesired, poolA, poolCA);
+        //        uint256 amountC = ButtonswapLibrary.getAmountOut(amountADesired, poolA, poolCA);
 
         // Estimating how much of amountC will be converted to B-tokens, and how much of the reservoir will be used
         uint256 liquidityOut;
         uint256 tokenCToSwap;
         uint256 swappedReservoirAmountB;
         (tokenCToSwap, swappedReservoirAmountB) = ButtonswapLibrary.getMintSwappedAmounts(
-            address(buttonswapFactory), address(tokenC), address(tokenB), ButtonswapLibrary.getAmountOut(amountADesired, poolA, poolCA)
+            address(buttonswapFactory),
+            address(tokenC),
+            address(tokenB),
+            ButtonswapLibrary.getAmountOut(amountADesired, poolA, poolCA)
         );
 
         // Making sure A->C swap doesn't overflow poolA in A-C pair
@@ -1403,7 +1543,10 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Making sure reservoirB is not exceeded
         vm.assume(swappedReservoirAmountB < reservoirB);
         // Making sure the rest of reservoirB can absorb the ephemeral sync that happens from the tokenCToSwap transfer-in
-        vm.assume((poolCB + ButtonswapLibrary.getAmountOut(amountADesired, poolA, poolCA)) * poolB <= (poolB + reservoirB) * poolCB);
+        vm.assume(
+            (poolCB + ButtonswapLibrary.getAmountOut(amountADesired, poolA, poolCA)) * poolB
+                <= (poolB + reservoirB) * poolCB
+        );
 
         // Estimating how much liquidity will be minted
         liquidityOut = PairMath.getDualSidedMintLiquidityOutAmount(
@@ -1430,7 +1573,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.swapStepsA.push();
         addLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.SWAP;
         addLiquidityStep.swapStepsA[0].tokenOut = address(tokenC);
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = amountADesired;
         addLiquidityStep.amountBDesired = 0;
         addLiquidityStep.amountAMin = 0;
@@ -1439,7 +1582,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertEq(amountsA[0], amountADesired, "AmountsA[0] should be amountADesired");
         assertEq(amountsB.length, 0, "AmountsB should be empty since tokenB was untouched");
@@ -1470,14 +1614,17 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Getting reservoir size
         uint256 reservoirA;
         (poolA, poolButtonB, reservoirA,) =
-        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(buttonTokenB));
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(buttonTokenB));
 
         // Estimating how much of buttonTokenB will be converted to A-tokens, and how much of the reservoir will be used
         uint256 liquidityOut;
         uint256 buttonTokenBToSwap;
         uint256 swappedReservoirAmountA;
         (buttonTokenBToSwap, swappedReservoirAmountA) = ButtonswapLibrary.getMintSwappedAmounts(
-            address(buttonswapFactory), address(buttonTokenB), address(tokenA), buttonTokenB.underlyingToWrapper(amountBDesired)
+            address(buttonswapFactory),
+            address(buttonTokenB),
+            address(tokenA),
+            buttonTokenB.underlyingToWrapper(amountBDesired)
         );
 
         // Making sure poolA doesn't get Overflowed
@@ -1487,7 +1634,10 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Making sure reservoirA is not exceeded
         vm.assume(swappedReservoirAmountA < reservoirA);
         // Making sure the rest of reservoirA can absorb the ephemeral sync that happens from the tokenBToSwap transfer-in
-        vm.assume((poolButtonB + buttonTokenB.underlyingToWrapper(amountBDesired)) * poolA <= (poolA + reservoirA) * poolButtonB);
+        vm.assume(
+            (poolButtonB + buttonTokenB.underlyingToWrapper(amountBDesired)) * poolA
+                <= (poolA + reservoirA) * poolButtonB
+        );
 
         // Estimating how much liquidity will be minted
         liquidityOut = PairMath.getDualSidedMintLiquidityOutAmount(
@@ -1511,7 +1661,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(tokenB);
-//        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
         addLiquidityStep.swapStepsB.push();
         addLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
         addLiquidityStep.swapStepsB[0].tokenOut = address(buttonTokenB);
@@ -1523,7 +1673,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertEq(amountsA.length, 0, "AmountsA should be empty since tokenA was untouched");
         assertEq(amountsB[0], amountBDesired, "AmountsB[0] should be amountBDesired");
@@ -1553,15 +1704,18 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
 
         // Getting reservoir size
         uint256 reservoirB;
-        (poolButtonA, poolB,,reservoirB) =
-        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(buttonTokenA), address(tokenB));
+        (poolButtonA, poolB,, reservoirB) =
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(buttonTokenA), address(tokenB));
 
         // Estimating how much of buttonTokenA will be converted to B-tokens, and how much of the reservoir will be used
         uint256 liquidityOut;
         uint256 buttonTokenAToSwap;
         uint256 swappedReservoirAmountB;
         (buttonTokenAToSwap, swappedReservoirAmountB) = ButtonswapLibrary.getMintSwappedAmounts(
-            address(buttonswapFactory), address(buttonTokenA), address(tokenB), buttonTokenA.underlyingToWrapper(amountADesired)
+            address(buttonswapFactory),
+            address(buttonTokenA),
+            address(tokenB),
+            buttonTokenA.underlyingToWrapper(amountADesired)
         );
 
         // Making sure poolB doesn't get Overflowed
@@ -1571,7 +1725,10 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Making sure reservoirB is not exceeded
         vm.assume(swappedReservoirAmountB < reservoirB);
         // Making sure the rest of reservoirB can absorb the ephemeral sync that happens from the tokenAToSwap transfer-in
-        vm.assume((poolButtonA + buttonTokenA.underlyingToWrapper(amountADesired)) * poolB <= (poolB + reservoirB) * poolButtonA);
+        vm.assume(
+            (poolButtonA + buttonTokenA.underlyingToWrapper(amountADesired)) * poolB
+                <= (poolB + reservoirB) * poolButtonA
+        );
 
         // Estimating how much liquidity will be minted
         liquidityOut = PairMath.getDualSidedMintLiquidityOutAmount(
@@ -1598,7 +1755,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.swapStepsA.push();
         addLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
         addLiquidityStep.swapStepsA[0].tokenOut = address(buttonTokenA);
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = amountADesired;
         addLiquidityStep.amountBDesired = 0;
         addLiquidityStep.amountAMin = 0;
@@ -1607,7 +1764,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertEq(amountsA[0], amountADesired, "AmountsA[0] should be amountADesired");
         assertEq(amountsB.length, 0, "AmountsB should be empty since tokenB was untouched");
@@ -1638,14 +1796,17 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Getting reservoir size
         uint256 reservoirA;
         (poolA, poolB, reservoirA,) =
-        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
 
         // Estimating how much of buttonTokenB will be converted to A-tokens, and how much of the reservoir will be used
         uint256 liquidityOut;
         uint256 tokenBToSwap;
         uint256 swappedReservoirAmountA;
         (tokenBToSwap, swappedReservoirAmountA) = ButtonswapLibrary.getMintSwappedAmounts(
-            address(buttonswapFactory), address(tokenB), address(tokenA), buttonTokenB.wrapperToUnderlying(amountButtonBDesired)
+            address(buttonswapFactory),
+            address(tokenB),
+            address(tokenA),
+            buttonTokenB.wrapperToUnderlying(amountButtonBDesired)
         );
 
         // Making sure poolA doesn't get Overflowed
@@ -1655,7 +1816,9 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Making sure reservoirA is not exceeded
         vm.assume(swappedReservoirAmountA < reservoirA);
         // Making sure the rest of reservoirA can absorb the ephemeral sync that happens from the tokenBToSwap transfer-in
-        vm.assume((poolB + buttonTokenB.wrapperToUnderlying(amountButtonBDesired)) * poolA <= (poolA + reservoirA) * poolB);
+        vm.assume(
+            (poolB + buttonTokenB.wrapperToUnderlying(amountButtonBDesired)) * poolA <= (poolA + reservoirA) * poolB
+        );
 
         // Estimating how much liquidity will be minted
         liquidityOut = PairMath.getDualSidedMintLiquidityOutAmount(
@@ -1677,12 +1840,11 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         buttonTokenB.mint(amountButtonBDesired);
         buttonTokenB.approve(address(genericButtonswapRouter), amountButtonBDesired);
 
-
         // Creating the addLiquidityStep
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(buttonTokenB);
-//        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
         addLiquidityStep.swapStepsB.push();
         addLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
         addLiquidityStep.swapStepsB[0].tokenOut = address(tokenB);
@@ -1694,7 +1856,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertEq(amountsA.length, 0, "AmountsA should be empty since tokenA was untouched");
         assertEq(amountsB[0], amountButtonBDesired, "AmountsB[0] should be amountButtonBDesired");
@@ -1724,15 +1887,18 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
 
         // Getting reservoir size
         uint256 reservoirB;
-        (poolA, poolB,,reservoirB) =
-        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
+        (poolA, poolB,, reservoirB) =
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
 
         // Estimating how much of buttonTokenB will be converted to A-tokens, and how much of the reservoir will be used
         uint256 liquidityOut;
         uint256 tokenAToSwap;
         uint256 swappedReservoirAmountB;
         (tokenAToSwap, swappedReservoirAmountB) = ButtonswapLibrary.getMintSwappedAmounts(
-            address(buttonswapFactory), address(tokenA), address(tokenB), buttonTokenA.wrapperToUnderlying(amountButtonADesired)
+            address(buttonswapFactory),
+            address(tokenA),
+            address(tokenB),
+            buttonTokenA.wrapperToUnderlying(amountButtonADesired)
         );
 
         // Making sure poolB doesn't get Overflowed
@@ -1742,7 +1908,9 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Making sure reservoirB is not exceeded
         vm.assume(swappedReservoirAmountB < reservoirB);
         // Making sure the rest of reservoirB can absorb the ephemeral sync that happens from the tokenAToSwap transfer-in
-        vm.assume((poolA + buttonTokenA.wrapperToUnderlying(amountButtonADesired)) * poolB <= (poolB + reservoirB) * poolA);
+        vm.assume(
+            (poolA + buttonTokenA.wrapperToUnderlying(amountButtonADesired)) * poolB <= (poolB + reservoirB) * poolA
+        );
 
         // Estimating how much liquidity will be minted
         liquidityOut = PairMath.getDualSidedMintLiquidityOutAmount(
@@ -1764,7 +1932,6 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         buttonTokenA.mint(amountButtonADesired);
         buttonTokenA.approve(address(genericButtonswapRouter), amountButtonADesired);
 
-
         // Creating the addLiquidityStep
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(buttonTokenA);
@@ -1772,7 +1939,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.swapStepsA.push();
         addLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
         addLiquidityStep.swapStepsA[0].tokenOut = address(tokenA);
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = amountButtonADesired;
         addLiquidityStep.amountBDesired = 0;
         addLiquidityStep.amountAMin = 0;
@@ -1781,7 +1948,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity(addLiquidityStep, to, deadline);
 
         assertEq(amountsA[0], amountButtonADesired, "AmountsA[0] should be amountButtonADesired");
         assertEq(amountsB.length, 0, "AmountsB should be empty since tokenB was untouched");
@@ -1812,7 +1980,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Getting reservoir size
         uint256 reservoirA;
         (poolA, poolWETH, reservoirA,) =
-        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(weth));
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(weth));
 
         // Estimating how much of weth will be converted to A-tokens, and how much of the reservoir will be used
         uint256 liquidityOut;
@@ -1852,7 +2020,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         addLiquidityStep.tokenA = address(tokenA);
         addLiquidityStep.tokenB = address(0);
-//        addLiquidityStep.swapStepsA; // Default to []
+        //        addLiquidityStep.swapStepsA; // Default to []
         addLiquidityStep.swapStepsB.push();
         addLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.WRAP_WETH;
         addLiquidityStep.swapStepsB[0].tokenOut = address(weth);
@@ -1864,7 +2032,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity{value: amountETHDesired}(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity{value: amountETHDesired}(addLiquidityStep, to, deadline);
 
         assertEq(amountsA.length, 0, "AmountsA should be empty since tokenA was untouched");
         assertEq(amountsB[0], amountETHDesired, "AmountsB[0] should be amountETHDesired");
@@ -1895,7 +2064,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Getting reservoir size
         uint256 reservoirB;
         (poolWETH, poolB,, reservoirB) =
-        ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(weth), address(tokenB));
+            ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(weth), address(tokenB));
 
         // Estimating how much of weth will be converted to B-tokens, and how much of the reservoir will be used
         uint256 liquidityOut;
@@ -1938,7 +2107,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityStep.swapStepsA.push();
         addLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.WRAP_WETH;
         addLiquidityStep.swapStepsA[0].tokenOut = address(weth);
-//        addLiquidityStep.swapStepsB; // Default to []
+        //        addLiquidityStep.swapStepsB; // Default to []
         addLiquidityStep.amountADesired = amountETHDesired;
         addLiquidityStep.amountBDesired = 0;
         addLiquidityStep.amountAMin = 0;
@@ -1947,7 +2116,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
-        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) = genericButtonswapRouter.addLiquidity{value: amountETHDesired}(addLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+            genericButtonswapRouter.addLiquidity{value: amountETHDesired}(addLiquidityStep, to, deadline);
 
         assertEq(amountsA[0], amountETHDesired, "AmountsA[0] should be amountETHDesired");
         assertEq(amountsB.length, 0, "AmountsB should be empty since tokenB was untouched");

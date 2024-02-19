@@ -3,7 +3,8 @@ pragma solidity ^0.8.13;
 
 import {Test} from "buttonswap-periphery_forge-std/Test.sol";
 import {IButtonswapPair} from "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
-import {IButtonswapPairErrors} from "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPairErrors.sol";
+import {IButtonswapPairErrors} from
+    "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPairErrors.sol";
 import {IGenericButtonswapRouter} from "../../src/interfaces/IButtonswapRouter/IGenericButtonswapRouter.sol";
 import {IGenericButtonswapRouterErrors} from "../../src/interfaces/IButtonswapRouter/IGenericButtonswapRouterErrors.sol";
 import {GenericButtonswapRouter} from "../../src/GenericButtonswapRouter.sol";
@@ -17,7 +18,7 @@ import {MockWeth} from "./../mocks/MockWeth.sol";
 import {MockButtonToken} from "./../mocks/MockButtonToken.sol";
 import {IButtonswapPairErrors} from
     "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPairErrors.sol";
-import {MathExtended}  from "../utils/MathExtended.sol";
+import {MathExtended} from "../utils/MathExtended.sol";
 import {MockERC20} from "buttonswap-periphery_mock-contracts/MockERC20.sol";
 import {console} from "buttonswap-periphery_forge-std/console.sol";
 
@@ -82,10 +83,12 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
     }
 
     // Utility function for creating and initializing button-pairs with poolButtonA:poolB price ratio. Does not use ButtonwoodRouter
-    function createAndInitializePairButton(MockRebasingERC20 tokenA1, MockButtonToken buttonTokenB1, uint256 poolA, uint256 poolButtonB)
-    private
-    returns (IButtonswapPair pair, uint256 liquidityOut)
-    {
+    function createAndInitializePairButton(
+        MockRebasingERC20 tokenA1,
+        MockButtonToken buttonTokenB1,
+        uint256 poolA,
+        uint256 poolButtonB
+    ) private returns (IButtonswapPair pair, uint256 liquidityOut) {
         pair = IButtonswapPair(buttonswapFactory.createPair(address(tokenA1), address(buttonTokenB1)));
 
         tokenA1.mint(address(this), poolA);
@@ -96,7 +99,6 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         buttonTokenB1.mint(poolButtonB);
         buttonTokenB1.approve(address(pair), poolButtonB);
 
-
         if (pair.token0() == address(tokenA1)) {
             liquidityOut = pair.mint(poolA, poolButtonB, address(this));
         } else {
@@ -105,11 +107,13 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
     }
 
     // Utility function for testing functions that use Permit
-    function generateUserPermitSignature(address user, uint256 userPrivateKey, IButtonswapPair pair, uint256 liquidity, uint256 deadline)
-        private
-        view
-        returns (uint8 v, bytes32 r, bytes32 s)
-    {
+    function generateUserPermitSignature(
+        address user,
+        uint256 userPrivateKey,
+        IButtonswapPair pair,
+        uint256 liquidity,
+        uint256 deadline
+    ) private view returns (uint8 v, bytes32 r, bytes32 s) {
         bytes32 permitDigest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
@@ -138,8 +142,9 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         buttonTokenA = new MockButtonToken(address(tokenA));
         buttonTokenB = new MockButtonToken(address(tokenB));
         weth = new MockWeth();
-        buttonswapFactory =
-        new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "Token Name", "SYMBOL");
+        buttonswapFactory = new ButtonswapFactory(
+            feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "Token Name", "SYMBOL"
+        );
         genericButtonswapRouter = new GenericButtonswapRouter(address(buttonswapFactory), address(weth));
     }
 
@@ -153,9 +158,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
 
         // Attempting to add liquidity with an expired deadline
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IGenericButtonswapRouterErrors.Expired.selector, deadline, block.timestamp
-            )
+            abi.encodeWithSelector(IGenericButtonswapRouterErrors.Expired.selector, deadline, block.timestamp)
         );
         genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
     }
@@ -171,8 +174,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA1);
         removeLiquidityStep.tokenB = address(tokenB1);
-//        removeLiquidityStep.swapStepsA; // Default to []
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         removeLiquidityStep.amountAMin = 0;
         removeLiquidityStep.amountBMin = 0;
@@ -188,7 +191,12 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
     }
 
-    function test_removeLiquidity_insufficientAmountA(uint256 poolA, uint256 poolB, uint256 liquidity, uint256 amountAMin) public {
+    function test_removeLiquidity_insufficientAmountA(
+        uint256 poolA,
+        uint256 poolB,
+        uint256 liquidity,
+        uint256 amountAMin
+    ) public {
         // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -209,8 +217,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
-//        removeLiquidityStep.swapStepsA; // Default to []
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         removeLiquidityStep.amountAMin = amountAMin;
         removeLiquidityStep.amountBMin = 0;
@@ -226,7 +234,12 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
     }
 
-    function test_removeLiquidity_insufficientAmountB(uint256 poolA, uint256 poolB, uint256 liquidity, uint256 amountBMin) public {
+    function test_removeLiquidity_insufficientAmountB(
+        uint256 poolA,
+        uint256 poolB,
+        uint256 liquidity,
+        uint256 amountBMin
+    ) public {
         // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -247,8 +260,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
-//        removeLiquidityStep.swapStepsA; // Default to []
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         removeLiquidityStep.amountAMin = 0;
         removeLiquidityStep.amountBMin = amountBMin;
@@ -284,8 +297,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
-//        removeLiquidityStep.swapStepsA; // Default to []
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         removeLiquidityStep.amountAMin = 0;
         removeLiquidityStep.amountBMin = 0;
@@ -293,14 +306,22 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
         assertEq(amountsB[0], expectedAmountB, "AmountsB[0] should equal expectedAmountB");
     }
 
-    function test_removeLiquidity_noHopsWithReservoir(uint256 poolA, uint256 poolB, uint256 liquidity, uint8 rebaseNumerator, uint8 rebaseDenominator, bool aOrB) public {
+    function test_removeLiquidity_noHopsWithReservoir(
+        uint256 poolA,
+        uint256 poolB,
+        uint256 liquidity,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator,
+        bool aOrB
+    ) public {
         // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -333,8 +354,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
-//        removeLiquidityStep.swapStepsA; // Default to []
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         removeLiquidityStep.amountAMin = 0;
         removeLiquidityStep.amountBMin = 0;
@@ -342,7 +363,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
@@ -376,12 +398,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         vm.assume(expectedAmountA > 0);
         vm.assume(expectedAmountA < type(uint112).max - poolAC);
         // Estimating amountC returned from swapping A->C
-        uint256 expectedAmountC =
-            ButtonswapLibrary.getAmountOut(
-                expectedAmountA,
-                poolAC,
-                poolC
-            );
+        uint256 expectedAmountC = ButtonswapLibrary.getAmountOut(expectedAmountA, poolAC, poolC);
         // Ensuring expectedAmountC is within poolC bounds
         vm.assume(expectedAmountC > 0);
         vm.assume(expectedAmountC < poolC);
@@ -398,7 +415,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.swapStepsA.push();
         removeLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.SWAP;
         removeLiquidityStep.swapStepsA[0].tokenOut = address(tokenC);
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         removeLiquidityStep.amountAMin = 0;
         removeLiquidityStep.amountBMin = 0;
@@ -406,7 +423,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountsA/amountsB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
@@ -443,12 +461,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         vm.assume(expectedAmountB > 0);
         vm.assume(expectedAmountB < type(uint112).max - poolBC);
         // Estimating amountC returned from swapping A->C
-        uint256 expectedAmountC =
-                            ButtonswapLibrary.getAmountOut(
-                expectedAmountB,
-                poolBC,
-                poolC
-            );
+        uint256 expectedAmountC = ButtonswapLibrary.getAmountOut(expectedAmountB, poolBC, poolC);
         // Ensuring expectedAmountC is within poolC bounds
         vm.assume(expectedAmountC > 0);
         vm.assume(expectedAmountC < poolC);
@@ -460,7 +473,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
-//        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
         removeLiquidityStep.swapStepsB.push();
         removeLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.SWAP;
         removeLiquidityStep.swapStepsB[0].tokenOut = address(tokenC);
@@ -471,7 +484,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountsA/amountsB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
@@ -480,11 +494,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
     }
 
     // Removing liquidity from a A-B pair and button-wrapping A->bA
-    function test_removeLiquidity_singleWrapButtonA(
-        uint256 poolA,
-        uint256 poolB,
-        uint256 liquidity
-    ) public {
+    function test_removeLiquidity_singleWrapButtonA(uint256 poolA, uint256 poolB, uint256 liquidity) public {
         // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -508,7 +518,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.swapStepsA.push();
         removeLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
         removeLiquidityStep.swapStepsA[0].tokenOut = address(buttonTokenA);
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         removeLiquidityStep.amountAMin = 0;
         removeLiquidityStep.amountBMin = 0;
@@ -516,7 +526,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountsA/amountsB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
@@ -525,11 +536,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
     }
 
     // Removing liquidity from a A-B pair and button-wrapping A->bB
-    function test_removeLiquidity_singleWrapButtonB(
-        uint256 poolA,
-        uint256 poolB,
-        uint256 liquidity
-    ) public {
+    function test_removeLiquidity_singleWrapButtonB(uint256 poolA, uint256 poolB, uint256 liquidity) public {
         // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -550,7 +557,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
-//        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
         removeLiquidityStep.swapStepsB.push();
         removeLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
         removeLiquidityStep.swapStepsB[0].tokenOut = address(buttonTokenB);
@@ -561,7 +568,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountsA/amountsB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
@@ -570,15 +578,12 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
     }
 
     // Removing liquidity from a bA-B pair and button-wrapping bA->A
-    function test_removeLiquidity_singleUnwrapButtonA(
-        uint256 poolButtonA,
-        uint256 poolB,
-        uint256 liquidity
-    ) public {
+    function test_removeLiquidity_singleUnwrapButtonA(uint256 poolButtonA, uint256 poolB, uint256 liquidity) public {
         // Creating bA-B pair with at least minimum liquidity and poolButtonA:poolB price ratio
         poolButtonA = bound(poolButtonA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
-        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePairButton(tokenB, buttonTokenA, poolB, poolButtonA);
+        (IButtonswapPair pair, uint256 liquidityOut) =
+            createAndInitializePairButton(tokenB, buttonTokenA, poolB, poolButtonA);
 
         // Bound liquidity to be within the range of any pair's liquidity`
         liquidity = bound(liquidity, 1, liquidityOut);
@@ -600,7 +605,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.swapStepsA.push();
         removeLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
         removeLiquidityStep.swapStepsA[0].tokenOut = address(tokenA);
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         removeLiquidityStep.amountAMin = 0;
         removeLiquidityStep.amountBMin = 0;
@@ -608,7 +613,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountsA/amountsB returned
         assertEq(amountsA[0], expectedAmountButtonA, "AmountsA[0] should equal expectedAmountButtonA");
@@ -617,15 +623,12 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
     }
 
     // Removing liquidity from a A-Bb pair and button-wrapping bB->B
-    function test_removeLiquidity_singleUnwrapButtonB(
-        uint256 poolA,
-        uint256 poolButtonB,
-        uint256 liquidity
-    ) public {
+    function test_removeLiquidity_singleUnwrapButtonB(uint256 poolA, uint256 poolButtonB, uint256 liquidity) public {
         // Creating A-B pair with at least minimum liquidity and poolA:poolButtonB price ratio
         poolA = bound(poolA, 10000, type(uint112).max);
         poolButtonB = bound(poolButtonB, 10000, type(uint112).max);
-        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePairButton(tokenA, buttonTokenB, poolA, poolButtonB);
+        (IButtonswapPair pair, uint256 liquidityOut) =
+            createAndInitializePairButton(tokenA, buttonTokenB, poolA, poolButtonB);
 
         // Bound liquidity to be within the range of any pair's liquidity`
         liquidity = bound(liquidity, 1, liquidityOut);
@@ -644,7 +647,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(buttonTokenB);
-//        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
         removeLiquidityStep.swapStepsB.push();
         removeLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
         removeLiquidityStep.swapStepsB[0].tokenOut = address(tokenB);
@@ -655,7 +658,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountsA/amountsB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
@@ -666,11 +670,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
     // test_removeLiquidity_singleWrapWeth not a viable test-cases since pairs can't accept raw-ETH
 
     // Removing liquidity from a WETH-B pair and weth-unwrapping WETH->ETH
-    function test_removeLiquidity_singleUnwrapWethA(
-        uint256 poolWETH,
-        uint256 poolB,
-        uint256 liquidity
-    ) public {
+    function test_removeLiquidity_singleUnwrapWethA(uint256 poolWETH, uint256 poolB, uint256 liquidity) public {
         // Creating WETH-B pair with at least minimum liquidity and poolWETH:poolB price ratio
         poolWETH = bound(poolWETH, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -694,7 +694,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.swapStepsA.push();
         removeLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.UNWRAP_WETH;
         removeLiquidityStep.swapStepsA[0].tokenOut = address(0);
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         removeLiquidityStep.amountAMin = 0;
         removeLiquidityStep.amountBMin = 0;
@@ -702,7 +702,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountsA/amountsB returned
         assertEq(amountsA[0], expectedAmountWETH, "AmountsA[0] should equal expectedAmountWETH");
@@ -711,11 +712,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
     }
 
     // Removing liquidity from a A-WETH pair and weth-unwrapping WETH->ETH
-    function test_removeLiquidity_singleUnwrapWethB(
-        uint256 poolA,
-        uint256 poolWETH,
-        uint256 liquidity
-    ) public {
+    function test_removeLiquidity_singleUnwrapWethB(uint256 poolA, uint256 poolWETH, uint256 liquidity) public {
         // Creating A-WETH pair with at least minimum liquidity and poolA:poolWETH price ratio
         poolA = bound(poolA, 10000, type(uint112).max);
         poolWETH = bound(poolWETH, 10000, type(uint112).max);
@@ -736,7 +733,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(weth);
-//        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
         removeLiquidityStep.swapStepsB.push();
         removeLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.UNWRAP_WETH;
         removeLiquidityStep.swapStepsB[0].tokenOut = address(0);
@@ -747,7 +744,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountsA/amountsB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
@@ -755,8 +753,9 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         assertEq(amountsB[1], expectedAmountWETH, "AmountsB[1] should also equal expectedAmountWETH");
     }
 
-
-    function test_removeLiquidityFromReservoir_pairDoesNotExist(address tokenA1, address tokenB1, uint256 liquidity) public {
+    function test_removeLiquidityFromReservoir_pairDoesNotExist(address tokenA1, address tokenB1, uint256 liquidity)
+        public
+    {
         // Validating pair doesn't exist
         assertEq(buttonswapFactory.getPair(address(tokenA1), address(tokenB1)), address(0), "Pair should not exist");
 
@@ -764,8 +763,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA1);
         removeLiquidityStep.tokenB = address(tokenB1);
-//        removeLiquidityStep.swapStepsA; // Default to []
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         removeLiquidityStep.amountAMin = 0;
         removeLiquidityStep.amountBMin = 0;
@@ -794,8 +793,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
-//        removeLiquidityStep.swapStepsA; // Default to []
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidityOut;
         removeLiquidityStep.amountAMin = 0;
         removeLiquidityStep.amountBMin = 0;
@@ -807,7 +806,14 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
     }
 
-    function test_removeLiquidityFromReservoir_reservoirAInsufficientTokenAmount(uint256 poolA, uint256 poolB, uint256 liquidity, uint8 rebaseNumerator, uint8 rebaseDenominator, bool insufficientAOrB) public {
+    function test_removeLiquidityFromReservoir_reservoirAInsufficientTokenAmount(
+        uint256 poolA,
+        uint256 poolB,
+        uint256 liquidity,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator,
+        bool insufficientAOrB
+    ) public {
         // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -828,7 +834,9 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         liquidity = bound(liquidity, 1, liquidityOut);
 
         // Estimating amountA/amountB returned from removing liquidity
-        (uint256 tokenOutA, uint256 swappedReservoirAmountA) = ButtonswapLibrary.getBurnSwappedAmounts(address(buttonswapFactory), address(tokenA), address(tokenB), liquidity);
+        (uint256 tokenOutA, uint256 swappedReservoirAmountA) = ButtonswapLibrary.getBurnSwappedAmounts(
+            address(buttonswapFactory), address(tokenA), address(tokenB), liquidity
+        );
         // Ensuring that that swappedReservoirAmountA is less than the reservoir
         vm.assume(swappedReservoirAmountA < reservoirA);
         // Ensuring that swappedReservoirAmountA is less than swappableReservoirLimit
@@ -845,8 +853,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
-//        removeLiquidityStep.swapStepsA; // Default to []
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         // Ensuring insufficient token output
         if (insufficientAOrB) {
@@ -863,7 +871,10 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         if (insufficientAOrB) {
             vm.expectRevert(
                 abi.encodeWithSelector(
-                    IGenericButtonswapRouterErrors.InsufficientTokenAmount.selector, address(tokenA), tokenOutA, tokenOutA + 1
+                    IGenericButtonswapRouterErrors.InsufficientTokenAmount.selector,
+                    address(tokenA),
+                    tokenOutA,
+                    tokenOutA + 1
                 )
             );
         } else {
@@ -876,7 +887,14 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
     }
 
-    function test_removeLiquidityFromReservoir_reservoirBInsufficientTokenAmount(uint256 poolA, uint256 poolB, uint256 liquidity, uint8 rebaseNumerator, uint8 rebaseDenominator, bool insufficientAOrB) public {
+    function test_removeLiquidityFromReservoir_reservoirBInsufficientTokenAmount(
+        uint256 poolA,
+        uint256 poolB,
+        uint256 liquidity,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator,
+        bool insufficientAOrB
+    ) public {
         // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -897,7 +915,9 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         liquidity = bound(liquidity, 1, liquidityOut);
 
         // Estimating amountA/amountB returned from removing liquidity
-        (uint256 tokenOutB, uint256 swappedReservoirAmountB) = ButtonswapLibrary.getBurnSwappedAmounts(address(buttonswapFactory), address(tokenB), address(tokenA), liquidity);
+        (uint256 tokenOutB, uint256 swappedReservoirAmountB) = ButtonswapLibrary.getBurnSwappedAmounts(
+            address(buttonswapFactory), address(tokenB), address(tokenA), liquidity
+        );
         // Ensuring that that swappedReservoirAmountB is less than the reservoir
         vm.assume(swappedReservoirAmountB < reservoirB);
         // Ensuring that swappedReservoirAmountB is less than swappableReservoirLimit
@@ -914,8 +934,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
-//        removeLiquidityStep.swapStepsA; // Default to []
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         // Ensuring insufficient token output
         if (insufficientAOrB) {
@@ -938,14 +958,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         } else {
             vm.expectRevert(
                 abi.encodeWithSelector(
-                    IGenericButtonswapRouterErrors.InsufficientTokenAmount.selector, address(tokenB), tokenOutB, tokenOutB + 1
+                    IGenericButtonswapRouterErrors.InsufficientTokenAmount.selector,
+                    address(tokenB),
+                    tokenOutB,
+                    tokenOutB + 1
                 )
             );
         }
         genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
     }
 
-    function test_removeLiquidityFromReservoir_reservoirANoHops(uint256 poolA, uint256 poolB, uint256 liquidity, uint8 rebaseNumerator, uint8 rebaseDenominator) public {
+    function test_removeLiquidityFromReservoir_reservoirANoHops(
+        uint256 poolA,
+        uint256 poolB,
+        uint256 liquidity,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator
+    ) public {
         // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -966,7 +995,9 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         liquidity = bound(liquidity, 1, liquidityOut);
 
         // Estimating amountA/amountB returned from removing liquidity
-        (uint256 tokenOutA, uint256 swappedReservoirAmountA) = ButtonswapLibrary.getBurnSwappedAmounts(address(buttonswapFactory), address(tokenA), address(tokenB), liquidity);
+        (uint256 tokenOutA, uint256 swappedReservoirAmountA) = ButtonswapLibrary.getBurnSwappedAmounts(
+            address(buttonswapFactory), address(tokenA), address(tokenB), liquidity
+        );
         // Ensuring that that swappedReservoirAmountA is less than the reservoir
         vm.assume(swappedReservoirAmountA < reservoirA);
         // Ensuring that swappedReservoirAmountA is less than swappableReservoirLimit
@@ -983,8 +1014,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
-//        removeLiquidityStep.swapStepsA; // Default to []
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         removeLiquidityStep.amountAMin = 0;
         removeLiquidityStep.amountBMin = 0;
@@ -992,14 +1023,21 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA[0], tokenOutA, "AmountsA[0] should equal tokenOutA");
         assertEq(amountsB.length, 0, "AmountsB should be empty");
     }
 
-    function test_removeLiquidityFromReservoir_reservoirBNoHops(uint256 poolA, uint256 poolB, uint256 liquidity, uint8 rebaseNumerator, uint8 rebaseDenominator) public {
+    function test_removeLiquidityFromReservoir_reservoirBNoHops(
+        uint256 poolA,
+        uint256 poolB,
+        uint256 liquidity,
+        uint8 rebaseNumerator,
+        uint8 rebaseDenominator
+    ) public {
         // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -1020,7 +1058,9 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         liquidity = bound(liquidity, 1, liquidityOut);
 
         // Estimating amountA/amountB returned from removing liquidity
-        (uint256 tokenOutB, uint256 swappedReservoirAmountB) = ButtonswapLibrary.getBurnSwappedAmounts(address(buttonswapFactory), address(tokenB), address(tokenA), liquidity);
+        (uint256 tokenOutB, uint256 swappedReservoirAmountB) = ButtonswapLibrary.getBurnSwappedAmounts(
+            address(buttonswapFactory), address(tokenB), address(tokenA), liquidity
+        );
         // Ensuring that that swappedReservoirAmountB is less than the reservoir
         vm.assume(swappedReservoirAmountB < reservoirB);
         // Ensuring that swappedReservoirAmountB is less than swappableReservoirLimit
@@ -1037,8 +1077,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
-//        removeLiquidityStep.swapStepsA; // Default to []
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         removeLiquidityStep.amountAMin = 0;
         removeLiquidityStep.amountBMin = 0;
@@ -1046,7 +1086,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA.length, 0, "AmountsA should be empty");
@@ -1054,7 +1095,14 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
     }
 
     // Removing liquidity from A-reservoir in an A-B pair and swapping A->C
-    function test_removeLiquidityFromReservoir_singleSwapA(uint256 poolA, uint256 poolB, uint256 reservoirA, uint256 poolAC, uint256 poolC, uint256 liquidity) public {
+    function test_removeLiquidityFromReservoir_singleSwapA(
+        uint256 poolA,
+        uint256 poolB,
+        uint256 reservoirA,
+        uint256 poolAC,
+        uint256 poolC,
+        uint256 liquidity
+    ) public {
         // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
         poolA = bound(poolA, 10000, type(uint112).max - 1);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -1073,7 +1121,9 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         liquidity = bound(liquidity, 1, liquidityOut);
 
         // Estimating amountA/amountB returned from removing liquidity
-        (uint256 tokenOutA, uint256 swappedReservoirAmountA) = ButtonswapLibrary.getBurnSwappedAmounts(address(buttonswapFactory), address(tokenA), address(tokenB), liquidity);
+        (uint256 tokenOutA, uint256 swappedReservoirAmountA) = ButtonswapLibrary.getBurnSwappedAmounts(
+            address(buttonswapFactory), address(tokenA), address(tokenB), liquidity
+        );
         // Ensuring that that swappedReservoirAmountA is less than the reservoir
         vm.assume(swappedReservoirAmountA < reservoirA);
         // Ensuring that swappedReservoirAmountA is less than swappableReservoirLimit
@@ -1099,7 +1149,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.swapStepsA.push();
         removeLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.SWAP;
         removeLiquidityStep.swapStepsA[0].tokenOut = address(tokenC);
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         removeLiquidityStep.amountAMin = 0;
         removeLiquidityStep.amountBMin = 0;
@@ -1107,7 +1157,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA[0], tokenOutA, "AmountsA[0] should equal tokenOutA");
@@ -1116,7 +1167,14 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
     }
 
     // Removing liquidity from B-reservoir in an A-B pair and swapping B->C
-    function test_removeLiquidityFromReservoir_singleSwapB(uint256 poolA, uint256 poolB, uint256 reservoirB, uint256 poolBC, uint256 poolC, uint256 liquidity) public {
+    function test_removeLiquidityFromReservoir_singleSwapB(
+        uint256 poolA,
+        uint256 poolB,
+        uint256 reservoirB,
+        uint256 poolBC,
+        uint256 poolC,
+        uint256 liquidity
+    ) public {
         // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max - 1);
@@ -1135,7 +1193,9 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         liquidity = bound(liquidity, 1, liquidityOut);
 
         // Estimating amountA/amountB returned from removing liquidity
-        (uint256 tokenOutB, uint256 swappedReservoirAmountB) = ButtonswapLibrary.getBurnSwappedAmounts(address(buttonswapFactory), address(tokenB), address(tokenA), liquidity);
+        (uint256 tokenOutB, uint256 swappedReservoirAmountB) = ButtonswapLibrary.getBurnSwappedAmounts(
+            address(buttonswapFactory), address(tokenB), address(tokenA), liquidity
+        );
         // Ensuring that that swappedReservoirAmountB is less than the reservoir
         vm.assume(swappedReservoirAmountB < reservoirB);
         // Ensuring that swappedReservoirAmountB is less than swappableReservoirLimit
@@ -1158,7 +1218,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
-//        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
         removeLiquidityStep.swapStepsB.push();
         removeLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.SWAP;
         removeLiquidityStep.swapStepsB[0].tokenOut = address(tokenC);
@@ -1169,7 +1229,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA.length, 0, "AmountsA should be empty");
@@ -1178,7 +1239,12 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
     }
 
     // Removing liquidity from A-reservoir in an A-B pair and button-wrapping A->bA
-    function test_removeLiquidityFromReservoir_singleWrapButtonA(uint256 poolA, uint256 poolB, uint256 reservoirA, uint256 liquidity) public {
+    function test_removeLiquidityFromReservoir_singleWrapButtonA(
+        uint256 poolA,
+        uint256 poolB,
+        uint256 reservoirA,
+        uint256 liquidity
+    ) public {
         // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
         poolA = bound(poolA, 10000, type(uint112).max - 1);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -1192,7 +1258,9 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         liquidity = bound(liquidity, 1, liquidityOut);
 
         // Estimating amountA/amountB returned from removing liquidity
-        (uint256 tokenOutA, uint256 swappedReservoirAmountA) = ButtonswapLibrary.getBurnSwappedAmounts(address(buttonswapFactory), address(tokenA), address(tokenB), liquidity);
+        (uint256 tokenOutA, uint256 swappedReservoirAmountA) = ButtonswapLibrary.getBurnSwappedAmounts(
+            address(buttonswapFactory), address(tokenA), address(tokenB), liquidity
+        );
         // Ensuring that that swappedReservoirAmountA is less than the reservoir
         vm.assume(swappedReservoirAmountA < reservoirA);
         // Ensuring that swappedReservoirAmountA is less than swappableReservoirLimit
@@ -1212,7 +1280,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.swapStepsA.push();
         removeLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
         removeLiquidityStep.swapStepsA[0].tokenOut = address(buttonTokenA);
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         removeLiquidityStep.amountAMin = 0;
         removeLiquidityStep.amountBMin = 0;
@@ -1220,16 +1288,26 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA[0], tokenOutA, "AmountsA[0] should equal tokenOutA");
-        assertEq(amountsA[1], buttonTokenA.underlyingToWrapper(tokenOutA), "AmountsA[1] should equal tokenOutA converted to buttonTokenA");
+        assertEq(
+            amountsA[1],
+            buttonTokenA.underlyingToWrapper(tokenOutA),
+            "AmountsA[1] should equal tokenOutA converted to buttonTokenA"
+        );
         assertEq(amountsB.length, 0, "AmountsB should be empty");
     }
 
     // Removing liquidity from B-reservoir in an A-B pair and button-wrapping B->bB
-    function test_removeLiquidityFromReservoir_singleWrapButtonB(uint256 poolA, uint256 poolB, uint256 reservoirB, uint256 liquidity) public {
+    function test_removeLiquidityFromReservoir_singleWrapButtonB(
+        uint256 poolA,
+        uint256 poolB,
+        uint256 reservoirB,
+        uint256 liquidity
+    ) public {
         // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max - 1);
@@ -1243,7 +1321,9 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         liquidity = bound(liquidity, 1, liquidityOut);
 
         // Estimating amountA/amountB returned from removing liquidity
-        (uint256 tokenOutB, uint256 swappedReservoirAmountB) = ButtonswapLibrary.getBurnSwappedAmounts(address(buttonswapFactory), address(tokenB), address(tokenA), liquidity);
+        (uint256 tokenOutB, uint256 swappedReservoirAmountB) = ButtonswapLibrary.getBurnSwappedAmounts(
+            address(buttonswapFactory), address(tokenB), address(tokenA), liquidity
+        );
         // Ensuring that that swappedReservoirAmountB is less than the reservoir
         vm.assume(swappedReservoirAmountB < reservoirB);
         // Ensuring that swappedReservoirAmountB is less than swappableReservoirLimit
@@ -1260,7 +1340,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
-//        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
         removeLiquidityStep.swapStepsB.push();
         removeLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
         removeLiquidityStep.swapStepsB[0].tokenOut = address(buttonTokenB);
@@ -1271,20 +1351,31 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA.length, 0, "AmountsA should be empty");
         assertEq(amountsB[0], tokenOutB, "AmountsB[0] should equal tokenOutB");
-        assertEq(amountsB[1], buttonTokenB.underlyingToWrapper(tokenOutB), "AmountsB[1] should equal tokenOutB converted to buttonTokenB");
+        assertEq(
+            amountsB[1],
+            buttonTokenB.underlyingToWrapper(tokenOutB),
+            "AmountsB[1] should equal tokenOutB converted to buttonTokenB"
+        );
     }
 
     // Removing liquidity from A-reservoir in a bA-B pair and button-wrapping bA->A
-    function test_removeLiquidityFromReservoir_singleUnwrapButtonA(uint256 poolButtonA, uint256 poolB, uint256 reservoirButtonA, uint256 liquidity) public {
+    function test_removeLiquidityFromReservoir_singleUnwrapButtonA(
+        uint256 poolButtonA,
+        uint256 poolB,
+        uint256 reservoirButtonA,
+        uint256 liquidity
+    ) public {
         // Creating bA-B pair with at least minimum liquidity and poolButtonA:poolB price ratio
         poolButtonA = bound(poolButtonA, 10000, type(uint112).max - 1);
         poolB = bound(poolB, 10000, type(uint112).max);
-        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePairButton(tokenB, buttonTokenA, poolB, poolButtonA);
+        (IButtonswapPair pair, uint256 liquidityOut) =
+            createAndInitializePairButton(tokenB, buttonTokenA, poolB, poolButtonA);
 
         // Creating an artificial reservoir by donating buttonTokenA to the pair
         reservoirButtonA = bound(reservoirButtonA, 1, type(uint112).max - poolButtonA);
@@ -1297,7 +1388,9 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         liquidity = bound(liquidity, 1, liquidityOut);
 
         // Estimating amountButtonA/amountB returned from removing liquidity
-        (uint256 tokenOutButtonA, uint256 swappedReservoirAmountButtonA) = ButtonswapLibrary.getBurnSwappedAmounts(address(buttonswapFactory), address(buttonTokenA), address(tokenB), liquidity);
+        (uint256 tokenOutButtonA, uint256 swappedReservoirAmountButtonA) = ButtonswapLibrary.getBurnSwappedAmounts(
+            address(buttonswapFactory), address(buttonTokenA), address(tokenB), liquidity
+        );
         // Ensuring that that swappedReservoirAmountButtonA is less than the reservoir
         vm.assume(swappedReservoirAmountButtonA < reservoirButtonA);
         // Ensuring that swappedReservoirAmountButtonA is less than swappableReservoirLimit
@@ -1317,7 +1410,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.swapStepsA.push();
         removeLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
         removeLiquidityStep.swapStepsA[0].tokenOut = address(tokenA);
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         removeLiquidityStep.amountAMin = 0;
         removeLiquidityStep.amountBMin = 0;
@@ -1325,20 +1418,31 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA[0], tokenOutButtonA, "AmountsA[0] should equal tokenOutButtonA");
-        assertEq(amountsA[1], buttonTokenA.wrapperToUnderlying(tokenOutButtonA), "AmountsA[1] should equal tokenOutButtonA converted to tokenA");
+        assertEq(
+            amountsA[1],
+            buttonTokenA.wrapperToUnderlying(tokenOutButtonA),
+            "AmountsA[1] should equal tokenOutButtonA converted to tokenA"
+        );
         assertEq(amountsB.length, 0, "AmountsB should be empty");
     }
 
     // Removing liquidity from B-reservoir in a A-Bb pair and button-wrapping bB->B
-    function test_removeLiquidityFromReservoir_singleUnwrapButtonB(uint256 poolA, uint256 poolButtonB, uint256 reservoirButtonB, uint256 liquidity) public {
+    function test_removeLiquidityFromReservoir_singleUnwrapButtonB(
+        uint256 poolA,
+        uint256 poolButtonB,
+        uint256 reservoirButtonB,
+        uint256 liquidity
+    ) public {
         // Creating A-bB pair with at least minimum liquidity and poolA:poolButtonB price ratio
         poolA = bound(poolA, 10000, type(uint112).max);
         poolButtonB = bound(poolButtonB, 10000, type(uint112).max - 1);
-        (IButtonswapPair pair, uint256 liquidityOut) = createAndInitializePairButton(tokenA, buttonTokenB, poolA, poolButtonB);
+        (IButtonswapPair pair, uint256 liquidityOut) =
+            createAndInitializePairButton(tokenA, buttonTokenB, poolA, poolButtonB);
 
         // Creating an artificial reservoir by donating buttonTokenB to the pair
         reservoirButtonB = bound(reservoirButtonB, 1, type(uint112).max - poolButtonB);
@@ -1351,7 +1455,9 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         liquidity = bound(liquidity, 1, liquidityOut);
 
         // Estimating amountButtonA/amountB returned from removing liquidity
-        (uint256 tokenOutButtonB, uint256 swappedReservoirAmountButtonB) = ButtonswapLibrary.getBurnSwappedAmounts(address(buttonswapFactory), address(buttonTokenB), address(tokenA), liquidity);
+        (uint256 tokenOutButtonB, uint256 swappedReservoirAmountButtonB) = ButtonswapLibrary.getBurnSwappedAmounts(
+            address(buttonswapFactory), address(buttonTokenB), address(tokenA), liquidity
+        );
         // Ensuring that that swappedReservoirAmountButtonB is less than the reservoir
         vm.assume(swappedReservoirAmountButtonB < reservoirButtonB);
         // Ensuring that swappedReservoirAmountButtonB is less than swappableReservoirLimit
@@ -1368,7 +1474,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(buttonTokenB);
-//        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
         removeLiquidityStep.swapStepsB.push();
         removeLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
         removeLiquidityStep.swapStepsB[0].tokenOut = address(tokenB);
@@ -1379,18 +1485,28 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA.length, 0, "AmountsB should be empty");
         assertEq(amountsB[0], tokenOutButtonB, "AmountsA[0] should equal tokenOutButtonB");
-        assertEq(amountsB[1], buttonTokenB.wrapperToUnderlying(tokenOutButtonB), "AmountsB[1] should equal tokenOutButtonB converted to tokenB");
+        assertEq(
+            amountsB[1],
+            buttonTokenB.wrapperToUnderlying(tokenOutButtonB),
+            "AmountsB[1] should equal tokenOutButtonB converted to tokenB"
+        );
     }
 
     // test_removeLiquidityFromReservoir_singleWrapWeth not a viable test-cases since pairs can't accept raw-ETH
 
     // Removing liquidity from A-reservoir in a WETH-B pair and weth-unwrapping WETH->ETH
-    function test_removeLiquidityFromReservoir_singleUnwrapWethA(uint256 poolWETH, uint256 poolB, uint256 reservoirWETH, uint256 liquidity) public {
+    function test_removeLiquidityFromReservoir_singleUnwrapWethA(
+        uint256 poolWETH,
+        uint256 poolB,
+        uint256 reservoirWETH,
+        uint256 liquidity
+    ) public {
         // Creating WETH-B pair with at least minimum liquidity and poolWETH:poolB price ratio
         poolWETH = bound(poolWETH, 10000, type(uint112).max - 1);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -1406,7 +1522,9 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         liquidity = bound(liquidity, 1, liquidityOut);
 
         // Estimating amountButtonA/amountB returned from removing liquidity
-        (uint256 tokenOutWETH, uint256 swappedReservoirAmountWETH) = ButtonswapLibrary.getBurnSwappedAmounts(address(buttonswapFactory), address(weth), address(tokenB), liquidity);
+        (uint256 tokenOutWETH, uint256 swappedReservoirAmountWETH) = ButtonswapLibrary.getBurnSwappedAmounts(
+            address(buttonswapFactory), address(weth), address(tokenB), liquidity
+        );
         // Ensuring that that swappedReservoirAmountWETH is less than the reservoir
         vm.assume(swappedReservoirAmountWETH < reservoirWETH);
         // Ensuring that swappedReservoirAmountWETH is less than swappableReservoirLimit
@@ -1426,7 +1544,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.swapStepsA.push();
         removeLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.UNWRAP_WETH;
         removeLiquidityStep.swapStepsA[0].tokenOut = address(0);
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         removeLiquidityStep.amountAMin = 0;
         removeLiquidityStep.amountBMin = 0;
@@ -1434,7 +1552,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA[0], tokenOutWETH, "AmountsA[0] should equal tokenOutWETH in WETH");
@@ -1442,8 +1561,13 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         assertEq(amountsB.length, 0, "AmountsB should be empty");
     }
 
-//    // Removing liquidity from B-reservoir in a A-WETH pair and weth-unwrapping WETH->ETH
-    function test_removeLiquidityFromReservoir_singleUnwrapWethB(uint256 poolA, uint256 poolWETH, uint256 reservoirWETH, uint256 liquidity) public {
+    //    // Removing liquidity from B-reservoir in a A-WETH pair and weth-unwrapping WETH->ETH
+    function test_removeLiquidityFromReservoir_singleUnwrapWethB(
+        uint256 poolA,
+        uint256 poolWETH,
+        uint256 reservoirWETH,
+        uint256 liquidity
+    ) public {
         // Creating A-WETH pair with at least minimum liquidity and poolA:poolWETH price ratio
         poolA = bound(poolA, 10000, type(uint112).max);
         poolWETH = bound(poolWETH, 10000, type(uint112).max - 1);
@@ -1459,7 +1583,9 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         liquidity = bound(liquidity, 1, liquidityOut);
 
         // Estimating amountButtonA/amountB returned from removing liquidity
-        (uint256 tokenOutWETH, uint256 swappedReservoirAmountWETH) = ButtonswapLibrary.getBurnSwappedAmounts(address(buttonswapFactory), address(weth), address(tokenA), liquidity);
+        (uint256 tokenOutWETH, uint256 swappedReservoirAmountWETH) = ButtonswapLibrary.getBurnSwappedAmounts(
+            address(buttonswapFactory), address(weth), address(tokenA), liquidity
+        );
         // Ensuring that that swappedReservoirAmountWETH is less than the reservoir
         vm.assume(swappedReservoirAmountWETH < reservoirWETH);
         // Ensuring that swappedReservoirAmountWETH is less than swappableReservoirLimit
@@ -1476,7 +1602,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(weth);
-//        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
         removeLiquidityStep.swapStepsB.push();
         removeLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.UNWRAP_WETH;
         removeLiquidityStep.swapStepsB[0].tokenOut = address(0);
@@ -1487,7 +1613,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA.length, 0, "amountsA should be empty");
@@ -1495,7 +1622,9 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         assertEq(amountsB[1], tokenOutWETH, "amountsB[1] should equal tokenOutWETH in ETH");
     }
 
-    function test_removeLiquidityWithPermit_specificPermission(uint256 poolA, uint256 poolB, uint256 liquidity) public {
+    function test_removeLiquidityWithPermit_specificPermission(uint256 poolA, uint256 poolB, uint256 liquidity)
+        public
+    {
         // Creating A-B pair with at least minimum liquidity and poolA:poolB price ratio
         poolA = bound(poolA, 10000, type(uint112).max);
         poolB = bound(poolB, 10000, type(uint112).max);
@@ -1515,8 +1644,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
-//        removeLiquidityStep.swapStepsA; // Default to []
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         removeLiquidityStep.amountAMin = 0;
         removeLiquidityStep.amountBMin = 0;
@@ -1528,15 +1657,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
 
         // Removing liquidity as userA
         vm.prank(userA);
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidityWithPermit(
-            removeLiquidityStep,
-            to,
-            deadline,
-            false,
-            v,
-            r,
-            s
-        );
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidityWithPermit(removeLiquidityStep, to, deadline, false, v, r, s);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
@@ -1563,8 +1685,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
         removeLiquidityStep.tokenA = address(tokenA);
         removeLiquidityStep.tokenB = address(tokenB);
-//        removeLiquidityStep.swapStepsA; // Default to []
-//        removeLiquidityStep.swapStepsB; // Default to []
+        //        removeLiquidityStep.swapStepsA; // Default to []
+        //        removeLiquidityStep.swapStepsB; // Default to []
         removeLiquidityStep.liquidity = liquidity;
         removeLiquidityStep.amountAMin = 0;
         removeLiquidityStep.amountBMin = 0;
@@ -1572,19 +1694,13 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 deadline = block.timestamp + 1000;
 
         // Generating the v,r,s signature for userA to allow access to the pair
-        (uint8 v, bytes32 r, bytes32 s) = generateUserPermitSignature(userA, userAPrivateKey, pair, type(uint256).max, deadline);
+        (uint8 v, bytes32 r, bytes32 s) =
+            generateUserPermitSignature(userA, userAPrivateKey, pair, type(uint256).max, deadline);
 
         // Removing liquidity as userA
         vm.prank(userA);
-        (uint256[] memory amountsA, uint256[] memory amountsB) = genericButtonswapRouter.removeLiquidityWithPermit(
-            removeLiquidityStep,
-            to,
-            deadline,
-            true,
-            v,
-            r,
-            s
-        );
+        (uint256[] memory amountsA, uint256[] memory amountsB) =
+            genericButtonswapRouter.removeLiquidityWithPermit(removeLiquidityStep, to, deadline, true, v, r, s);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");

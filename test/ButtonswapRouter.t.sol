@@ -51,8 +51,9 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         (isPausedSetter, isPausedSetterPrivateKey) = makeAddrAndKey("isPausedSetter");
         (paramSetter, paramSetterPrivateKey) = makeAddrAndKey("paramSetter");
         weth = new MockWeth();
-        buttonswapFactory =
-        new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "LP Token", "LP");
+        buttonswapFactory = new ButtonswapFactory(
+            feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "LP Token", "LP"
+        );
         buttonswapRouter = new ButtonswapRouter(address(buttonswapFactory), address(weth));
     }
 

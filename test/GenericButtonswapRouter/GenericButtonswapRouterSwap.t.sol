@@ -107,8 +107,9 @@ contract GenericButtonswapRouterSwapTest is Test, IGenericButtonswapRouterErrors
         tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
         buttonTokenA = new MockButtonToken(address(tokenA));
         weth = new MockWeth();
-        buttonswapFactory =
-        new ButtonswapFactory(feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "Token Name", "SYMBOL");
+        buttonswapFactory = new ButtonswapFactory(
+            feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "Token Name", "SYMBOL"
+        );
         genericButtonswapRouter = new GenericButtonswapRouter(address(buttonswapFactory), address(weth));
     }
 
@@ -235,7 +236,10 @@ contract GenericButtonswapRouterSwapTest is Test, IGenericButtonswapRouterErrors
         );
     }
 
-    function test_swapExactTokensForTokens_singleWrapButtonIncorrectButtonPairing(uint256 amountIn, uint256 amountOutMin) public {
+    function test_swapExactTokensForTokens_singleWrapButtonIncorrectButtonPairing(
+        uint256 amountIn,
+        uint256 amountOutMin
+    ) public {
         // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
         amountIn = bound(amountIn, 0, tokenA.mintableBalance());
 
@@ -319,7 +323,10 @@ contract GenericButtonswapRouterSwapTest is Test, IGenericButtonswapRouterErrors
         );
     }
 
-    function test_swapExactTokensForTokens_singleUnwrapButtonIncorrectButtonPairing(uint256 amountIn, uint256 amountOutMin) public {
+    function test_swapExactTokensForTokens_singleUnwrapButtonIncorrectButtonPairing(
+        uint256 amountIn,
+        uint256 amountOutMin
+    ) public {
         // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
         amountIn = bound(amountIn, 0, tokenA.mintableBalance());
 

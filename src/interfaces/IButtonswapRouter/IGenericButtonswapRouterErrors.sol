@@ -61,37 +61,39 @@ interface IGenericButtonswapRouterErrors {
 
     // **** AddLiquidity Errors **** //
     /**
-    * @notice movingAveragePrice0 is out of specified bounds
-    * @param pool0 The amount in pool0
-    * @param pool1 The amount in pool1
-    * @param movingAveragePrice0 The current movingAveragePrice0 of the pair
-    * @param movingAveragePrice0ThresholdBps The threshold of deviation of movingAveragePrice0 from the pool price
-    */
-    error MovingAveragePriceOutOfBounds(uint256 pool0, uint256 pool1, uint256 movingAveragePrice0, uint16 movingAveragePrice0ThresholdBps);
+     * @notice movingAveragePrice0 is out of specified bounds
+     * @param pool0 The amount in pool0
+     * @param pool1 The amount in pool1
+     * @param movingAveragePrice0 The current movingAveragePrice0 of the pair
+     * @param movingAveragePrice0ThresholdBps The threshold of deviation of movingAveragePrice0 from the pool price
+     */
+    error MovingAveragePriceOutOfBounds(
+        uint256 pool0, uint256 pool1, uint256 movingAveragePrice0, uint16 movingAveragePrice0ThresholdBps
+    );
 
     // **** AddLiquidity/RemoveLiquidity Errors **** //
     /**
-    * @notice Insufficient amount of token available
-    * @param token The address of token
-    * @param amount The amount of token available
-    * @param requiredAmount The amount of token required
-    */
+     * @notice Insufficient amount of token available
+     * @param token The address of token
+     * @param amount The amount of token available
+     * @param requiredAmount The amount of token required
+     */
     error InsufficientTokenAmount(address token, uint256 amount, uint256 requiredAmount);
 
     /**
-    * @notice Pair does not exist
-    * @param tokenA The address of tokenA
-    * @param tokenB The address of tokenB
-    */
+     * @notice Pair does not exist
+     * @param tokenA The address of tokenA
+     * @param tokenB The address of tokenB
+     */
     error PairDoesNotExist(address tokenA, address tokenB);
 
     /**
-    * @notice Pair has not yet been initialized
-    */
+     * @notice Pair has not yet been initialized
+     */
     error NotInitialized(address pair);
 
     /**
-    * @notice Neither token in the pair has a non-empty reservoir
-    */
+     * @notice Neither token in the pair has a non-empty reservoir
+     */
     error NoReservoir(address pair);
 }
