@@ -65,6 +65,8 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
     }
 
     function setUp() public {
+        deployCodeTo("MockBlastERC20Rebasing.sol", 0x4200000000000000000000000000000000000022);
+        deployCodeTo("MockBlastERC20Rebasing.sol", 0x4200000000000000000000000000000000000023);
         (feeToSetter, feeToSetterPrivateKey) = makeAddrAndKey("feeToSetter");
         (isCreationRestrictedSetter, isCreationRestrictedSetterPrivateKey) =
             makeAddrAndKey("isCreationRestrictedSetter");
