@@ -56,6 +56,8 @@ contract ButtonswapLibraryTest is Test {
     }
 
     function setUp() public {
+        deployCodeTo("MockBlastERC20Rebasing.sol", 0x4200000000000000000000000000000000000022);
+        deployCodeTo("MockBlastERC20Rebasing.sol", 0x4200000000000000000000000000000000000023);
         buttonswapFactory = new ButtonswapFactory(
             feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "LP Token", "LP"
         );
