@@ -5,7 +5,6 @@ import {IButtonswapFactory} from
     "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapFactory/IButtonswapFactory.sol";
 import {IButtonswapPair} from "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPair.sol";
 import {TransferHelper} from "./libraries/TransferHelper.sol";
-import {IERC20} from "./interfaces/IERC20.sol";
 
 contract PairLauncher {
     struct PairData {
@@ -27,14 +26,21 @@ contract PairLauncher {
         _;
     }
 
-    constructor(address _launcher, address isCreationRestrictedSetter, address _factory) {
+    modifier onlyLauncherOrOriginalSetter() {
+        if (msg.sender != launcher && msg.sender != originalIsCreationRestrictedSetter) {
+            revert();
+        }
+        _;
+    }
+
+    constructor(address _launcher, address _originalIsCreationRestrictedSetter, address _factory) {
         launcher = _launcher;
-        originalgity IsCreationRestrictedSetter = isCreationRestrictedSetter;
+        originalIsCreationRestrictedSetter = _originalIsCreationRestrictedSetter;
         factory = IButtonswapFactory(_factory);
     }
 
     // Only callable by the launcher
-    function returnPermissions() external onlyLauncher {
+    function returnPermissions() external onlyLauncherOrOriginalSetter {
         factory.setIsCreationRestrictedSetter(originalIsCreationRestrictedSetter);
     }
 
@@ -73,5 +79,12 @@ contract PairLauncher {
             }
             _createTopPair();
         }
+    }
+
+    function destroy() external onlyLauncherOrOriginalSetter {
+        if (factory.isCreationRestrictedSetter() != originalIsCreationRestrictedSetter) {
+            revert();
+        }
+        selfdestruct(payable(launcher));
     }
 }
