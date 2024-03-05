@@ -243,8 +243,13 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         returns (uint256 amountOut)
     {
         amountOut = amountIn;
-        for (uint256 i = 0; i < swapSteps.length; i++) {
-            amountOut = _getAmountOut(tokenIn, amountOut, swapSteps[i]);
+        if (swapSteps.length > 0) {
+            // Do the first iteration outside of the loop since we need to use tokenIn
+            amountOut = _getAmountOut(tokenIn, amountOut, swapSteps[0]);
+
+            for (uint256 i = 1; i < swapSteps.length; i++) {
+                amountOut = _getAmountOut(swapSteps[i - 1].tokenOut, amountOut, swapSteps[i]);
+            }
         }
     }
 
