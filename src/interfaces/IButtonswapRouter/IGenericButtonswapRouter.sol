@@ -87,6 +87,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * @param swapSteps An array of SwapStep structs representing the path the input token takes to get to the output token
      * @param to The address to send the output token to.
      * @param deadline The time after which this transaction can no longer be executed.
+     * @return amounts The amounts of each token received during the execution of swapSteps
      */
     function swapExactTokensForTokens(
         address tokenIn,
@@ -120,6 +121,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * @param swapSteps An array of SwapStep structs representing the path the input token takes to get to the output token
      * @param to The address to send the output token to.
      * @param deadline The time after which this transaction can no longer be executed.
+     * @return amounts The amounts of each token received during the execution of swapSteps
      */
     function swapTokensForExactTokens(
         address tokenIn,
@@ -161,6 +163,9 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * @param addLiquidityStep The AddLiquidityStep struct containing all the parameters necessary to add liquidity
      * @param to The address to send the liquidity tokens to.
      * @param deadline The time after which this transaction can no longer be executed.
+     * @return amountsA The amounts of each tokenA received during the execution of swapStepsA before adding liquidity
+     * @return amountsB The amounts of each tokenB received during the execution of swapStepsB before adding liquidity
+     * @return liquidity The amount of liquidity tokens minted
      */
     function addLiquidity(AddLiquidityStep calldata addLiquidityStep, address to, uint256 deadline)
         external
@@ -196,6 +201,8 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * @param removeLiquidityStep The RemoveLiquidityStep struct containing all the parameters necessary to remove liquidity
      * @param to The address to send the tokens to.
      * @param deadline The time after which this transaction can no longer be executed.
+     * @return amountsA The amounts of each tokenA received during the execution of swapStepsA after removing liquidity
+     * @return amountsB The amounts of each tokenB received during the execution of swapStepsB after removing liquidity
      */
     function removeLiquidity(RemoveLiquidityStep calldata removeLiquidityStep, address to, uint256 deadline)
         external
@@ -233,6 +240,8 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * @param v Part of the signature
      * @param r Part of the signature
      * @param s Part of the signature
+     * @return amountsA The amounts of each tokenA received during the execution of swapStepsA after removing liquidity
+     * @return amountsB The amounts of each tokenB received during the execution of swapStepsB after removing liquidity
      */
     function removeLiquidityWithPermit(
         RemoveLiquidityStep calldata removeLiquidityStep,
