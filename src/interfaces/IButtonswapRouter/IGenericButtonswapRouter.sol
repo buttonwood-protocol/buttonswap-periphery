@@ -81,6 +81,18 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
 
     /**
      * @notice Given an ordered array of tokens, performs consecutive swaps/transformation operations from a specific amount of the first token to the last token in the swapSteps array.
+     * @dev Example: exact ETH -> WETH -> stETH
+     * swapExactTokensForTokens(
+     *     address(0),
+     *     5*10**18,
+     *     4*10**18,
+     *     [
+     *         IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.WRAP_ETH, address(weth)),
+     *         IGenericButtonswapRouter.SwapStep(ButtonSwapOperation.Swap.SWAP, address(stETH))
+     *     ],
+     *     toAddress,
+     *     deadline
+     * );
      * @param tokenIn The address of the input token
      * @param amountIn The amount of the first token to swap
      * @param amountOutMin The minimum amount of the last token to receive from the swap
@@ -97,24 +109,23 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
         address to,
         uint256 deadline
     ) external payable returns (uint256[] memory amounts);
-    // Example: exact ETH > WETH > stETH
-    /**
-     * swapExactTokensForTokens(
-     *     address(0),
-     *     5*10**18,
-     *     4*10**18,
-     *     [
-     *         IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.WRAP_ETH, address(weth)),
-     *         IGenericButtonswapRouter.SwapStep(ButtonSwapOperation.Swap.SWAP, address(stETH))
-     *     ],
-     *     toAddress,
-     *     deadline
-     * );
-     */
+    //
 
     /**
      * @notice Given an ordered array of tokens, performs consecutive swaps/transformation operations from the first token to a specific amount of the last token in the swapSteps array.
      * @dev Note: If there is excess balance stored in the contract, it will be transferred out. Thus the actual amount received may be more than the `amountOut` specified.
+     * @dev: Example: stETH -> rrETH -> rETH
+     * swapTokensForExactTokens(
+     *     address(stETH)
+     *     4*10**18,
+     *     5*10**18,
+     *     [
+     *         IGenericButtonswapRouter.SwapStep(ButtonSwapOperation.Swap.SWAP, address(rebasingRocketEth))
+     *         IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.UNWRAP_BUTTON, address(rocketETH)),
+     *     ],
+     *     toAddress,
+     *     deadline
+     * );
      * @param tokenIn The address of the input token
      * @param amountOut The amount of the last token to receive from the swap.
      * @param amountInMax The maximum amount of the first token to swap.
@@ -131,20 +142,6 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
         address to,
         uint256 deadline
     ) external payable returns (uint256[] memory amounts);
-    // Example: stETH > rrETH > rETH
-    /**
-     * swapTokensForExactTokens(
-     *     address(stETH)
-     *     4*10**18,
-     *     5*10**18,
-     *     [
-     *         IGenericButtonswapRouter.SwapStep(ButtonSwapOperation.Swap.SWAP, address(rebasingRocketEth))
-     *         IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.UNWRAP_BUTTON, address(rocketETH)),
-     *     ],
-     *     toAddress,
-     *     deadline
-     * );
-     */
 
     /**
      * @notice Adds liquidity to a pair and transfers the liquidity tokens to the recipient.
@@ -160,19 +157,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * 1. If there is no reservoir, it rejects
      * 2. The token corresponding to the existing reservoir has its corresponding amountDesired parameter ignored
      * 3. The reservoir is deducted from and transformed into the corresponding output token (after applying swapSteps), and then checked against corresponding amountMin parameter.
-     * @param addLiquidityStep The AddLiquidityStep struct containing all the parameters necessary to add liquidity
-     * @param to The address to send the liquidity tokens to.
-     * @param deadline The time after which this transaction can no longer be executed.
-     * @return amountsA The amounts of each tokenA received during the execution of swapStepsA before adding liquidity
-     * @return amountsB The amounts of each tokenB received during the execution of swapStepsB before adding liquidity
-     * @return liquidity The amount of liquidity tokens minted
-     */
-    function addLiquidity(AddLiquidityStep calldata addLiquidityStep, address to, uint256 deadline)
-        external
-        payable
-        returns (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity);
-    // Example: (ETH -> WETH) + (rETH -> rrETH)
-    /**
+     * @dev Example: (ETH -> WETH) + (rETH -> rrETH)
      * addLiquidity(
      *     IGenericButtonswapRouter.AddLiquidityStep(
      *         ButtonswapOperations.Liquidity.DUAL,
@@ -193,22 +178,22 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      *     toAddress,
      *     deadline
      * );
+     * @param addLiquidityStep The AddLiquidityStep struct containing all the parameters necessary to add liquidity
+     * @param to The address to send the liquidity tokens to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     * @return amountsA The amounts of each tokenA received during the execution of swapStepsA before adding liquidity
+     * @return amountsB The amounts of each tokenB received during the execution of swapStepsB before adding liquidity
+     * @return liquidity The amount of liquidity tokens minted
      */
+    function addLiquidity(AddLiquidityStep calldata addLiquidityStep, address to, uint256 deadline)
+        external
+        payable
+        returns (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity);
 
     /**
      * @notice Removes liquidity from a pair, and transfers the tokens to the recipient.
      * @dev `removeLiquidityStep.liquidity` determines whether to perform dual- or single- sided liquidity withdrawal.
-     * @param removeLiquidityStep The RemoveLiquidityStep struct containing all the parameters necessary to remove liquidity
-     * @param to The address to send the tokens to.
-     * @param deadline The time after which this transaction can no longer be executed.
-     * @return amountsA The amounts of each tokenA received during the execution of swapStepsA after removing liquidity
-     * @return amountsB The amounts of each tokenB received during the execution of swapStepsB after removing liquidity
-     */
-    function removeLiquidity(RemoveLiquidityStep calldata removeLiquidityStep, address to, uint256 deadline)
-        external
-        returns (uint256[] memory amountsA, uint256[] memory amountsB);
-    // Example: (WETH -> ETH) - (rrETH -> stETH)
-    /**
+     * @dev Example: (WETH -> ETH) - (rrETH -> stETH)
      * removeLiquidity(
      *     IGenericButtonswapRouter.RemoveLiquidityStep(
      *         ButtonswapOperations.Liquidity.DUAL,
@@ -228,7 +213,15 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      *     toAddress,
      *     deadline
      * );
+     * @param removeLiquidityStep The RemoveLiquidityStep struct containing all the parameters necessary to remove liquidity
+     * @param to The address to send the tokens to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     * @return amountsA The amounts of each tokenA received during the execution of swapStepsA after removing liquidity
+     * @return amountsB The amounts of each tokenB received during the execution of swapStepsB after removing liquidity
      */
+    function removeLiquidity(RemoveLiquidityStep calldata removeLiquidityStep, address to, uint256 deadline)
+        external
+        returns (uint256[] memory amountsA, uint256[] memory amountsB);
 
     /**
      * @notice Similar to `removeLiquidity()` but utilizes the Permit signatures to reduce gas consumption.
