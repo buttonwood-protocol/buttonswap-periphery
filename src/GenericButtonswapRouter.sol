@@ -158,7 +158,8 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amountIn);
         }
 
-        // Doing the swaps one-by-one and re-using tokenIn/amountIn as tokenOut/amountOut
+        // Doing the swaps one-by-one
+        // Repurposing tokenIn/amountIn variables to represent finalTokenOut/finalAmountOut to save gas
         (amounts, tokenIn, amountIn) = _swapExactTokensForTokens(tokenIn, amountIn, swapSteps);
 
         // Confirm that the final amountOut is greater than or equal to the amountOutMin
@@ -343,7 +344,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
                 }
                 (amountA, amountB) = (addLiquidityParams.amountADesired, amountOptimal);
             } else {
-                // Calculate optimal amountA (re-using variable) and check if it fits
+                // Calculate optimal amountA (repurposing variable to save gas) and check if it fits
                 amountOptimal = _getAmountIn(
                     addLiquidityParams.tokenA,
                     ButtonswapLibrary.quote(
@@ -588,7 +589,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
 
         // ToDo: Take this code block and re-use as internal function? (probably don't have to re-use addliquidity-parts)
-        // Re-using amountA/amountB to calculate final output amount of tokenA/tokenB (after all the swaps)
+        // Repurposing amountA/amountB variables to represent finalOutputAmountA/finalOutputAmountB (after all the swaps) to save gas
         address finalTokenA;
         address finalTokenB;
         (amountsA, finalTokenA, amountA) =
@@ -626,7 +627,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
 
         // ToDo: Take this code block and re-use as internal function? (probably don't have to re-use addliquidity-parts)
-        // Re-using amountA/amountB to calculate final output amount of tokenA/tokenB (after all the swaps)
+        // Repurposing amountA/amountB variables to represent finalOutputAmountA/finalOutputAmountB (after all the swaps) to save gas
         address finalTokenA;
         address finalTokenB;
         if (amountA > 0) {
