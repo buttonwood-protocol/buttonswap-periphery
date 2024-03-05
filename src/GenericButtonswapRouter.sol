@@ -285,6 +285,23 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         _transferTokensOut(tokenIn, swapSteps, to);
     }
 
+    function _transferSwapStepsIn(address pair, address tokenIn, uint256 amountIn, SwapStep[] calldata swapSteps)
+        internal
+        returns (uint256[] memory amounts, uint256 finalAmountIn)
+    {
+        // Transferring in tokenA from user if first swapStepsA is not wrap-weth
+        if (swapSteps.length == 0 || swapSteps[0].operation != ButtonswapOperations.Swap.WRAP_WETH) {
+            TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amountIn);
+        }
+
+        // Repurposing tokenIn/amountIn variables as finalTokenIn/finalAmountIn to save gas
+        (amounts, tokenIn, amountIn) = _swapExactTokensForTokens(tokenIn, amountIn, swapSteps);
+
+        // Approving final tokenA for transfer to pair
+        TransferHelper.safeApprove(tokenIn, pair, amountIn);
+        finalAmountIn = amountIn;
+    }
+
     // ToDo: Move to a library function?
     function _validateMovingAveragePrice0Threshold(
         uint16 movingAveragePrice0ThresholdBps,
@@ -382,33 +399,10 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         // Calculating how much of tokenA and tokenB to take from user
         (uint256 amountA, uint256 amountB) = _calculateDualSidedAddAmounts(addLiquidityParams, pair, aToken0);
 
-        // ToDo: Take this code block and re-use as internal function?
-        address tokenA = addLiquidityParams.tokenA;
-        address tokenB = addLiquidityParams.tokenB;
-        // Transferring in tokenA from user if first swapStepsA is not wrap-weth
-        if (
-            addLiquidityParams.swapStepsA.length == 0
-                || addLiquidityParams.swapStepsA[0].operation != ButtonswapOperations.Swap.WRAP_WETH
-        ) {
-            TransferHelper.safeTransferFrom(tokenA, msg.sender, address(this), amountA);
-        }
-        // Transferring in tokenB from user if first swapStepsB is not wrap-weth
-        if (
-            addLiquidityParams.swapStepsB.length == 0
-                || addLiquidityParams.swapStepsB[0].operation != ButtonswapOperations.Swap.WRAP_WETH
-        ) {
-            TransferHelper.safeTransferFrom(tokenB, msg.sender, address(this), amountB);
-        }
-
-        // Reusing tokenA/amountA as finalTokenA/finalAmountA and likewise for tokenB
-        (amountsA, tokenA, amountA) = _swapExactTokensForTokens(tokenA, amountA, addLiquidityParams.swapStepsA);
-        (amountsB, tokenB, amountB) = _swapExactTokensForTokens(tokenB, amountB, addLiquidityParams.swapStepsB);
-        // ToDo: Up to here
-
-        // Approving final tokenA for transfer to pair
-        TransferHelper.safeApprove(tokenA, address(pair), amountA);
-        // Approving final tokenB for transfer to pair
-        TransferHelper.safeApprove(tokenB, address(pair), amountB);
+        (amountsA, amountA) =
+            _transferSwapStepsIn(address(pair), addLiquidityParams.tokenA, amountA, addLiquidityParams.swapStepsA);
+        (amountsB, amountB) =
+            _transferSwapStepsIn(address(pair), addLiquidityParams.tokenB, amountB, addLiquidityParams.swapStepsB);
 
         if (aToken0) {
             liquidity = pair.mint(amountA, amountB, to);
@@ -503,33 +497,12 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             _calculateSingleSidedAddAmounts(addLiquidityParams, pair, pairTokenA, pairTokenB);
 
         if (amountA > 0) {
-            address tokenA = addLiquidityParams.tokenA;
-            // Transferring in tokenA from user if first swapStepsA is not wrap-weth
-            if (
-                addLiquidityParams.swapStepsA.length == 0
-                    || addLiquidityParams.swapStepsA[0].operation != ButtonswapOperations.Swap.WRAP_WETH
-            ) {
-                TransferHelper.safeTransferFrom(tokenA, msg.sender, address(this), amountA);
-            }
-            // Reusing tokenA/amountA as finalTokenA/finalAmountA
-            (amountsA, tokenA, amountA) = _swapExactTokensForTokens(tokenA, amountA, addLiquidityParams.swapStepsA);
-
-            // Approving final tokenA for transfer to pair
-            TransferHelper.safeApprove(tokenA, address(pair), amountA);
+            (amountsA, amountA) =
+                _transferSwapStepsIn(address(pair), addLiquidityParams.tokenA, amountA, addLiquidityParams.swapStepsA);
             liquidity = pair.mintWithReservoir(amountA, to);
         } else if (amountB > 0) {
-            address tokenB = addLiquidityParams.tokenB;
-            // Transferring in tokenB from user if first swapStepsB is not wrap-weth
-            if (
-                addLiquidityParams.swapStepsB.length == 0
-                    || addLiquidityParams.swapStepsB[0].operation != ButtonswapOperations.Swap.WRAP_WETH
-            ) {
-                TransferHelper.safeTransferFrom(tokenB, msg.sender, address(this), amountB);
-            }
-            // Reusing tokenB/amountB as finalTokenB/finalAmountB
-            (amountsB, tokenB, amountB) = _swapExactTokensForTokens(tokenB, amountB, addLiquidityParams.swapStepsB);
-            // Approving final tokenB for transfer to pair
-            TransferHelper.safeApprove(tokenB, address(pair), amountB);
+            (amountsB, amountB) =
+                _transferSwapStepsIn(address(pair), addLiquidityParams.tokenB, amountB, addLiquidityParams.swapStepsB);
             liquidity = pair.mintWithReservoir(amountB, to);
         }
     }
