@@ -49,7 +49,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     // **** TransformOperations **** //
 
     // Swap
-    function _swap(address tokenIn, address tokenOut) internal virtual returns (uint256 amountOut) {
+    function _swap(address tokenIn, address tokenOut) internal returns (uint256 amountOut) {
         IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, tokenIn, tokenOut));
         uint256 amountIn = IERC20(tokenIn).balanceOf(address(this));
 
@@ -65,7 +65,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     }
 
     // Wrap-Button
-    function _wrapButton(address tokenIn, address tokenOut) internal virtual returns (uint256 amountOut) {
+    function _wrapButton(address tokenIn, address tokenOut) internal returns (uint256 amountOut) {
         if (IButtonToken(tokenOut).underlying() != tokenIn) {
             revert IncorrectButtonPairing(tokenIn, tokenOut);
         }
@@ -76,7 +76,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     }
 
     // Unwrap-Button
-    function _unwrapButton(address tokenIn, address tokenOut) internal virtual returns (uint256 amountOut) {
+    function _unwrapButton(address tokenIn, address tokenOut) internal returns (uint256 amountOut) {
         if (IButtonToken(tokenIn).underlying() != tokenOut) {
             revert IncorrectButtonPairing(tokenOut, tokenIn);
         }
@@ -85,7 +85,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     }
 
     // Wrap-WETH
-    function _wrapWETH(address tokenIn, address tokenOut) internal virtual returns (uint256 amountOut) {
+    function _wrapWETH(address tokenIn, address tokenOut) internal returns (uint256 amountOut) {
         if (tokenIn != address(0)) {
             revert NonEthToken(tokenIn);
         }
@@ -99,7 +99,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     }
 
     // Unwrap-WETH
-    function _unwrapWETH(address tokenIn, address tokenOut) internal virtual returns (uint256 amountOut) {
+    function _unwrapWETH(address tokenIn, address tokenOut) internal returns (uint256 amountOut) {
         if (tokenIn != address(WETH)) {
             revert NonWethToken(WETH, tokenIn);
         }
@@ -205,7 +205,6 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     // ToDo: Potentially move into it's own library
     function _getAmountIn(address tokenIn, uint256 amountOut, SwapStep[] calldata swapSteps)
         internal
-        virtual
         returns (uint256 amountIn)
     {
         amountIn = amountOut;
@@ -241,7 +240,6 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     // ToDo: Standardize with amountIn-functions and potentially move into it's own library
     function _getAmountOut(address tokenIn, uint256 amountIn, SwapStep[] calldata swapSteps)
         internal
-        virtual
         returns (uint256 amountOut)
     {
         amountOut = amountIn;
