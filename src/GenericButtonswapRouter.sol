@@ -145,6 +145,17 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
     }
 
+    function _transferTokensOut(address tokenOut, SwapStep[] calldata swapSteps, address to) internal {
+        // If swapSteps is empty or the last swapStep isn't unwrap-weth, then transfer out the entire balance of tokenOut
+        if (swapSteps.length == 0 || swapSteps[swapSteps.length - 1].operation != ButtonswapOperations.Swap.UNWRAP_WETH)
+        {
+            TransferHelper.safeTransfer(tokenOut, to, IERC20(tokenOut).balanceOf(address(this)));
+        } else {
+            // Otherwise, transfer out the entire balance
+            payable(to).transfer(address(this).balance);
+        }
+    }
+
     function swapExactTokensForTokens(
         address tokenIn,
         uint256 amountIn,
@@ -167,12 +178,8 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             revert InsufficientOutputAmount(amountOutMin, amountIn);
         }
 
-        // Transferring out the entire balance of the last token if the last swapStep is not unwrap-weth
-        if (swapSteps[swapSteps.length - 1].operation != ButtonswapOperations.Swap.UNWRAP_WETH) {
-            TransferHelper.safeTransfer(tokenIn, to, IERC20(tokenIn).balanceOf(address(this)));
-        } else {
-            payable(to).transfer(address(this).balance);
-        }
+        // Transferring output balance to to-address
+        _transferTokensOut(tokenIn, swapSteps, to);
     }
 
     // ToDo: Potentially move into it's own library
@@ -276,12 +283,8 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             revert InsufficientOutputAmount(amountOut, amountIn);
         }
 
-        // Transferring out the entire balance of the last token if the last swapStep is not unwrap-weth
-        if (swapSteps[swapSteps.length - 1].operation != ButtonswapOperations.Swap.UNWRAP_WETH) {
-            TransferHelper.safeTransfer(tokenIn, to, IERC20(tokenIn).balanceOf(address(this)));
-        } else {
-            payable(to).transfer(address(this).balance);
-        }
+        // Transferring output balance to to-address
+        _transferTokensOut(tokenIn, swapSteps, to);
     }
 
     // ToDo: Move to a library function?
@@ -607,8 +610,8 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
 
         // Transfer finalTokenA/finalTokenB to the user
-        TransferHelper.safeTransfer(finalTokenA, to, amountA);
-        TransferHelper.safeTransfer(finalTokenB, to, amountB);
+        _transferTokensOut(finalTokenA, removeLiquidityParams.swapStepsA, to);
+        _transferTokensOut(finalTokenB, removeLiquidityParams.swapStepsB, to);
     }
 
     function _removeLiquiditySingle(
@@ -649,8 +652,8 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
 
         // Transfer finalTokenA/finalTokenB to the user
-        TransferHelper.safeTransfer(finalTokenA, to, amountA);
-        TransferHelper.safeTransfer(finalTokenB, to, amountB);
+        _transferTokensOut(finalTokenA, removeLiquidityParams.swapStepsA, to);
+        _transferTokensOut(finalTokenB, removeLiquidityParams.swapStepsB, to);
         // ToDo: Can probably move most this logic up the chain
     }
 

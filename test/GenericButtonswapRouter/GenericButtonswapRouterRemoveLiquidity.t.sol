@@ -701,6 +701,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
+        assertEq(payable(to).balance, 0, "ETH balance should equal 0 before removing liquidity");
+
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
             genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
@@ -709,6 +711,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         assertEq(amountsA[0], expectedAmountWETH, "AmountsA[0] should equal expectedAmountWETH");
         assertEq(amountsA[1], expectedAmountWETH, "AmountsA[1] should also equal expectedAmountWETH");
         assertEq(amountsB[0], expectedAmountB, "AmountsB[0] should equal expectedAmountB");
+        assertEq(payable(to).balance, expectedAmountWETH, "ETH balance should equal expectedAmountWETH");
     }
 
     // Removing liquidity from a A-WETH pair and weth-unwrapping WETH->ETH
@@ -743,6 +746,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
+        assertEq(payable(to).balance, 0, "ETH balance should equal 0 before removing liquidity");
+
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
             genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
@@ -751,6 +756,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
         assertEq(amountsB[0], expectedAmountWETH, "AmountsB[0] should equal expectedAmountWETH");
         assertEq(amountsB[1], expectedAmountWETH, "AmountsB[1] should also equal expectedAmountWETH");
+        assertEq(payable(to).balance, expectedAmountWETH, "ETH balance should equal expectedAmountWETH");
     }
 
     function test_removeLiquidityFromReservoir_pairDoesNotExist(address tokenA1, address tokenB1, uint256 liquidity)
@@ -1551,6 +1557,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
+        assertEq(payable(to).balance, 0, "ETH balance should be zero before removing liquidity");
+
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
             genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
@@ -1559,6 +1567,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         assertEq(amountsA[0], tokenOutWETH, "AmountsA[0] should equal tokenOutWETH in WETH");
         assertEq(amountsA[1], tokenOutWETH, "AmountsA[1] should equal tokenOutWETH in ETH");
         assertEq(amountsB.length, 0, "AmountsB should be empty");
+        assertEq(payable(to).balance, tokenOutWETH, "ETH balance should equal tokenOutWETH");
     }
 
     //    // Removing liquidity from B-reservoir in a A-WETH pair and weth-unwrapping WETH->ETH
@@ -1612,6 +1621,8 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
+        assertEq(payable(to).balance, 0, "ETH balance should be zero before removing liquidity");
+
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
             genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
@@ -1620,6 +1631,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         assertEq(amountsA.length, 0, "amountsA should be empty");
         assertEq(amountsB[0], tokenOutWETH, "amountsB[0] should equal tokenOutWETH in WETH");
         assertEq(amountsB[1], tokenOutWETH, "amountsB[1] should equal tokenOutWETH in ETH");
+        assertEq(payable(to).balance, tokenOutWETH, "ETH balance should equal tokenOutWETH");
     }
 
     function test_removeLiquidityWithPermit_specificPermission(uint256 poolA, uint256 poolB, uint256 liquidity)
