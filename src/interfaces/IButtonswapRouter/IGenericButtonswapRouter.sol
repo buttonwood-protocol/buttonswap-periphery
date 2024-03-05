@@ -31,7 +31,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * @param amountBMin The minimum amount of the second token to provide
      * @param movingAveragePrice0ThresholdBps The percentage threshold that movingAveragePrice0 can deviate from the current price.
      */
-    struct AddLiquidityStep {
+    struct AddLiquidityParams {
         ButtonswapOperations.Liquidity operation; // Potentially just separate out the function
         address tokenA;
         address tokenB;
@@ -57,7 +57,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * @param amountAMin The minimum amount of the first token to receive
      * @param amountBMin The minimum amount of the second token to receive
      */
-    struct RemoveLiquidityStep {
+    struct RemoveLiquidityParams {
         ButtonswapOperations.Liquidity operation;
         address tokenA;
         address tokenB;
@@ -154,15 +154,15 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
 
     /**
      * @notice Adds liquidity to a pair and transfers the liquidity tokens to the recipient.
-     * @dev If `addLiquidityStep.liquidity` is `ButtonswapOperations.Liquidity.DUAL`, then first the pair is created if it doesn't exist yet.
-     * If the pair is empty, `addLiquidityStep.amountAMin` and `addLiquidityStep.amountBMin` are ignored.
-     * If the pair is nonempty, it deposits as much of `addLiquidityStep.tokenA` and `addLiquidityStep.tokenB` as possible
-     * (after applying `addLiquidityStep.swapStepsA` and `addLiquidityStep.swapStepsB`) while maintaining 3 conditions:
+     * @dev If `addLiquidityParams.liquidity` is `ButtonswapOperations.Liquidity.DUAL`, then first the pair is created if it doesn't exist yet.
+     * If the pair is empty, `addLiquidityParams.amountAMin` and `addLiquidityParams.amountBMin` are ignored.
+     * If the pair is nonempty, it deposits as much of `addLiquidityParams.tokenA` and `addLiquidityParams.tokenB` as possible
+     * (after applying `addLiquidityParams.swapStepsA` and `addLiquidityParams.swapStepsB`) while maintaining 3 conditions:
      * 1. The ratio of final tokenA to final tokenB in the pair remains approximately the same
-     * 2. The amount of `addLiquidityStep.tokenA` provided from the sender is at least `addLiquidityStep.amountAMin` but less than or equal to `addLiquidityStep.amountADesired`
-     * 3. The amount of `addLiquidityStep.tokenB` provided from the sender is at least `addLiquidityStep.amountBMin` but less than or equal to `addLiquidityStep.amountBDesired`
+     * 2. The amount of `addLiquidityParams.tokenA` provided from the sender is at least `addLiquidityParams.amountAMin` but less than or equal to `addLiquidityParams.amountADesired`
+     * 3. The amount of `addLiquidityParams.tokenB` provided from the sender is at least `addLiquidityParams.amountBMin` but less than or equal to `addLiquidityParams.amountBDesired`
      * ---
-     * If `addLiquidityStep.liquidity` is `ButtonswapOperations.Liquidity.SINGLE`, it only adds liquidity opposite to the pair's existing reservoir.this
+     * If `addLiquidityParams.liquidity` is `ButtonswapOperations.Liquidity.SINGLE`, it only adds liquidity opposite to the pair's existing reservoir.this
      * Since there at most one reservoir at a given time, some conditions are checked:
      * 1. If there is no reservoir, it rejects
      * 2. The token corresponding to the existing reservoir has its corresponding amountDesired parameter ignored
@@ -172,7 +172,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * ```
      * // Example: (ETH -> WETH) + (rETH -> rrETH)
      * addLiquidity(
-     *     IGenericButtonswapRouter.AddLiquidityStep(
+     *     IGenericButtonswapRouter.AddLiquidityParams(
      *         ButtonswapOperations.Liquidity.DUAL,
      *         address(0),
      *         address(rETH),
@@ -193,27 +193,27 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * );
      * ```
      * &nbsp;*&nbsp;
-     * @param addLiquidityStep The AddLiquidityStep struct containing all the parameters necessary to add liquidity
+     * @param addLiquidityParams The AddLiquidityParams struct containing all the parameters necessary to add liquidity
      * @param to The address to send the liquidity tokens to.
      * @param deadline The time after which this transaction can no longer be executed.
      * @return amountsA The amounts of each tokenA received during the execution of swapStepsA before adding liquidity
      * @return amountsB The amounts of each tokenB received during the execution of swapStepsB before adding liquidity
      * @return liquidity The amount of liquidity tokens minted
      */
-    function addLiquidity(AddLiquidityStep calldata addLiquidityStep, address to, uint256 deadline)
+    function addLiquidity(AddLiquidityParams calldata addLiquidityParams, address to, uint256 deadline)
         external
         payable
         returns (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity);
 
     /**
      * @notice Removes liquidity from a pair, and transfers the tokens to the recipient.
-     * @dev `removeLiquidityStep.liquidity` determines whether to perform dual- or single- sided liquidity withdrawal.
+     * @dev `removeLiquidityParams.liquidity` determines whether to perform dual- or single- sided liquidity withdrawal.
      * <br>
      * Example: (WETH -> ETH) - (rrETH -> stETH)*
      * ```
      * // Example: (WETH -> ETH) - (rrETH -> stETH)
      * removeLiquidity(
-     *     IGenericButtonswapRouter.RemoveLiquidityStep(
+     *     IGenericButtonswapRouter.RemoveLiquidityParams(
      *         ButtonswapOperations.Liquidity.DUAL,
      *         address(WETH),
      *         address(rrETH),
@@ -233,20 +233,20 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * );
      * ```
      * &nbsp;*&nbsp;
-     * @param removeLiquidityStep The RemoveLiquidityStep struct containing all the parameters necessary to remove liquidity
+     * @param removeLiquidityParams The RemoveLiquidityParams struct containing all the parameters necessary to remove liquidity
      * @param to The address to send the tokens to.
      * @param deadline The time after which this transaction can no longer be executed.
      * @return amountsA The amounts of each tokenA received during the execution of swapStepsA after removing liquidity
      * @return amountsB The amounts of each tokenB received during the execution of swapStepsB after removing liquidity
      */
-    function removeLiquidity(RemoveLiquidityStep calldata removeLiquidityStep, address to, uint256 deadline)
+    function removeLiquidity(RemoveLiquidityParams calldata removeLiquidityParams, address to, uint256 deadline)
         external
         returns (uint256[] memory amountsA, uint256[] memory amountsB);
 
     /**
      * @notice Similar to `removeLiquidity()` but utilizes the Permit signatures to reduce gas consumption.
      * Removes liquidity from a pair, and transfers the tokens to the recipient.
-     * @param removeLiquidityStep The RemoveLiquidityStep struct containing all the parameters necessary to remove liquidity
+     * @param removeLiquidityParams The RemoveLiquidityParams struct containing all the parameters necessary to remove liquidity
      * @param to The address to send the tokens to.
      * @param deadline The time after which this transaction can no longer be executed.
      * @param approveMax Whether the signature is for the max uint256 or liquidity value
@@ -257,7 +257,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * @return amountsB The amounts of each tokenB received during the execution of swapStepsB after removing liquidity
      */
     function removeLiquidityWithPermit(
-        RemoveLiquidityStep calldata removeLiquidityStep,
+        RemoveLiquidityParams calldata removeLiquidityParams,
         address to,
         uint256 deadline,
         bool approveMax,

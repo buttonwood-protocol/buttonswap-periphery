@@ -43,7 +43,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
     IWETH public weth;
     ButtonswapFactory public buttonswapFactory;
     GenericButtonswapRouter public genericButtonswapRouter;
-    IGenericButtonswapRouter.RemoveLiquidityStep public removeLiquidityStep;
+    IGenericButtonswapRouter.RemoveLiquidityParams public removeLiquidityParams;
 
     // Utility function for creating and initializing pairs with poolA:poolB price ratio. Does not use ButtonwoodRouter
     function createAndInitializePair(MockRebasingERC20 tokenA1, MockRebasingERC20 tokenB1, uint256 poolA, uint256 poolB)
@@ -160,7 +160,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         vm.expectRevert(
             abi.encodeWithSelector(IGenericButtonswapRouterErrors.Expired.selector, deadline, block.timestamp)
         );
-        genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
     }
 
     function test_removeLiquidity_pairDoesNotExist(address tokenA1, address tokenB1, uint256 liquidity) public {
@@ -170,15 +170,15 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Validating pair doesn't exist
         assertEq(buttonswapFactory.getPair(address(tokenA1), address(tokenB1)), address(0), "Pair should not exist");
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
-        removeLiquidityStep.tokenA = address(tokenA1);
-        removeLiquidityStep.tokenB = address(tokenB1);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.DUAL;
+        removeLiquidityParams.tokenA = address(tokenA1);
+        removeLiquidityParams.tokenB = address(tokenB1);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -188,7 +188,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
                 IGenericButtonswapRouterErrors.PairDoesNotExist.selector, address(tokenA1), address(tokenB1)
             )
         );
-        genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
     }
 
     function test_removeLiquidity_insufficientAmountA(
@@ -213,15 +213,15 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = amountAMin;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.DUAL;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = amountAMin;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -231,7 +231,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
                 IGenericButtonswapRouterErrors.InsufficientTokenAmount.selector, address(tokenA), amountA, amountAMin
             )
         );
-        genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
     }
 
     function test_removeLiquidity_insufficientAmountB(
@@ -256,15 +256,15 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = amountBMin;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.DUAL;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = amountBMin;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -274,7 +274,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
                 IGenericButtonswapRouterErrors.InsufficientTokenAmount.selector, address(tokenB), amountB, amountBMin
             )
         );
-        genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
     }
 
     function test_removeLiquidity_noHops(uint256 poolA, uint256 poolB, uint256 liquidity) public {
@@ -293,21 +293,21 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.DUAL;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
@@ -350,21 +350,21 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.DUAL;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
@@ -408,23 +408,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        removeLiquidityStep.swapStepsA.push();
-        removeLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.SWAP;
-        removeLiquidityStep.swapStepsA[0].tokenOut = address(tokenC);
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.DUAL;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        removeLiquidityParams.swapStepsA.push();
+        removeLiquidityParams.swapStepsA[0].operation = ButtonswapOperations.Swap.SWAP;
+        removeLiquidityParams.swapStepsA[0].tokenOut = address(tokenC);
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountsA/amountsB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
@@ -469,23 +469,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        removeLiquidityStep.swapStepsB.push();
-        removeLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.SWAP;
-        removeLiquidityStep.swapStepsB[0].tokenOut = address(tokenC);
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.DUAL;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        removeLiquidityParams.swapStepsB.push();
+        removeLiquidityParams.swapStepsB[0].operation = ButtonswapOperations.Swap.SWAP;
+        removeLiquidityParams.swapStepsB[0].tokenOut = address(tokenC);
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountsA/amountsB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
@@ -511,23 +511,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        removeLiquidityStep.swapStepsA.push();
-        removeLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
-        removeLiquidityStep.swapStepsA[0].tokenOut = address(buttonTokenA);
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.DUAL;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        removeLiquidityParams.swapStepsA.push();
+        removeLiquidityParams.swapStepsA[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
+        removeLiquidityParams.swapStepsA[0].tokenOut = address(buttonTokenA);
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountsA/amountsB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
@@ -553,23 +553,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        removeLiquidityStep.swapStepsB.push();
-        removeLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
-        removeLiquidityStep.swapStepsB[0].tokenOut = address(buttonTokenB);
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.DUAL;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        removeLiquidityParams.swapStepsB.push();
+        removeLiquidityParams.swapStepsB[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
+        removeLiquidityParams.swapStepsB[0].tokenOut = address(buttonTokenB);
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountsA/amountsB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
@@ -598,23 +598,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
-        removeLiquidityStep.tokenA = address(buttonTokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        removeLiquidityStep.swapStepsA.push();
-        removeLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
-        removeLiquidityStep.swapStepsA[0].tokenOut = address(tokenA);
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.DUAL;
+        removeLiquidityParams.tokenA = address(buttonTokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        removeLiquidityParams.swapStepsA.push();
+        removeLiquidityParams.swapStepsA[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
+        removeLiquidityParams.swapStepsA[0].tokenOut = address(tokenA);
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountsA/amountsB returned
         assertEq(amountsA[0], expectedAmountButtonA, "AmountsA[0] should equal expectedAmountButtonA");
@@ -643,23 +643,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(buttonTokenB);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        removeLiquidityStep.swapStepsB.push();
-        removeLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
-        removeLiquidityStep.swapStepsB[0].tokenOut = address(tokenB);
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.DUAL;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(buttonTokenB);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        removeLiquidityParams.swapStepsB.push();
+        removeLiquidityParams.swapStepsB[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
+        removeLiquidityParams.swapStepsB[0].tokenOut = address(tokenB);
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountsA/amountsB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
@@ -687,23 +687,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
-        removeLiquidityStep.tokenA = address(weth);
-        removeLiquidityStep.tokenB = address(tokenB);
-        removeLiquidityStep.swapStepsA.push();
-        removeLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.UNWRAP_WETH;
-        removeLiquidityStep.swapStepsA[0].tokenOut = address(0);
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.DUAL;
+        removeLiquidityParams.tokenA = address(weth);
+        removeLiquidityParams.tokenB = address(tokenB);
+        removeLiquidityParams.swapStepsA.push();
+        removeLiquidityParams.swapStepsA[0].operation = ButtonswapOperations.Swap.UNWRAP_WETH;
+        removeLiquidityParams.swapStepsA[0].tokenOut = address(0);
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountsA/amountsB returned
         assertEq(amountsA[0], expectedAmountWETH, "AmountsA[0] should equal expectedAmountWETH");
@@ -729,23 +729,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(weth);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        removeLiquidityStep.swapStepsB.push();
-        removeLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.UNWRAP_WETH;
-        removeLiquidityStep.swapStepsB[0].tokenOut = address(0);
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.DUAL;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(weth);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        removeLiquidityParams.swapStepsB.push();
+        removeLiquidityParams.swapStepsB[0].operation = ButtonswapOperations.Swap.UNWRAP_WETH;
+        removeLiquidityParams.swapStepsB[0].tokenOut = address(0);
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountsA/amountsB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
@@ -759,15 +759,15 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Validating pair doesn't exist
         assertEq(buttonswapFactory.getPair(address(tokenA1), address(tokenB1)), address(0), "Pair should not exist");
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
-        removeLiquidityStep.tokenA = address(tokenA1);
-        removeLiquidityStep.tokenB = address(tokenB1);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.SINGLE;
+        removeLiquidityParams.tokenA = address(tokenA1);
+        removeLiquidityParams.tokenB = address(tokenB1);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -777,7 +777,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
                 IGenericButtonswapRouterErrors.PairDoesNotExist.selector, address(tokenA1), address(tokenB1)
             )
         );
-        genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
     }
 
     function test_removeLiquidityFromReservoir_noReservoir(uint256 poolA, uint256 poolB) public {
@@ -789,21 +789,21 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidityOut);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidityOut;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.SINGLE;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidityOut;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Attempting to remove all the liquidity from a pair with no reservoir
         vm.expectRevert(abi.encodeWithSelector(IButtonswapPairErrors.InsufficientReservoir.selector));
-        genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
     }
 
     function test_removeLiquidityFromReservoir_reservoirAInsufficientTokenAmount(
@@ -849,20 +849,20 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.SINGLE;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
         // Ensuring insufficient token output
         if (insufficientAOrB) {
-            removeLiquidityStep.amountAMin = tokenOutA + 1;
-            removeLiquidityStep.amountBMin = 0;
+            removeLiquidityParams.amountAMin = tokenOutA + 1;
+            removeLiquidityParams.amountBMin = 0;
         } else {
-            removeLiquidityStep.amountAMin = 0;
-            removeLiquidityStep.amountBMin = 1;
+            removeLiquidityParams.amountAMin = 0;
+            removeLiquidityParams.amountBMin = 1;
         }
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
@@ -884,7 +884,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
                 )
             );
         }
-        genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
     }
 
     function test_removeLiquidityFromReservoir_reservoirBInsufficientTokenAmount(
@@ -930,20 +930,20 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.SINGLE;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
         // Ensuring insufficient token output
         if (insufficientAOrB) {
-            removeLiquidityStep.amountAMin = 1;
-            removeLiquidityStep.amountBMin = 0;
+            removeLiquidityParams.amountAMin = 1;
+            removeLiquidityParams.amountBMin = 0;
         } else {
-            removeLiquidityStep.amountAMin = 0;
-            removeLiquidityStep.amountBMin = tokenOutB + 1;
+            removeLiquidityParams.amountAMin = 0;
+            removeLiquidityParams.amountBMin = tokenOutB + 1;
         }
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
@@ -965,7 +965,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
                 )
             );
         }
-        genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+        genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
     }
 
     function test_removeLiquidityFromReservoir_reservoirANoHops(
@@ -1010,21 +1010,21 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.SINGLE;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA[0], tokenOutA, "AmountsA[0] should equal tokenOutA");
@@ -1073,21 +1073,21 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.SINGLE;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA.length, 0, "AmountsA should be empty");
@@ -1142,23 +1142,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        removeLiquidityStep.swapStepsA.push();
-        removeLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.SWAP;
-        removeLiquidityStep.swapStepsA[0].tokenOut = address(tokenC);
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.SINGLE;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        removeLiquidityParams.swapStepsA.push();
+        removeLiquidityParams.swapStepsA[0].operation = ButtonswapOperations.Swap.SWAP;
+        removeLiquidityParams.swapStepsA[0].tokenOut = address(tokenC);
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA[0], tokenOutA, "AmountsA[0] should equal tokenOutA");
@@ -1214,23 +1214,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        removeLiquidityStep.swapStepsB.push();
-        removeLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.SWAP;
-        removeLiquidityStep.swapStepsB[0].tokenOut = address(tokenC);
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.SINGLE;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        removeLiquidityParams.swapStepsB.push();
+        removeLiquidityParams.swapStepsB[0].operation = ButtonswapOperations.Swap.SWAP;
+        removeLiquidityParams.swapStepsB[0].tokenOut = address(tokenC);
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA.length, 0, "AmountsA should be empty");
@@ -1273,23 +1273,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        removeLiquidityStep.swapStepsA.push();
-        removeLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
-        removeLiquidityStep.swapStepsA[0].tokenOut = address(buttonTokenA);
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.SINGLE;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        removeLiquidityParams.swapStepsA.push();
+        removeLiquidityParams.swapStepsA[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
+        removeLiquidityParams.swapStepsA[0].tokenOut = address(buttonTokenA);
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA[0], tokenOutA, "AmountsA[0] should equal tokenOutA");
@@ -1336,23 +1336,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        removeLiquidityStep.swapStepsB.push();
-        removeLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
-        removeLiquidityStep.swapStepsB[0].tokenOut = address(buttonTokenB);
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.SINGLE;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        removeLiquidityParams.swapStepsB.push();
+        removeLiquidityParams.swapStepsB[0].operation = ButtonswapOperations.Swap.WRAP_BUTTON;
+        removeLiquidityParams.swapStepsB[0].tokenOut = address(buttonTokenB);
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA.length, 0, "AmountsA should be empty");
@@ -1403,23 +1403,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
-        removeLiquidityStep.tokenA = address(buttonTokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        removeLiquidityStep.swapStepsA.push();
-        removeLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
-        removeLiquidityStep.swapStepsA[0].tokenOut = address(tokenA);
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.SINGLE;
+        removeLiquidityParams.tokenA = address(buttonTokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        removeLiquidityParams.swapStepsA.push();
+        removeLiquidityParams.swapStepsA[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
+        removeLiquidityParams.swapStepsA[0].tokenOut = address(tokenA);
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA[0], tokenOutButtonA, "AmountsA[0] should equal tokenOutButtonA");
@@ -1470,23 +1470,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(buttonTokenB);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        removeLiquidityStep.swapStepsB.push();
-        removeLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
-        removeLiquidityStep.swapStepsB[0].tokenOut = address(tokenB);
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.SINGLE;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(buttonTokenB);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        removeLiquidityParams.swapStepsB.push();
+        removeLiquidityParams.swapStepsB[0].operation = ButtonswapOperations.Swap.UNWRAP_BUTTON;
+        removeLiquidityParams.swapStepsB[0].tokenOut = address(tokenB);
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA.length, 0, "AmountsB should be empty");
@@ -1537,23 +1537,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
-        removeLiquidityStep.tokenA = address(weth);
-        removeLiquidityStep.tokenB = address(tokenB);
-        removeLiquidityStep.swapStepsA.push();
-        removeLiquidityStep.swapStepsA[0].operation = ButtonswapOperations.Swap.UNWRAP_WETH;
-        removeLiquidityStep.swapStepsA[0].tokenOut = address(0);
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.SINGLE;
+        removeLiquidityParams.tokenA = address(weth);
+        removeLiquidityParams.tokenB = address(tokenB);
+        removeLiquidityParams.swapStepsA.push();
+        removeLiquidityParams.swapStepsA[0].operation = ButtonswapOperations.Swap.UNWRAP_WETH;
+        removeLiquidityParams.swapStepsA[0].tokenOut = address(0);
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA[0], tokenOutWETH, "AmountsA[0] should equal tokenOutWETH in WETH");
@@ -1598,23 +1598,23 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Approving the router to use the pair-tokens
         pair.approve(address(genericButtonswapRouter), liquidity);
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.SINGLE;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(weth);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        removeLiquidityStep.swapStepsB.push();
-        removeLiquidityStep.swapStepsB[0].operation = ButtonswapOperations.Swap.UNWRAP_WETH;
-        removeLiquidityStep.swapStepsB[0].tokenOut = address(0);
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.SINGLE;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(weth);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        removeLiquidityParams.swapStepsB.push();
+        removeLiquidityParams.swapStepsB[0].operation = ButtonswapOperations.Swap.UNWRAP_WETH;
+        removeLiquidityParams.swapStepsB[0].tokenOut = address(0);
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
         // Removing liquidity
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidity(removeLiquidityStep, to, deadline);
+            genericButtonswapRouter.removeLiquidity(removeLiquidityParams, to, deadline);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA.length, 0, "amountsA should be empty");
@@ -1640,15 +1640,15 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 expectedAmountA = (poolA * liquidity) / pair.totalSupply();
         uint256 expectedAmountB = (poolB * liquidity) / pair.totalSupply();
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.DUAL;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1658,7 +1658,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Removing liquidity as userA
         vm.prank(userA);
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidityWithPermit(removeLiquidityStep, to, deadline, false, v, r, s);
+            genericButtonswapRouter.removeLiquidityWithPermit(removeLiquidityParams, to, deadline, false, v, r, s);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
@@ -1681,15 +1681,15 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         uint256 expectedAmountA = (poolA * liquidity) / pair.totalSupply();
         uint256 expectedAmountB = (poolB * liquidity) / pair.totalSupply();
 
-        // Creating the removeLiquidityStep
-        removeLiquidityStep.operation = ButtonswapOperations.Liquidity.DUAL;
-        removeLiquidityStep.tokenA = address(tokenA);
-        removeLiquidityStep.tokenB = address(tokenB);
-        //        removeLiquidityStep.swapStepsA; // Default to []
-        //        removeLiquidityStep.swapStepsB; // Default to []
-        removeLiquidityStep.liquidity = liquidity;
-        removeLiquidityStep.amountAMin = 0;
-        removeLiquidityStep.amountBMin = 0;
+        // Creating the removeLiquidityParams
+        removeLiquidityParams.operation = ButtonswapOperations.Liquidity.DUAL;
+        removeLiquidityParams.tokenA = address(tokenA);
+        removeLiquidityParams.tokenB = address(tokenB);
+        //        removeLiquidityParams.swapStepsA; // Default to []
+        //        removeLiquidityParams.swapStepsB; // Default to []
+        removeLiquidityParams.liquidity = liquidity;
+        removeLiquidityParams.amountAMin = 0;
+        removeLiquidityParams.amountBMin = 0;
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1700,7 +1700,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         // Removing liquidity as userA
         vm.prank(userA);
         (uint256[] memory amountsA, uint256[] memory amountsB) =
-            genericButtonswapRouter.removeLiquidityWithPermit(removeLiquidityStep, to, deadline, true, v, r, s);
+            genericButtonswapRouter.removeLiquidityWithPermit(removeLiquidityParams, to, deadline, true, v, r, s);
 
         // Validating the amountA/amountB returned
         assertEq(amountsA[0], expectedAmountA, "AmountsA[0] should equal expectedAmountA");
