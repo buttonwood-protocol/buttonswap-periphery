@@ -81,7 +81,9 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
 
     /**
      * @notice Given an ordered array of tokens, performs consecutive swaps/transformation operations from a specific amount of the first token to the last token in the swapSteps array.
-     * @dev Example: exact ETH -> WETH -> stETH
+     * @dev Example:*
+     * ```solidity
+     * // Example: exact ETH -> WETH -> stETH
      * swapExactTokensForTokens(
      *     address(0),
      *     5*10**18,
@@ -93,6 +95,8 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      *     toAddress,
      *     deadline
      * );
+     * ```
+     * &nbsp;*&nbsp;
      * @param tokenIn The address of the input token
      * @param amountIn The amount of the first token to swap
      * @param amountOutMin The minimum amount of the last token to receive from the swap
@@ -114,7 +118,10 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
     /**
      * @notice Given an ordered array of tokens, performs consecutive swaps/transformation operations from the first token to a specific amount of the last token in the swapSteps array.
      * @dev Note: If there is excess balance stored in the contract, it will be transferred out. Thus the actual amount received may be more than the `amountOut` specified.
-     * @dev: Example: stETH -> rrETH -> rETH
+     * <br>
+     * Example: stETH -> rrETH -> rETH*
+     * ```solidity
+     * // Example: stETH -> rrETH -> rETH
      * swapTokensForExactTokens(
      *     address(stETH)
      *     4*10**18,
@@ -126,6 +133,8 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      *     toAddress,
      *     deadline
      * );
+     * ```
+     * &nbsp;*&nbsp;
      * @param tokenIn The address of the input token
      * @param amountOut The amount of the last token to receive from the swap.
      * @param amountInMax The maximum amount of the first token to swap.
@@ -152,12 +161,16 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * 1. The ratio of final tokenA to final tokenB in the pair remains approximately the same
      * 2. The amount of `addLiquidityStep.tokenA` provided from the sender is at least `addLiquidityStep.amountAMin` but less than or equal to `addLiquidityStep.amountADesired`
      * 3. The amount of `addLiquidityStep.tokenB` provided from the sender is at least `addLiquidityStep.amountBMin` but less than or equal to `addLiquidityStep.amountBDesired`
-     * @dev If `addLiquidityStep.liquidity` is `ButtonswapOperations.Liquidity.SINGLE`, it only adds liquidity opposite to the pair's existing reservoir.this
+     * ---
+     * If `addLiquidityStep.liquidity` is `ButtonswapOperations.Liquidity.SINGLE`, it only adds liquidity opposite to the pair's existing reservoir.this
      * Since there at most one reservoir at a given time, some conditions are checked:
      * 1. If there is no reservoir, it rejects
      * 2. The token corresponding to the existing reservoir has its corresponding amountDesired parameter ignored
      * 3. The reservoir is deducted from and transformed into the corresponding output token (after applying swapSteps), and then checked against corresponding amountMin parameter.
-     * @dev Example: (ETH -> WETH) + (rETH -> rrETH)
+     * ---
+     * *Example: (ETH -> WETH) + (rETH -> rrETH)
+     * ```
+     * // Example: (ETH -> WETH) + (rETH -> rrETH)
      * addLiquidity(
      *     IGenericButtonswapRouter.AddLiquidityStep(
      *         ButtonswapOperations.Liquidity.DUAL,
@@ -178,6 +191,8 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      *     toAddress,
      *     deadline
      * );
+     * ```
+     * &nbsp;*&nbsp;
      * @param addLiquidityStep The AddLiquidityStep struct containing all the parameters necessary to add liquidity
      * @param to The address to send the liquidity tokens to.
      * @param deadline The time after which this transaction can no longer be executed.
@@ -193,7 +208,10 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
     /**
      * @notice Removes liquidity from a pair, and transfers the tokens to the recipient.
      * @dev `removeLiquidityStep.liquidity` determines whether to perform dual- or single- sided liquidity withdrawal.
-     * @dev Example: (WETH -> ETH) - (rrETH -> stETH)
+     * <br>
+     * Example: (WETH -> ETH) - (rrETH -> stETH)*
+     * ```
+     * // Example: (WETH -> ETH) - (rrETH -> stETH)
      * removeLiquidity(
      *     IGenericButtonswapRouter.RemoveLiquidityStep(
      *         ButtonswapOperations.Liquidity.DUAL,
@@ -213,6 +231,8 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      *     toAddress,
      *     deadline
      * );
+     * ```
+     * &nbsp;*&nbsp;
      * @param removeLiquidityStep The RemoveLiquidityStep struct containing all the parameters necessary to remove liquidity
      * @param to The address to send the tokens to.
      * @param deadline The time after which this transaction can no longer be executed.
