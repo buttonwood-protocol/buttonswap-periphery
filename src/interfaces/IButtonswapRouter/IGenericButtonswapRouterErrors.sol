@@ -96,4 +96,11 @@ interface IGenericButtonswapRouterErrors {
      * @notice Neither token in the pair has a non-empty reservoir
      */
     error NoReservoir(address pair);
+
+    /**
+     * @notice Insufficient liquidity output from mint
+     * @param liquidity The amount of liquidity
+     * @param minLiquidity The minimum amount of liquidity
+     */
+    error InsufficientOutputLiquidity(uint256 liquidity, uint256 minLiquidity);
 }

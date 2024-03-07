@@ -546,9 +546,13 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         (address pairAddress, address pairTokenA, address pairTokenB) = _addLiquidityGetOrCreatePair(addLiquidityParams);
 
         if (addLiquidityParams.operation == ButtonswapOperations.Liquidity.DUAL) {
-            return _addLiquidityDual(IButtonswapPair(pairAddress), pairTokenA < pairTokenB, addLiquidityParams, to);
+            (amountsA, amountsB, liquidity) = _addLiquidityDual(IButtonswapPair(pairAddress), pairTokenA < pairTokenB, addLiquidityParams, to);
         } else if (addLiquidityParams.operation == ButtonswapOperations.Liquidity.SINGLE) {
-            return _addLiquiditySingle(IButtonswapPair(pairAddress), pairTokenA, pairTokenB, addLiquidityParams, to);
+            (amountsA, amountsB, liquidity) = _addLiquiditySingle(IButtonswapPair(pairAddress), pairTokenA, pairTokenB, addLiquidityParams, to);
+        }
+
+        if (liquidity < addLiquidityParams.liquidityMin) {
+            revert InsufficientOutputLiquidity(liquidity, addLiquidityParams.liquidityMin);
         }
     }
 
