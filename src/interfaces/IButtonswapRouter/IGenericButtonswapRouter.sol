@@ -30,6 +30,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * @param amountAMin The minimum amount of the first token to provide
      * @param amountBMin The minimum amount of the second token to provide
      * @param movingAveragePrice0ThresholdBps The percentage threshold that movingAveragePrice0 can deviate from the current price.
+     * @param createPair Whether to create the pair. Will trigger revert if false and the pair does not exist, or if true and the pair already exists.
      */
     struct AddLiquidityParams {
         ButtonswapOperations.Liquidity operation; // Potentially just separate out the function
@@ -43,6 +44,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
         uint256 amountBMin;
         uint256 liquidityMin;
         uint16 movingAveragePrice0ThresholdBps;
+        bool createPair;
     }
 
     /**

@@ -526,14 +526,18 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
 
         // Fetch the pair
         pairAddress = IButtonswapFactory(factory).getPair(pairTokenA, pairTokenB);
-        // Pair doesn't exist yet
+
+        // Pair doesn't exist
         if (pairAddress == address(0)) {
-            // If dual-sided liquidity, create it. Otherwise, throw an error.
-            if (addLiquidityParams.operation == ButtonswapOperations.Liquidity.DUAL) {
+            // If the operation is dual-sided and createPair is true, then create the pair. Otherwise throw an error
+            if (addLiquidityParams.operation == ButtonswapOperations.Liquidity.DUAL && addLiquidityParams.createPair) {
                 pairAddress = IButtonswapFactory(factory).createPair(pairTokenA, pairTokenB);
             } else {
                 revert PairDoesNotExist(pairTokenA, pairTokenB);
             }
+        } else if (addLiquidityParams.createPair) {
+            // The pair already exists but createPair is true
+            revert PairAlreadyExists(pairTokenA, pairTokenB, pairAddress);
         }
     }
 
@@ -546,9 +550,11 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         (address pairAddress, address pairTokenA, address pairTokenB) = _addLiquidityGetOrCreatePair(addLiquidityParams);
 
         if (addLiquidityParams.operation == ButtonswapOperations.Liquidity.DUAL) {
-            (amountsA, amountsB, liquidity) = _addLiquidityDual(IButtonswapPair(pairAddress), pairTokenA < pairTokenB, addLiquidityParams, to);
+            (amountsA, amountsB, liquidity) =
+                _addLiquidityDual(IButtonswapPair(pairAddress), pairTokenA < pairTokenB, addLiquidityParams, to);
         } else if (addLiquidityParams.operation == ButtonswapOperations.Liquidity.SINGLE) {
-            (amountsA, amountsB, liquidity) = _addLiquiditySingle(IButtonswapPair(pairAddress), pairTokenA, pairTokenB, addLiquidityParams, to);
+            (amountsA, amountsB, liquidity) =
+                _addLiquiditySingle(IButtonswapPair(pairAddress), pairTokenA, pairTokenB, addLiquidityParams, to);
         }
 
         if (liquidity < addLiquidityParams.liquidityMin) {

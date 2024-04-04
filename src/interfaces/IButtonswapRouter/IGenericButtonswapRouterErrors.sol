@@ -88,6 +88,14 @@ interface IGenericButtonswapRouterErrors {
     error PairDoesNotExist(address tokenA, address tokenB);
 
     /**
+     * @notice Pair already exists
+     * @param tokenA The address of tokenA
+     * @param tokenB The address of tokenB
+     * @param pair The address of the pair
+     */
+    error PairAlreadyExists(address tokenA, address tokenB, address pair);
+
+    /**
      * @notice Pair has not yet been initialized
      */
     error NotInitialized(address pair);
