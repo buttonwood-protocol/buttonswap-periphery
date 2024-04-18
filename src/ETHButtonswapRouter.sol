@@ -72,6 +72,35 @@ contract ETHButtonswapRouter is BasicButtonswapRouter, IETHButtonswapRouter {
     /**
      * @inheritdoc IETHButtonswapRouter
      */
+    function createAndAddLiquidityETH(address token, uint256 amountTokenDesired, address to, uint256 deadline)
+        external
+        payable
+        virtual
+        override
+        ensure(deadline)
+        returns (uint256 amountToken, uint256 amountETH, uint256 liquidity)
+    {
+        (amountToken, amountETH) = _createAndAddLiquidity(token, WETH, amountTokenDesired, msg.value);
+        address pair = ButtonswapLibrary.pairFor(factory, token, WETH);
+        TransferHelper.safeTransferFrom(token, msg.sender, address(this), amountToken);
+        TransferHelper.safeApprove(token, pair, amountToken);
+        IWETH(WETH).deposit{value: amountETH}();
+        TransferHelper.safeApprove(WETH, pair, amountETH);
+
+        (address token0,) = ButtonswapLibrary.sortTokens(token, WETH);
+        liquidity = (token == token0)
+            ? IButtonswapPair(pair).mint(amountToken, amountETH, to)
+            : IButtonswapPair(pair).mint(amountETH, amountToken, to);
+
+        // refund dust eth, if any
+        if (msg.value > amountETH) {
+            TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);
+        }
+    }
+
+    /**
+     * @inheritdoc IETHButtonswapRouter
+     */
     function addLiquidityETHWithReservoir(
         address token,
         uint256 amountTokenDesired,

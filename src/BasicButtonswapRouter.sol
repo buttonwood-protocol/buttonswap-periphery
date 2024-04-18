@@ -54,6 +54,31 @@ contract BasicButtonswapRouter is RootButtonswapRouter, IBasicButtonswapRouter {
     /**
      * @inheritdoc IBasicButtonswapRouter
      */
+    function createAndAddLiquidity(
+        address tokenA,
+        address tokenB,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        address to,
+        uint256 deadline
+    ) external virtual override ensure(deadline) returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
+        (amountA, amountB) = _createAndAddLiquidity(tokenA, tokenB, amountADesired, amountBDesired);
+        address pair = ButtonswapLibrary.pairFor(factory, tokenA, tokenB);
+        TransferHelper.safeTransferFrom(tokenA, msg.sender, address(this), amountA);
+        TransferHelper.safeApprove(tokenA, pair, amountA);
+        TransferHelper.safeTransferFrom(tokenB, msg.sender, address(this), amountB);
+        TransferHelper.safeApprove(tokenB, pair, amountB);
+
+        if (tokenA < tokenB) {
+            liquidity = IButtonswapPair(pair).mint(amountA, amountB, to);
+        } else {
+            liquidity = IButtonswapPair(pair).mint(amountB, amountA, to);
+        }
+    }
+
+    /**
+     * @inheritdoc IBasicButtonswapRouter
+     */
     function addLiquidityWithReservoir(
         address tokenA,
         address tokenB,

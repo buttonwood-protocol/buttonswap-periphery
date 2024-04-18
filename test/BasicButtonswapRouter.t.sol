@@ -83,9 +83,10 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         assertEq(basicButtonswapRouter.factory(), address(buttonswapFactory));
     }
 
-    // **** addLiquidity() ****
-
-    function test_addLiquidity_createsPairIfNoneExists(uint256 amountADesired, uint256 amountBDesired) public {
+    // **** createAndAddLiquidity() ****
+    function test_createAndAddLiquidity_createsPairIfNoneExists(uint256 amountADesired, uint256 amountBDesired)
+        public
+    {
         // Minting enough for minimum liquidity requirement
         amountADesired = bound(amountADesired, 10000, type(uint112).max);
         amountBDesired = bound(amountBDesired, 10000, type(uint112).max);
@@ -102,8 +103,8 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         vm.expectCall(
             address(buttonswapFactory), abi.encodeCall(ButtonswapFactory.createPair, (address(tokenA), address(tokenB)))
         );
-        basicButtonswapRouter.addLiquidity(
-            address(tokenA), address(tokenB), amountADesired, amountBDesired, 0, 0, 700, userA, block.timestamp + 1
+        basicButtonswapRouter.createAndAddLiquidity(
+            address(tokenA), address(tokenB), amountADesired, amountBDesired, userA, block.timestamp + 1
         );
 
         // Asserting one pair has been created
@@ -113,6 +114,44 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         address pair = buttonswapFactory.getPair(address(tokenA), address(tokenB));
         assertEq(tokenA.balanceOf(pair), amountADesired);
         assertEq(tokenB.balanceOf(pair), amountBDesired);
+    }
+
+    function testFail_createAndAddLiquidity_pairAlreadyExists(uint256 amountADesired, uint256 amountBDesired) public {
+        // Creating the pair with minimum liquidity before starting
+        createAndInitializePair(tokenA, tokenB, 10000, 10000);
+
+        // Minting enough for minimum liquidity requirement
+        amountADesired = bound(amountADesired, 10000, type(uint112).max);
+        amountBDesired = bound(amountBDesired, 10000, type(uint112).max);
+
+        tokenA.mint(address(this), amountADesired);
+        tokenB.mint(address(this), amountBDesired);
+        tokenA.approve(address(basicButtonswapRouter), amountADesired);
+        tokenB.approve(address(basicButtonswapRouter), amountBDesired);
+
+        basicButtonswapRouter.createAndAddLiquidity(
+            address(tokenA), address(tokenB), amountADesired, amountBDesired, userA, block.timestamp + 1
+        );
+    }
+
+    // **** addLiquidity() ****
+    function testFail_addLiquidity_pairDoesNotExist(uint256 amountADesired, uint256 amountBDesired) public {
+        // Minting enough for minimum liquidity requirement
+        amountADesired = bound(amountADesired, 10000, type(uint112).max);
+        amountBDesired = bound(amountBDesired, 10000, type(uint112).max);
+
+        tokenA.mint(address(this), amountADesired);
+        tokenB.mint(address(this), amountBDesired);
+        tokenA.approve(address(basicButtonswapRouter), amountADesired);
+        tokenB.approve(address(basicButtonswapRouter), amountBDesired);
+
+        // Validating no pairs exist before call
+        assertEq(buttonswapFactory.allPairsLength(), 0);
+
+        // Attempt to add liquidity to a non-existent pair
+        basicButtonswapRouter.addLiquidity(
+            address(tokenA), address(tokenB), amountADesired, amountBDesired, 0, 0, 700, userA, block.timestamp + 1
+        );
     }
 
     function test_addLiquidity_pairExistsNoReservoirInsufficientAAmount(
