@@ -140,7 +140,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         amounts[0] = amountIn;
 
         for (uint256 i = 0; i < swapSteps.length; i++) {
-            (tokenOut, amountOut) = _swapStep(tokenIn, swapSteps[i]);
+            (tokenOut, amountOut) = _swapStep(tokenOut, swapSteps[i]);
             amounts[i + 1] = amountOut;
         }
     }
