@@ -182,7 +182,6 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         _transferTokensOut(tokenIn, swapSteps, to);
     }
 
-    // ToDo: Potentially move into it's own library
     function _getAmountIn(address tokenIn, uint256 amountOut, SwapStep calldata swapStep)
         internal
         virtual
@@ -202,7 +201,6 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
     }
 
-    // ToDo: Potentially move into it's own library
     function _getAmountIn(address tokenIn, uint256 amountOut, SwapStep[] calldata swapSteps)
         internal
         returns (uint256 amountIn)
@@ -217,7 +215,6 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
     }
 
-    // ToDo: Standardize with amountIn-functions and potentially move into it's own library
     function _getAmountOut(address tokenIn, uint256 amountIn, SwapStep calldata swapStep)
         internal
         virtual
@@ -237,7 +234,6 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
     }
 
-    // ToDo: Standardize with amountIn-functions and potentially move into it's own library
     function _getAmountOut(address tokenIn, uint256 amountIn, SwapStep[] calldata swapSteps)
         internal
         returns (uint256 amountOut)
@@ -268,7 +264,6 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             revert ExcessiveInputAmount(amountInMax, amountIn);
         }
 
-        // ToDo: re-use this part
         // Transferring in the initial amount if the first swapStep is not wrap-weth
         if (swapSteps[0].operation != ButtonswapOperations.Swap.WRAP_WETH) {
             TransferHelper.safeTransferFrom(tokenIn, msg.sender, address(this), amountIn);
@@ -279,7 +274,6 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
 
         // Reusing tokenIn/amountIn as finalTokenIn/finalAmountIn
         (amounts, tokenIn, amountIn) = _swapExactTokensForTokens(tokenIn, amountIn, swapSteps);
-        // ToDo: Up to here
 
         // Validate that sufficient output was returned
         if (amountIn < amountOut) {
@@ -307,7 +301,6 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         finalAmountIn = amountIn;
     }
 
-    // ToDo: Move to a library function?
     function _validateMovingAveragePrice0Threshold(
         uint16 movingAveragePrice0ThresholdBps,
         uint256 pool0,
@@ -362,7 +355,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             if (amountOptimal <= addLiquidityParams.amountBDesired) {
                 if (amountOptimal < addLiquidityParams.amountBMin) {
                     revert InsufficientTokenAmount(
-                        addLiquidityParams.tokenB, addLiquidityParams.amountBDesired, amountOptimal
+                        addLiquidityParams.tokenB, amountOptimal, addLiquidityParams.amountBMin
                     );
                 }
                 (amountA, amountB) = (addLiquidityParams.amountADesired, amountOptimal);
@@ -379,10 +372,10 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
                     ),
                     addLiquidityParams.swapStepsA
                 );
-                assert(amountOptimal <= addLiquidityParams.amountADesired); //ToDo: Consider replacing with an error instead of an assert
+                assert(amountOptimal <= addLiquidityParams.amountADesired); // This case should never happen
                 if (amountOptimal < addLiquidityParams.amountAMin) {
                     revert InsufficientTokenAmount(
-                        addLiquidityParams.tokenA, addLiquidityParams.amountADesired, amountOptimal
+                        addLiquidityParams.tokenA, amountOptimal, addLiquidityParams.amountAMin
                     );
                 }
                 (amountA, amountB) = (amountOptimal, addLiquidityParams.amountBDesired);
@@ -577,7 +570,6 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             (amountB, amountA) = pair.burn(removeLiquidityParams.liquidity, address(this));
         }
 
-        // ToDo: Take this code block and re-use as internal function? (probably don't have to re-use addliquidity-parts)
         // Repurposing amountA/amountB variables to represent finalOutputAmountA/finalOutputAmountB (after all the swaps) to save gas
         address finalTokenA;
         address finalTokenB;
@@ -585,7 +577,6 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             _swapExactTokensForTokens(removeLiquidityParams.tokenA, amountA, removeLiquidityParams.swapStepsA);
         (amountsB, finalTokenB, amountB) =
             _swapExactTokensForTokens(removeLiquidityParams.tokenB, amountB, removeLiquidityParams.swapStepsB);
-        // ToDo: Up to here
 
         // Validate that enough of tokenA/B (after all the swaps) was received
         if (amountA < removeLiquidityParams.amountAMin) {
@@ -615,7 +606,6 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             (amountB, amountA) = pair.burnFromReservoir(removeLiquidityParams.liquidity, address(this));
         }
 
-        // ToDo: Take this code block and re-use as internal function? (probably don't have to re-use addliquidity-parts)
         // Repurposing amountA/amountB variables to represent finalOutputAmountA/finalOutputAmountB (after all the swaps) to save gas
         address finalTokenA;
         address finalTokenB;
@@ -640,7 +630,6 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         // Transfer finalTokenA/finalTokenB to the user
         _transferTokensOut(finalTokenA, removeLiquidityParams.swapStepsA, to);
         _transferTokensOut(finalTokenB, removeLiquidityParams.swapStepsB, to);
-        // ToDo: Can probably move most this logic up the chain
     }
 
     function _removeLiquidity(IButtonswapPair pair, RemoveLiquidityParams calldata removeLiquidityParams, address to)
