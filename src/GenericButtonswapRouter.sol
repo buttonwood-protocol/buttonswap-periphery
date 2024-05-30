@@ -12,6 +12,7 @@ import {TransferHelper} from "./libraries/TransferHelper.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {ButtonswapOperations} from "./libraries/ButtonswapOperations.sol";
 import {Math} from "./libraries/Math.sol";
+import {IUSDM} from "./interfaces/IUSDM.sol";
 
 contract GenericButtonswapRouter is IGenericButtonswapRouter {
     uint256 private constant BPS = 10_000;
@@ -111,6 +112,27 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         amountOut = address(this).balance;
     }
 
+    // USDM-swap
+    function _usdmSwap(address tokenIn, address tokenOut) internal returns (uint256 amountOut) {
+        IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, tokenIn, tokenOut));
+        uint256 amountIn = IERC20(tokenIn).balanceOf(address(this));
+        uint256 receivedAmount = IUSDM(tokenIn).convertToTokens(
+            IUSDM(tokenIn).convertToShares(
+                IERC20(tokenIn).balanceOf(address(this))
+            )
+        );
+
+        (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, tokenOut);
+        amountOut = ButtonswapLibrary.getAmountOut(receivedAmount, poolIn, poolOut);
+
+        TransferHelper.safeApprove(tokenIn, address(pair), amountIn);
+        if (tokenIn < tokenOut) {
+            pair.swap(amountIn, 0, 0, amountOut, address(this));
+        } else {
+            pair.swap(0, amountIn, amountOut, 0, address(this));
+        }
+    }
+
     function _swapStep(address tokenIn, SwapStep calldata swapStep)
         internal
         virtual
@@ -127,6 +149,8 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             amountOut = _wrapWETH(tokenIn, tokenOut);
         } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_WETH) {
             amountOut = _unwrapWETH(tokenIn, tokenOut);
+        } else if (swapStep.operation == ButtonswapOperations.Swap.USDM_SWAP) {
+            amountOut = _usdmSwap(tokenIn, tokenOut);
         }
     }
 
@@ -198,6 +222,9 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             amountIn = amountOut;
         } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_WETH) {
             amountIn = amountOut;
+        } else if (swapStep.operation == ButtonswapOperations.Swap.USDM_SWAP) {
+            (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, swapStep.tokenOut);
+            amountIn = ButtonswapLibrary.getAmountIn(amountOut, poolIn, poolOut) + 4;
         }
     }
 
@@ -231,6 +258,9 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             amountOut = amountIn;
         } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_WETH) {
             amountOut = amountIn;
+        } else if (swapStep.operation == ButtonswapOperations.Swap.USDM_SWAP) {
+            (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, swapStep.tokenOut);
+            amountOut = ButtonswapLibrary.getAmountOut(IUSDM(tokenIn).convertToTokens(IUSDM(tokenIn).convertToShares(amountIn)), poolIn, poolOut);
         }
     }
 
