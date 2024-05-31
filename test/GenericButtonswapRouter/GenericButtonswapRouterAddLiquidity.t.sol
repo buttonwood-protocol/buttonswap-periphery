@@ -212,6 +212,64 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         );
     }
 
+    function test_addLiquidity_createPairNoHopsMovingAveragePrice0ThresholdExceeds100Percent(
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 liquidityMin,
+        uint256 movingAveragePrice0ThresholdBps
+    )
+    public
+    {
+        // Minting enough for minimum liquidity requirement
+        amountADesired = bound(amountADesired, 10000, type(uint112).max);
+        amountBDesired = bound(amountBDesired, 10000, type(uint112).max);
+        movingAveragePrice0ThresholdBps = bound(movingAveragePrice0ThresholdBps, 10001, type(uint256).max);
+
+        // Ensuring expectedLiquidity is over liquidityMin
+        uint256 expectedLiquidity = MathExtended.sqrt(amountADesired * amountBDesired) - 1000;
+        liquidityMin = bound(liquidityMin, 0, expectedLiquidity - 1);
+
+        tokenA.mint(address(this), amountADesired);
+        tokenA.approve(address(genericButtonswapRouter), amountADesired);
+        tokenB.mint(address(this), amountBDesired);
+        tokenB.approve(address(genericButtonswapRouter), amountBDesired);
+
+        // Creating the addLiquidityParams
+        addLiquidityParams.operation = ButtonswapOperations.Liquidity.DUAL; // Potentially just separate out the function
+        addLiquidityParams.tokenA = address(tokenA);
+        addLiquidityParams.tokenB = address(tokenB);
+        //        addLiquidityParams.swapStepsA; // Default to []
+        //        addLiquidityParams.swapStepsB; // Default to []
+        addLiquidityParams.amountADesired = amountADesired;
+        addLiquidityParams.amountBDesired = amountBDesired;
+        addLiquidityParams.amountAMin = 0;
+        addLiquidityParams.amountBMin = 0;
+        addLiquidityParams.liquidityMin = 0;
+        addLiquidityParams.movingAveragePrice0ThresholdBps = movingAveragePrice0ThresholdBps;
+        addLiquidityParams.createPair = true;
+        address to = address(this);
+        uint256 deadline = block.timestamp + 1000;
+
+        // Validate the pair does not exist yet
+        assertEq(buttonswapFactory.getPair(address(tokenA), address(tokenB)), address(0), "Pair should not exist yet");
+
+        // Creating the pair
+
+        (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
+                            genericButtonswapRouter.addLiquidity(addLiquidityParams, to, deadline);
+
+        // Validating state
+        address pairAddress = buttonswapFactory.getPair(address(tokenA), address(tokenB));
+        assertNotEq(pairAddress, address(0), "Pair should now exist");
+        assertEq(amountsA[0], amountADesired, "AmountsA[0] should be equal to amountADesired");
+        assertEq(amountsB[0], amountBDesired, "AmountsB[0] should be equal to amountBDesired");
+        assertEq(
+            liquidity,
+            MathExtended.sqrt(amountADesired * amountBDesired) - 1000,
+            "Liquidity should be equal geometric mean - 1000"
+        );
+    }
+
     function test_addLiquidity_createPairNoHopsPairDoesNotExist(
         uint256 amountADesired,
         uint256 amountBDesired,

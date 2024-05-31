@@ -332,18 +332,22 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     }
 
     function _validateMovingAveragePrice0Threshold(
-        uint16 movingAveragePrice0ThresholdBps,
+        uint256 movingAveragePrice0ThresholdBps,
         uint256 pool0,
         uint256 pool1,
         IButtonswapPair pair
     ) internal view {
         // Validate that the moving average price is within the threshold for pairs that exist
-        if (pool0 > 0 && pool1 > 0) {
+        // Skip if pair doesn't exist yet (empty pools) or if movingAveragePrice0ThresholdBps is maximum
+        if (pool0 > 0 && pool1 > 0 && movingAveragePrice0ThresholdBps < type(uint256).max) {
             uint256 movingAveragePrice0 = pair.movingAveragePrice0();
             uint256 cachedTerm = Math.mulDiv(movingAveragePrice0, pool0 * BPS, 2 ** 112);
-            if (
-                pool1 * (BPS - movingAveragePrice0ThresholdBps) > cachedTerm
-                    || pool1 * (BPS + movingAveragePrice0ThresholdBps) < cachedTerm
+            // Check above lowerbound
+            if ((movingAveragePrice0ThresholdBps < BPS) && pool1 * (BPS - movingAveragePrice0ThresholdBps) > cachedTerm) {
+                revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
+            }
+            // Check below upperbound
+            if (pool1 * (BPS + movingAveragePrice0ThresholdBps) < cachedTerm
             ) {
                 revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
             }
