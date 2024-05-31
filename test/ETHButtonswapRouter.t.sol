@@ -410,14 +410,14 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
             // token is token0
             vm.assume((poolETH * newPoolToken * BPS) > (newPoolETH * poolToken) * (BPS + 1));
             movingAveragePrice0ThresholdBps =
-                uint16((poolETH * newPoolToken * BPS) / (newPoolETH * poolToken) - BPS - 1);
+                uint16((poolETH * newPoolToken * BPS) / (newPoolETH * poolToken) - BPS - 1) - 1;
             vm.assume(0 < movingAveragePrice0ThresholdBps);
             vm.assume(movingAveragePrice0ThresholdBps < BPS);
         } else {
             // weth is token0
             vm.assume((poolToken * newPoolETH * BPS) > (newPoolToken * poolETH) * (BPS + 1));
             movingAveragePrice0ThresholdBps =
-                uint16((poolToken * newPoolETH * BPS) / (newPoolToken * poolETH) - BPS - 1);
+                uint16((poolToken * newPoolETH * BPS) / (newPoolToken * poolETH) - BPS - 1) - 1;
             vm.assume(0 < movingAveragePrice0ThresholdBps);
             vm.assume(movingAveragePrice0ThresholdBps < BPS);
         }
