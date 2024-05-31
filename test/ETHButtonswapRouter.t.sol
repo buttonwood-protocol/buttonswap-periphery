@@ -139,9 +139,10 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         assertTrue(sent, "Expected call to succeed");
     }
 
-    // **** addLiquidityETH() ****
-
-    function test_addLiquidityETH_createsPairIfNoneExists(uint256 amountTokenDesired, uint256 amountETHSent) public {
+    // **** createAndAddLiquidityETH() ****
+    function test_createAndAddLiquidityETH_createsPairIfNoneExists(uint256 amountTokenDesired, uint256 amountETHSent)
+        public
+    {
         // Minting enough for minimum liquidity requirement
         amountTokenDesired = bound(amountTokenDesired, 10000, type(uint112).max);
         amountETHSent = bound(amountETHSent, 10000, type(uint112).max);
@@ -159,12 +160,51 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
             abi.encodeCall(ButtonswapFactory.createPair, (address(rebasingToken), address(weth)))
         );
 
-        ethButtonswapRouter.addLiquidityETH{value: amountETHSent}(
-            address(rebasingToken), amountTokenDesired, 0, 0, 700, userA, block.timestamp + 1
+        ethButtonswapRouter.createAndAddLiquidityETH{value: amountETHSent}(
+            address(rebasingToken), amountTokenDesired, userA, block.timestamp + 1
         );
 
         // Asserting one pair has been created
         assertEq(buttonswapFactory.allPairsLength(), 1);
+    }
+
+    function testFail_createAndAddLiquidityETH_pairAlreadyExists(uint256 amountTokenDesired, uint256 amountETHSent)
+        public
+    {
+        // Creating the pair with minimum liquidity before starting
+        createAndInitializePairETH(rebasingToken, 10000, 10000);
+
+        // Minting enough for minimum liquidity requirement
+        amountTokenDesired = bound(amountTokenDesired, 10000, type(uint112).max);
+        amountETHSent = bound(amountETHSent, 10000, type(uint112).max);
+
+        rebasingToken.mint(address(this), amountTokenDesired);
+        rebasingToken.approve(address(ethButtonswapRouter), amountTokenDesired);
+        vm.deal(address(this), amountETHSent);
+
+        ethButtonswapRouter.createAndAddLiquidityETH{value: amountETHSent}(
+            address(rebasingToken), amountTokenDesired, userA, block.timestamp + 1
+        );
+    }
+
+    // **** addLiquidityETH() ****
+
+    function testFail_addLiquidityETH_pairDoesNotExist(uint256 amountTokenDesired, uint256 amountETHSent) public {
+        // Minting enough for minimum liquidity requirement
+        amountTokenDesired = bound(amountTokenDesired, 10000, type(uint112).max);
+        amountETHSent = bound(amountETHSent, 10000, type(uint112).max);
+
+        rebasingToken.mint(address(this), amountTokenDesired);
+        rebasingToken.approve(address(ethButtonswapRouter), amountTokenDesired);
+        vm.deal(address(this), amountETHSent);
+
+        // Validating no pairs exist before call
+        assertEq(buttonswapFactory.allPairsLength(), 0);
+
+        // Attempt to add liquidity to a non-existent pair
+        ethButtonswapRouter.addLiquidityETH{value: amountETHSent}(
+            address(rebasingToken), amountTokenDesired, 0, 0, 700, userA, block.timestamp + 1
+        );
     }
 
     function test_addLiquidityETH_pairExistsNoReservoirInsufficientTokenAmount(

@@ -5,7 +5,7 @@ import {IRootButtonswapRouter} from "./IRootButtonswapRouter.sol";
 
 interface IBasicButtonswapRouter is IRootButtonswapRouter {
     /**
-     * @notice Adds liquidity to a pair, creating it if it doesn't exist yet, and transfers the liquidity tokens to the recipient.
+     * @notice Adds liquidity to a pair, reverting if it doesn't exist yet, and transfers the liquidity tokens to the recipient.
      * @dev If the pair is empty, amountAMin and amountBMin are ignored.
      * If the pair is nonempty, it deposits as much of tokenA and tokenB as possible while maintaining 3 conditions:
      * 1. The ratio of tokenA to tokenB in the pair remains approximately the same
@@ -32,6 +32,32 @@ interface IBasicButtonswapRouter is IRootButtonswapRouter {
         uint256 amountAMin,
         uint256 amountBMin,
         uint16 movingAveragePrice0ThresholdBps,
+        address to,
+        uint256 deadline
+    ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
+
+    /**
+     * @notice Adds liquidity to a pair, creating it if it doesn't exist yet, and transfers the liquidity tokens to the recipient.
+     * @dev If the pair is empty, amountAMin and amountBMin are ignored.
+     * If the pair is nonempty, it deposits as much of tokenA and tokenB as possible while maintaining 3 conditions:
+     * 1. The ratio of tokenA to tokenB in the pair remains approximately the same
+     * 2. The amount of tokenA in the pair is at least amountAMin but less than or equal to amountADesired
+     * 3. The amount of tokenB in the pair is at least amountBMin but less than or equal to amountBDesired
+     * @param tokenA The address of the first token in the pair.
+     * @param tokenB The address of the second token in the pair.
+     * @param amountADesired The maximum amount of the first token to add to the pair.
+     * @param amountBDesired The maximum amount of the second token to add to the pair.
+     * @param to The address to send the liquidity tokens to.
+     * @param deadline The time after which this transaction can no longer be executed.
+     * @return amountA The amount of tokenA actually added to the pair.
+     * @return amountB The amount of tokenB actually added to the pair.
+     * @return liquidity The amount of liquidity tokens minted.
+     */
+    function createAndAddLiquidity(
+        address tokenA,
+        address tokenB,
+        uint256 amountADesired,
+        uint256 amountBDesired,
         address to,
         uint256 deadline
     ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
