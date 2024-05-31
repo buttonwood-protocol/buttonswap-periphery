@@ -24,6 +24,18 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
 
     // **** ADD LIQUIDITY ****
     // @dev Refer to [movingAveragePriceThreshold.md](https://github.com/buttonwood-protocol/buttonswap-periphery/blob/main/notes/movingAveragePriceThreshold.md) for more detail.
+
+    function _createAndAddLiquidity(address tokenA, address tokenB, uint256 amountADesired, uint256 amountBDesired)
+        internal
+        virtual
+        returns (uint256 amountA, uint256 amountB)
+    {
+        // create the pair
+        IButtonswapFactory(factory).createPair(tokenA, tokenB);
+
+        (amountA, amountB) = (amountADesired, amountBDesired);
+    }
+
     function _addLiquidity(
         address tokenA,
         address tokenB,
@@ -34,10 +46,8 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
         uint16 movingAveragePrice0ThresholdBps
     ) internal virtual returns (uint256 amountA, uint256 amountB) {
         // create the pair if it doesn't exist yet
+        // Downstream logic will revert if pair does not exist
         address pair = IButtonswapFactory(factory).getPair(tokenA, tokenB);
-        if (pair == address(0)) {
-            pair = IButtonswapFactory(factory).createPair(tokenA, tokenB);
-        }
 
         (uint256 poolA, uint256 poolB, uint256 reservoirA, uint256 reservoirB) =
             ButtonswapLibrary.getLiquidityBalances(factory, tokenA, tokenB);
@@ -45,23 +55,36 @@ contract RootButtonswapRouter is IRootButtonswapRouter {
         if ((poolA + reservoirA) == 0 && (poolB + reservoirB) == 0) {
             (amountA, amountB) = (amountADesired, amountBDesired);
         } else {
-            uint256 amountBOptimal = ButtonswapLibrary.quote(amountADesired, poolA + reservoirA, poolB + reservoirB);
-            if (amountBOptimal <= amountBDesired) {
-                if (amountBOptimal < amountBMin) {
+            // Calculate optimal amountB and check if it fits
+            uint256 amountOptimal = ButtonswapLibrary.quote(amountADesired, poolA + reservoirA, poolB + reservoirB);
+            if (amountOptimal <= amountBDesired) {
+                if (amountOptimal < amountBMin) {
                     revert InsufficientBAmount();
                 }
-                (amountA, amountB) = (amountADesired, amountBOptimal);
+                (amountA, amountB) = (amountADesired, amountOptimal);
             } else {
-                uint256 amountAOptimal = ButtonswapLibrary.quote(amountBDesired, poolB + reservoirB, poolA + reservoirA);
-                assert(amountAOptimal <= amountADesired);
-                if (amountAOptimal < amountAMin) {
+                // Calculate optimal amountA (repurposing variable to save gas) and check if it fits
+                amountOptimal = ButtonswapLibrary.quote(amountBDesired, poolB + reservoirB, poolA + reservoirA);
+                assert(amountOptimal <= amountADesired);
+                if (amountOptimal < amountAMin) {
                     revert InsufficientAAmount();
                 }
-                (amountA, amountB) = (amountAOptimal, amountBDesired);
+                (amountA, amountB) = (amountOptimal, amountBDesired);
             }
         }
 
         // Validate that the moving average price is within the threshold for pairs that exist
+        _validateMovingAveragePrice0Threshold(pair, tokenA, tokenB, poolA, poolB, movingAveragePrice0ThresholdBps);
+    }
+
+    function _validateMovingAveragePrice0Threshold(
+        address pair,
+        address tokenA,
+        address tokenB,
+        uint256 poolA,
+        uint256 poolB,
+        uint16 movingAveragePrice0ThresholdBps
+    ) internal virtual {
         if (poolA > 0 && poolB > 0) {
             uint256 movingAveragePrice0 = IButtonswapPair(pair).movingAveragePrice0();
             if (tokenA < tokenB) {
