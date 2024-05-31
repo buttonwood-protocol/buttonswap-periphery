@@ -136,11 +136,12 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
         tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
 
         // Minting enough for minimum liquidity requirement
-        poolUsdm = bound(poolUsdm, 10000, type(uint112).max);
+        poolUsdm = bound(poolUsdm, 10000, type(uint112).max - 3);
         poolB = bound(poolB, 10000, type(uint112).max);
 
         // Ensuring that amountIn is bounded to avoid errors/overflows/underflows
-        amountIn = bound(amountIn, 1, type(uint112).max - poolUsdm);
+        // Bounding below by 3 since 1 and 2 can both result in the router receiving 0 usdm
+        amountIn = bound(amountIn, 3, type(uint112).max - poolUsdm);
 
         // Creating the pair with poolUsdm:poolB price ratio
         (IButtonswapPair pair,) = createAndInitializePair(tokenB, poolUsdm, poolB);
