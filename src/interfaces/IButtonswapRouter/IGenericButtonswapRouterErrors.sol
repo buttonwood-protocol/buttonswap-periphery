@@ -68,7 +68,7 @@ interface IGenericButtonswapRouterErrors {
      * @param movingAveragePrice0ThresholdBps The threshold of deviation of movingAveragePrice0 from the pool price
      */
     error MovingAveragePriceOutOfBounds(
-        uint256 pool0, uint256 pool1, uint256 movingAveragePrice0, uint16 movingAveragePrice0ThresholdBps
+        uint256 pool0, uint256 pool1, uint256 movingAveragePrice0, uint256 movingAveragePrice0ThresholdBps
     );
 
     // **** AddLiquidity/RemoveLiquidity Errors **** //

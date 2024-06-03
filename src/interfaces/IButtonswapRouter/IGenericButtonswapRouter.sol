@@ -43,7 +43,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
         uint256 amountAMin;
         uint256 amountBMin;
         uint256 liquidityMin;
-        uint16 movingAveragePrice0ThresholdBps;
+        uint256 movingAveragePrice0ThresholdBps;
         bool createPair;
     }
 
