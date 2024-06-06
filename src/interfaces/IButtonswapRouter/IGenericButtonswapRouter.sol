@@ -10,10 +10,12 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * @notice Struct for swapping tokens
      * @param operation The operation to perform: (SWAP, WRAP_BUTTON, UNWRAP_BUTTON, WRAP_WETH, UNWRAP_WETH)
      * @param tokenOut The address of the output token to swap to. If ETH (or network currency), address(0) is used.
+     * @param data Additional data for the operation. Ignored if not required.
      */
     struct SwapStep {
         ButtonswapOperations.Swap operation;
         address tokenOut;
+        bytes data;
     }
 
     /**
@@ -76,6 +78,12 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * @return factory The address of the Buttonswap Factory
      */
     function factory() external view returns (address factory);
+
+    /**
+     * @notice Returns the address of the ButtonswapV2 Factory
+     * @return v2Factory The address of the ButtonswapV2 Factory
+     */
+    function v2Factory() external view returns (address v2Factory);
     /**
      * @notice Returns the address of the WETH token
      * @return WETH The address of the WETH token

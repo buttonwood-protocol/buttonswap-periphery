@@ -105,24 +105,6 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         }
     }
 
-    //    // Utility function for testing functions that use Permit
-    //    function generateUserAPermitSignature(IButtonswapPair pair, uint256 liquidity, uint256 deadline)
-    //        private
-    //        view
-    //        returns (uint8 v, bytes32 r, bytes32 s)
-    //    {
-    //        bytes32 permitDigest = keccak256(
-    //            abi.encodePacked(
-    //                "\x19\x01",
-    //                pair.DOMAIN_SEPARATOR(),
-    //                keccak256(
-    //                    abi.encode(pair.PERMIT_TYPEHASH(), userA, address(basicButtonswapRouter), liquidity, 0, deadline)
-    //                )
-    //            )
-    //        );
-    //        return vm.sign(userAPrivateKey, permitDigest);
-    //    }
-
     // Required function for receiving ETH refunds
     receive() external payable {}
 
@@ -142,7 +124,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         buttonswapFactory = new ButtonswapFactory(
             feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "Token Name", "SYMBOL"
         );
-        genericButtonswapRouter = new GenericButtonswapRouter(address(buttonswapFactory), address(weth));
+        genericButtonswapRouter = new GenericButtonswapRouter(address(buttonswapFactory), address(0), address(weth));
     }
 
     function test_addLiquidity_expiredDeadline(uint256 timestamp, uint256 deadline) public {
@@ -217,9 +199,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 amountBDesired,
         uint256 liquidityMin,
         uint256 movingAveragePrice0ThresholdBps
-    )
-    public
-    {
+    ) public {
         // Minting enough for minimum liquidity requirement
         amountADesired = bound(amountADesired, 10000, type(uint112).max);
         amountBDesired = bound(amountBDesired, 10000, type(uint112).max);
@@ -256,7 +236,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Creating the pair
 
         (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
-                            genericButtonswapRouter.addLiquidity(addLiquidityParams, to, deadline);
+            genericButtonswapRouter.addLiquidity(addLiquidityParams, to, deadline);
 
         // Validating state
         address pairAddress = buttonswapFactory.getPair(address(tokenA), address(tokenB));

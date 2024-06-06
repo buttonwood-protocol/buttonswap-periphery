@@ -145,7 +145,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         buttonswapFactory = new ButtonswapFactory(
             feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "Token Name", "SYMBOL"
         );
-        genericButtonswapRouter = new GenericButtonswapRouter(address(buttonswapFactory), address(weth));
+        genericButtonswapRouter = new GenericButtonswapRouter(address(buttonswapFactory), address(0), address(weth));
     }
 
     function test_removeLiquidity_expiredDeadline(uint256 timestamp, uint256 deadline) public {

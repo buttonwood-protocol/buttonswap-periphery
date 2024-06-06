@@ -4,7 +4,9 @@ openzeppelin-contracts/=null
 openzeppelin/=null
 mock-contracts/=null
 buttonswap-core/=null
+buttonswap-v2-core/=null
 
 buttonswap-periphery_forge-std=lib/forge-std/src
 buttonswap-periphery_mock-contracts=lib/mock-contracts/src
 buttonswap-periphery_buttonswap-core=lib/buttonswap-core/src
+buttonswap-periphery_buttonswap-v2-core=lib/buttonswap-v2-core/src

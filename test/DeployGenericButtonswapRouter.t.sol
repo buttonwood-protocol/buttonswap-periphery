@@ -14,6 +14,8 @@ contract DeployGenericButtonswapRouterTest is Test {
 
     function test_setup() public {
         GenericButtonswapRouter genericButtonswapRouter = deploy.run();
-        assertNotEq(address(genericButtonswapRouter), address(0), "Validating GenericButtonswapRouter deploys with no errors");
+        assertNotEq(
+            address(genericButtonswapRouter), address(0), "Validating GenericButtonswapRouter deploys with no errors"
+        );
     }
 }
