@@ -22,10 +22,11 @@ library ButtonswapV2Library {
     //    /// @notice Invalid path provided
     //    error InvalidPath();
 
-    function decodeData(bytes memory data) internal pure returns (uint16 plBps, uint16 feeBps) {
+    function decodeData(bytes memory data) internal pure returns (uint8 version, uint16 plBps, uint16 feeBps) {
         assembly {
-            plBps := mload(add(data, 0x02))
-            feeBps := mload(add(data, 0x04))
+            version := mload(add(data, 0x01))
+            plBps := mload(add(data, 0x03))
+            feeBps := mload(add(data, 0x05))
         }
     }
 
@@ -98,7 +99,8 @@ library ButtonswapV2Library {
         returns (uint256 poolA, uint256 poolB)
     {
         (address token0,) = sortTokens(tokenA, tokenB);
-        (uint256 pool0, uint256 pool1,,,,,) = IButtonswapV2Pair(pairFor(factory, tokenA, tokenB, plBps, feeBps)).getLiquidityBalances();
+        (uint256 pool0, uint256 pool1,,,,,) =
+            IButtonswapV2Pair(pairFor(factory, tokenA, tokenB, plBps, feeBps)).getLiquidityBalances();
         (poolA, poolB) = tokenA == token0 ? (pool0, pool1) : (pool1, pool0);
     }
 

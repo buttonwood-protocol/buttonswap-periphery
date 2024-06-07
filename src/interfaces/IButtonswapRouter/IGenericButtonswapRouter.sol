@@ -10,7 +10,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * @notice Struct for swapping tokens
      * @param operation The operation to perform: (SWAP, WRAP_BUTTON, UNWRAP_BUTTON, WRAP_WETH, UNWRAP_WETH)
      * @param tokenOut The address of the output token to swap to. If ETH (or network currency), address(0) is used.
-     * @param data Additional data for the operation. Ignored if not required.
+     * @param data Additional data for the operation. First 8 bits represent the version. Ignored if not required.
      */
     struct SwapStep {
         ButtonswapOperations.Swap operation;
@@ -33,6 +33,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * @param amountBMin The minimum amount of the second token to provide
      * @param movingAveragePrice0ThresholdBps The percentage threshold that movingAveragePrice0 can deviate from the current price.
      * @param createPair Whether to create the pair. Will trigger revert if false and the pair does not exist, or if true and the pair already exists.
+     * @param data Additional data for the operation. First 8 bits represent the version. Ignored if not required.
      */
     struct AddLiquidityParams {
         ButtonswapOperations.Liquidity operation; // Potentially just separate out the function
@@ -47,6 +48,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
         uint256 liquidityMin;
         uint256 movingAveragePrice0ThresholdBps;
         bool createPair;
+        bytes data;
     }
 
     /**
@@ -61,6 +63,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
      * @param liquidity The amount of liquidity tokens to burn
      * @param amountAMin The minimum amount of the first token to receive
      * @param amountBMin The minimum amount of the second token to receive
+     * @param data Additional data for the operation. First 8 bits represent the version. Ignored if not required.
      */
     struct RemoveLiquidityParams {
         ButtonswapOperations.Liquidity operation;
@@ -71,6 +74,7 @@ interface IGenericButtonswapRouter is IGenericButtonswapRouterErrors {
         uint256 liquidity;
         uint256 amountAMin;
         uint256 amountBMin;
+        bytes data;
     }
 
     /**

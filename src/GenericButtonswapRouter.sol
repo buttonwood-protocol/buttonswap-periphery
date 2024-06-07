@@ -17,7 +17,7 @@ import {ButtonswapV2Library} from "./libraries/ButtonswapV2Library.sol";
 import {IButtonswapV2Pair} from
     "buttonswap-periphery_buttonswap-v2-core/interfaces/IButtonswapV2Pair/IButtonswapV2Pair.sol";
 import {IButtonswapV2Factory} from
-"buttonswap-periphery_buttonswap-v2-core/interfaces/IButtonswapV2Factory/IButtonswapV2Factory.sol";
+    "buttonswap-periphery_buttonswap-v2-core/interfaces/IButtonswapV2Factory/IButtonswapV2Factory.sol";
 
 contract GenericButtonswapRouter is IGenericButtonswapRouter {
     uint256 private constant BPS = 10_000;
@@ -143,7 +143,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
 
     // Swap
     function _swapV2(address tokenIn, address tokenOut, bytes calldata data) internal returns (uint256 amountOut) {
-        (uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(data);
+        (, uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(data);
         IButtonswapV2Pair pair =
             IButtonswapV2Pair(ButtonswapV2Library.pairFor(v2Factory, tokenIn, tokenOut, plBps, feeBps));
         uint256 amountIn = IERC20(tokenIn).balanceOf(address(this));
@@ -254,8 +254,9 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, swapStep.tokenOut);
             amountIn = ButtonswapLibrary.getAmountIn(amountOut, poolIn, poolOut) + 4;
         } else if (swapStep.operation == ButtonswapOperations.Swap.SWAP_V2) {
-            (uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(swapStep.data);
-            (uint256 poolIn, uint256 poolOut) = ButtonswapV2Library.getPools(v2Factory, tokenIn, swapStep.tokenOut, plBps, feeBps);
+            (, uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(swapStep.data);
+            (uint256 poolIn, uint256 poolOut) =
+                ButtonswapV2Library.getPools(v2Factory, tokenIn, swapStep.tokenOut, plBps, feeBps);
             amountIn = ButtonswapV2Library.getAmountIn(amountOut, poolIn, poolOut, plBps, feeBps);
         }
     }
@@ -296,8 +297,9 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
                 IUSDM(tokenIn).convertToTokens(IUSDM(tokenIn).convertToShares(amountIn)), poolIn, poolOut
             );
         } else if (swapStep.operation == ButtonswapOperations.Swap.SWAP_V2) {
-            (uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(swapStep.data);
-            (uint256 poolIn, uint256 poolOut) = ButtonswapV2Library.getPools(v2Factory, tokenIn, swapStep.tokenOut, plBps, feeBps);
+            (, uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(swapStep.data);
+            (uint256 poolIn, uint256 poolOut) =
+                ButtonswapV2Library.getPools(v2Factory, tokenIn, swapStep.tokenOut, plBps, feeBps);
             amountOut = ButtonswapV2Library.getAmountOut(amountIn, poolIn, poolOut, plBps, feeBps);
         }
     }
@@ -367,6 +369,12 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         // Approving final tokenA for transfer to pair
         TransferHelper.safeApprove(tokenIn, pair, amountIn);
         finalAmountIn = amountIn;
+    }
+
+    function _getPairVersion(bytes memory data) internal pure returns (uint8 version) {
+        assembly {
+            version := mload(add(data, 0x01))
+        }
     }
 
     function _validateMovingAveragePrice0Threshold(
