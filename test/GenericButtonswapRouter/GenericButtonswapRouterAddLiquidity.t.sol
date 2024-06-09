@@ -105,6 +105,10 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         }
     }
 
+    function encodeV1Data() private pure returns (bytes memory) {
+        return abi.encodePacked(uint8(1));
+    }
+
     // Required function for receiving ETH refunds
     receive() external payable {}
 
@@ -171,6 +175,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = true;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -227,6 +232,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = movingAveragePrice0ThresholdBps;
         addLiquidityParams.createPair = true;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -281,6 +287,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -327,6 +334,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = liquidityMin;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = true;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -379,6 +387,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = true;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -438,6 +447,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = true;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -485,6 +495,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = true;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -534,6 +545,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = true;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -585,6 +597,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = true;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -634,6 +647,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = true;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -680,6 +694,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = true;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -726,6 +741,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = true;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -793,6 +809,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = liquidityMin;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 1; // Giving it 1 basis-point of slack because rounding from the 2**112 conversion
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -852,6 +869,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = liquidityMin;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 1; // Giving it 1 basis-point of slack because rounding from the 2**112 conversion
         addLiquidityParams.createPair = true;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -910,6 +928,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = liquidityMin;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 1; // Giving it 1 basis-point of slack because rounding from the 2**112 conversion
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -966,6 +985,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 1; // Giving it 1 basis-point of slack because rounding from the 2**112 conversion
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1027,6 +1047,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 1; // Giving it 1 basis-point of slack because rounding from the 2**112 conversion
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1076,6 +1097,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 1; // Giving it 1 basis-point of slack because rounding from the 2**112 conversion
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1125,6 +1147,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 1; // Giving it 1 basis-point of slack because rounding from the 2**112 conversion
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1178,6 +1201,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 1; // Giving it 1 basis-point of slack because rounding from the 2**112 conversion
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1231,6 +1255,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 1; // Giving it 1 basis-point of slack because rounding from the 2**112 conversion
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1279,6 +1304,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 1; // Giving it 1 basis-point of slack because rounding from the 2**112 conversion
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1327,6 +1353,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 1; // Giving it 1 basis-point of slack because rounding from the 2**112 conversion
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1359,6 +1386,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1395,6 +1423,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1425,6 +1454,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1467,6 +1497,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1516,6 +1547,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1604,6 +1636,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1688,6 +1721,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1791,6 +1825,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1894,6 +1929,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1987,6 +2023,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -2080,6 +2117,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -2174,6 +2212,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -2268,6 +2307,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -2354,6 +2394,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -2440,6 +2481,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.liquidityMin = 0;
         addLiquidityParams.movingAveragePrice0ThresholdBps = 0;
         addLiquidityParams.createPair = false;
+        addLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 

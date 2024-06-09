@@ -121,6 +121,16 @@ contract GenericButtonswapRouterSwapV2Test is Test, IGenericButtonswapRouterErro
         assertEq(genericButtonswapRouter.v2Factory(), address(buttonswapV2Factory));
     }
 
+    //    function test_hello(uint8 version, uint16 plBps, uint16 feeBps) public {
+    //        bytes memory wap = abi.encodePacked(version, plBps, feeBps);
+    //
+    //        (uint8 newVersion, uint16 newPlBps, uint16 newFeeBps) = ButtonswapV2Library.decodeData(wap);
+    //
+    //        assertEq(version, newVersion);
+    //        assertEq(plBps, newPlBps);
+    //        assertEq(feeBps, newFeeBps);
+    //    }
+
     //****  swapExactTokensForTokens ****//
     function test_swapExactTokensForTokens_singleSwapV2WithInsufficientOutputAmount(
         uint256 poolA,

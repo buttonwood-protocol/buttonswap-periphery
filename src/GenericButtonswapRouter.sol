@@ -377,25 +377,74 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
     }
 
+    function _validateMovingAveragePrice0ThresholdV1(
+        uint256 movingAveragePrice0,
+        uint256 movingAveragePrice0ThresholdBps,
+        uint256 pool0,
+        uint256 pool1
+    ) internal pure {
+        uint256 cachedTerm = Math.mulDiv(movingAveragePrice0, pool0 * BPS, 2 ** 112);
+        // Check above lowerbound
+        if ((movingAveragePrice0ThresholdBps < BPS) && pool1 * (BPS - movingAveragePrice0ThresholdBps) > cachedTerm) {
+            revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
+        }
+        // Check below upperbound
+        if (pool1 * (BPS + movingAveragePrice0ThresholdBps) < cachedTerm) {
+            revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
+        }
+    }
+
+    function _validateMovingAveragePrice0ThresholdV2(
+        uint256 movingAveragePrice0,
+        uint256 movingAveragePrice0ThresholdBps,
+        uint256 pool0,
+        uint256 pool1,
+        uint16 plBps
+    ) internal pure {
+        uint256 price0 = ButtonswapV2Library.price(pool1, pool0, plBps);
+        // Check above lowerbound
+        if (
+            (movingAveragePrice0ThresholdBps < BPS)
+                && (BPS * price0 < (BPS - movingAveragePrice0ThresholdBps) * movingAveragePrice0)
+        ) {
+            revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
+        }
+        // Check below upperbound
+        uint256 cachedTerm = BPS + movingAveragePrice0ThresholdBps;
+        if (movingAveragePrice0 < type(uint256).max / cachedTerm) {
+            // Can check without mulDiv
+            if (BPS * price0 > cachedTerm * movingAveragePrice0) {
+                revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
+            }
+        } else {
+            // Require mulDiv to check
+            if (Math.mulDiv(BPS, price0, 2 ** 112) > Math.mulDiv(cachedTerm, movingAveragePrice0, 2 ** 112)) {
+                revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
+            }
+        }
+    }
+
     function _validateMovingAveragePrice0Threshold(
         uint256 movingAveragePrice0ThresholdBps,
         uint256 pool0,
         uint256 pool1,
-        IButtonswapPair pair
+        IButtonswapPair pair,
+        bytes memory data
     ) internal view {
+        uint8 version = _getPairVersion(data);
         // Validate that the moving average price is within the threshold for pairs that exist
         // Skip if pair doesn't exist yet (empty pools) or if movingAveragePrice0ThresholdBps is maximum
         if (pool0 > 0 && pool1 > 0 && movingAveragePrice0ThresholdBps < type(uint256).max) {
             uint256 movingAveragePrice0 = pair.movingAveragePrice0();
-            uint256 cachedTerm = Math.mulDiv(movingAveragePrice0, pool0 * BPS, 2 ** 112);
-            // Check above lowerbound
-            if ((movingAveragePrice0ThresholdBps < BPS) && pool1 * (BPS - movingAveragePrice0ThresholdBps) > cachedTerm)
-            {
-                revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
-            }
-            // Check below upperbound
-            if (pool1 * (BPS + movingAveragePrice0ThresholdBps) < cachedTerm) {
-                revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
+            if (version == 1) {
+                _validateMovingAveragePrice0ThresholdV1(
+                    movingAveragePrice0, movingAveragePrice0ThresholdBps, pool0, pool1
+                );
+            } else if (version == 2) {
+                (, uint16 plBps,) = ButtonswapV2Library.decodeData(data);
+                _validateMovingAveragePrice0ThresholdV2(
+                    movingAveragePrice0, movingAveragePrice0ThresholdBps, pool0, pool1, plBps
+                );
             }
         }
     }
@@ -464,7 +513,11 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
 
         // Validate that the moving average price is within the threshold for pairs that already existed
         _validateMovingAveragePrice0Threshold(
-            addLiquidityParams.movingAveragePrice0ThresholdBps, aToken0 ? poolA : poolB, aToken0 ? poolB : poolA, pair
+            addLiquidityParams.movingAveragePrice0ThresholdBps,
+            aToken0 ? poolA : poolB,
+            aToken0 ? poolB : poolA,
+            pair,
+            addLiquidityParams.data
         );
     }
 
@@ -489,18 +542,21 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
     }
 
-    function _addLiquidityGetMintSwappedAmounts(
+    // Works for both V1 and V2
+    function _addLiquidityGetMintSwappedAmountsV2(
         AddLiquidityParams calldata addLiquidityParams,
         address pairTokenA,
         address pairTokenB,
         bool isReservoirA
     ) internal returns (uint256 amountA, uint256 amountB) {
+        address pairAddress = _getPair(pairTokenA, pairTokenB, addLiquidityParams.data);
+
         // ReservoirA is non-empty
         if (isReservoirA) {
             // we take from reservoirA and the user-provided amountBDesired
             // But modify so that you don't do liquidityOut logic since you don't need it
-            (, uint256 amountAOptimal) = ButtonswapLibrary.getMintSwappedAmounts(
-                factory,
+            (, uint256 amountAOptimal) = ButtonswapV2Library.getMintSwappedAmounts(
+                pairAddress,
                 pairTokenB,
                 pairTokenA,
                 _getAmountOut(
@@ -516,8 +572,8 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         } else {
             // ReservoirB is non-empty
             // we take from reservoirB and the user-provided amountADesired
-            (, uint256 amountBOptimal) = ButtonswapLibrary.getMintSwappedAmounts(
-                factory,
+            (, uint256 amountBOptimal) = ButtonswapV2Library.getMintSwappedAmounts(
+                pairAddress,
                 pairTokenA,
                 pairTokenB,
                 _getAmountOut(
@@ -559,8 +615,9 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             revert NoReservoir(address(pair));
         }
 
+        //        (amountA, amountB) = _addLiquidityGetMintSwappedAmounts(addLiquidityParams, pairTokenA, pairTokenB, reservoirA > 0);
         (amountA, amountB) =
-            _addLiquidityGetMintSwappedAmounts(addLiquidityParams, pairTokenA, pairTokenB, reservoirA > 0);
+            _addLiquidityGetMintSwappedAmountsV2(addLiquidityParams, pairTokenA, pairTokenB, reservoirA > 0);
     }
 
     function _addLiquiditySingle(
@@ -585,6 +642,39 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
     }
 
+    function _getPair(address pairTokenA, address pairTokenB, bytes memory data)
+        internal
+        view
+        returns (address pairAddress)
+    {
+        uint8 version = _getPairVersion(data);
+
+        if (version == 1) {
+            pairAddress = IButtonswapFactory(factory).getPair(pairTokenA, pairTokenB);
+        } else if (version == 2) {
+            (, uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(data);
+            pairAddress = IButtonswapV2Factory(v2Factory).getPair(pairTokenA, pairTokenB, plBps, feeBps);
+        } else {
+            revert UnsupportedVersion(version);
+        }
+    }
+
+    function _createPair(address pairTokenA, address pairTokenB, bytes memory data)
+        internal
+        returns (address pairAddress)
+    {
+        uint8 version = _getPairVersion(data);
+
+        if (version == 1) {
+            pairAddress = IButtonswapFactory(factory).createPair(pairTokenA, pairTokenB);
+        } else if (version == 2) {
+            (, uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(data);
+            pairAddress = IButtonswapV2Factory(v2Factory).createPair(pairTokenA, pairTokenB, plBps, feeBps);
+        } else {
+            revert UnsupportedVersion(version);
+        }
+    }
+
     function _addLiquidityGetOrCreatePair(AddLiquidityParams calldata addLiquidityParams)
         internal
         returns (address pairAddress, address pairTokenA, address pairTokenB)
@@ -598,17 +688,19 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             : addLiquidityParams.tokenB;
 
         // Fetch the pair
-        pairAddress = IButtonswapFactory(factory).getPair(pairTokenA, pairTokenB);
+        pairAddress = _getPair(pairTokenA, pairTokenB, addLiquidityParams.data);
 
         // Pair doesn't exist
         if (pairAddress == address(0)) {
             // If the operation is dual-sided and createPair is true, then create the pair. Otherwise throw an error
             if (addLiquidityParams.operation == ButtonswapOperations.Liquidity.DUAL && addLiquidityParams.createPair) {
-                pairAddress = IButtonswapFactory(factory).createPair(pairTokenA, pairTokenB);
+                pairAddress = _createPair(pairTokenA, pairTokenB, addLiquidityParams.data);
             } else {
+                // ToDo: Update error to include v2 params: plBps, feeBps?
                 revert PairDoesNotExist(pairTokenA, pairTokenB);
             }
         } else if (addLiquidityParams.createPair) {
+            // ToDo: Update error to include v2 params: plBps, feeBps?
             // The pair already exists but createPair is true
             revert PairAlreadyExists(pairTokenA, pairTokenB, pairAddress);
         }

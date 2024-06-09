@@ -228,4 +228,30 @@ library ButtonswapV2Library {
         // Scale the amountIn back down
         amountIn = amountIn / (1e4 - feeBps);
     }
+
+    function price(uint256 poolA, uint256 poolB, uint256 plBps) internal pure returns (uint256 currentPrice) {
+        return PairMathV2.price(poolA, poolB, plBps);
+    }
+
+    function getMintSwappedAmounts(address pairAddress, address tokenA, address tokenB, uint256 mintAmountA)
+        internal
+        view
+        returns (uint256 tokenAToSwap, uint256 swappedReservoirAmountB)
+    {
+        uint256 totalA = IERC20(tokenA).balanceOf(pairAddress);
+        uint256 totalB = IERC20(tokenB).balanceOf(pairAddress);
+        uint256 movingAveragePrice0 = IButtonswapV2Pair(pairAddress).movingAveragePrice0();
+
+        // tokenA == token0
+        if (tokenA < tokenB) {
+            tokenAToSwap =
+                (mintAmountA * totalB) / (Math.mulDiv(movingAveragePrice0, (totalA + mintAmountA), 2 ** 112) + totalB);
+            swappedReservoirAmountB = (tokenAToSwap * movingAveragePrice0) / 2 ** 112;
+        } else {
+            tokenAToSwap =
+                (mintAmountA * totalB) / (((2 ** 112 * (totalA + mintAmountA)) / movingAveragePrice0) + totalB);
+            // Inverse price so again we can use it without overflow risk
+            swappedReservoirAmountB = (tokenAToSwap * (2 ** 112)) / movingAveragePrice0;
+        }
+    }
 }
