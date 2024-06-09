@@ -254,4 +254,25 @@ library ButtonswapV2Library {
             swappedReservoirAmountB = (tokenAToSwap * (2 ** 112)) / movingAveragePrice0;
         }
     }
+
+    function getBurnSwappedAmounts(address pairAddress, address tokenA, address tokenB, uint256 liquidity)
+        internal
+        view
+        returns (uint256 tokenOutA, uint256 swappedReservoirAmountA)
+    {
+        uint256 totalLiquidity = IERC20(pairAddress).totalSupply();
+        uint256 totalA = IERC20(tokenA).balanceOf(pairAddress);
+        uint256 totalB = IERC20(tokenB).balanceOf(pairAddress);
+        uint256 movingAveragePrice0 = IButtonswapV2Pair(pairAddress).movingAveragePrice0();
+        uint256 tokenBToSwap = (totalB * liquidity) / totalLiquidity;
+        tokenOutA = (totalA * liquidity) / totalLiquidity;
+
+        // tokenA == token0
+        if (tokenA < tokenB) {
+            swappedReservoirAmountA = (tokenBToSwap * (2 ** 112)) / movingAveragePrice0;
+        } else {
+            swappedReservoirAmountA = (tokenBToSwap * movingAveragePrice0) / 2 ** 112;
+        }
+        tokenOutA += swappedReservoirAmountA;
+    }
 }

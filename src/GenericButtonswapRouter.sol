@@ -824,7 +824,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         view
         returns (address pairAddress)
     {
-        pairAddress = IButtonswapFactory(factory).getPair(removeLiquidityParams.tokenA, removeLiquidityParams.tokenB);
+        pairAddress = _getPair(removeLiquidityParams.tokenA, removeLiquidityParams.tokenB, removeLiquidityParams.data);
         // If pair doesn't exist, throw error
         if (pairAddress == address(0)) {
             revert PairDoesNotExist(removeLiquidityParams.tokenA, removeLiquidityParams.tokenB);

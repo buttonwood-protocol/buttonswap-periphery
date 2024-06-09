@@ -20,7 +20,6 @@ import {IButtonswapPairErrors} from
     "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPairErrors.sol";
 import {MathExtended} from "../utils/MathExtended.sol";
 import {MockERC20} from "buttonswap-periphery_mock-contracts/MockERC20.sol";
-import {console} from "buttonswap-periphery_forge-std/console.sol";
 
 contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapRouterErrors {
     uint256 constant BPS = 10_000;
@@ -126,6 +125,10 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         return vm.sign(userPrivateKey, permitDigest);
     }
 
+    function encodeV1Data() private pure returns (bytes memory) {
+        return abi.encodePacked(uint8(1));
+    }
+
     // Required function for receiving ETH refunds
     receive() external payable {}
 
@@ -179,6 +182,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -222,6 +226,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = amountAMin;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -265,6 +270,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = amountBMin;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -302,6 +308,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -359,6 +366,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -419,6 +427,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -480,6 +489,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -522,6 +532,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -564,6 +575,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -609,6 +621,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -654,6 +667,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -698,6 +712,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -743,6 +758,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -774,6 +790,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -804,6 +821,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidityOut;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -870,6 +888,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
             removeLiquidityParams.amountAMin = 0;
             removeLiquidityParams.amountBMin = 1;
         }
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -951,6 +970,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
             removeLiquidityParams.amountAMin = 0;
             removeLiquidityParams.amountBMin = tokenOutB + 1;
         }
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1025,6 +1045,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1088,6 +1109,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1159,6 +1181,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1231,6 +1254,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1290,6 +1314,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1353,6 +1378,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1420,6 +1446,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1487,6 +1514,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1554,6 +1582,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1618,6 +1647,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1661,6 +1691,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
@@ -1702,6 +1733,7 @@ contract GenericButtonswapRouterRemoveLiquidityTest is Test, IGenericButtonswapR
         removeLiquidityParams.liquidity = liquidity;
         removeLiquidityParams.amountAMin = 0;
         removeLiquidityParams.amountBMin = 0;
+        removeLiquidityParams.data = encodeV1Data();
         address to = address(this);
         uint256 deadline = block.timestamp + 1000;
 
