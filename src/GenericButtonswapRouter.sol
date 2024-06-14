@@ -61,12 +61,42 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     // **** TransformOperations **** //
 
     // Swap
-    function _swap(address tokenIn, address tokenOut) internal returns (uint256 amountOut) {
+    function _swap(address tokenIn, address tokenOut, bytes calldata data) internal returns (uint256 amountOut) {
+        (uint8 version, uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(data);
+        if (version == 1) {
+            amountOut = _swapV1(tokenIn, tokenOut);
+        } else if (version == 2) {
+            amountOut = _swapV2(tokenIn, tokenOut, plBps, feeBps);
+        }
+    }
+
+    // SwapV1
+    function _swapV1(address tokenIn, address tokenOut) internal returns (uint256 amountOut) {
         IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, tokenIn, tokenOut));
         uint256 amountIn = IERC20(tokenIn).balanceOf(address(this));
 
         (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, tokenOut);
         amountOut = ButtonswapLibrary.getAmountOut(amountIn, poolIn, poolOut);
+
+        TransferHelper.safeApprove(tokenIn, address(pair), amountIn);
+        if (tokenIn < tokenOut) {
+            pair.swap(amountIn, 0, 0, amountOut, address(this));
+        } else {
+            pair.swap(0, amountIn, amountOut, 0, address(this));
+        }
+    }
+
+    // SwapV2
+    function _swapV2(address tokenIn, address tokenOut, uint16 plBps, uint16 feeBps)
+        internal
+        returns (uint256 amountOut)
+    {
+        IButtonswapV2Pair pair =
+            IButtonswapV2Pair(ButtonswapV2Library.pairFor(v2Factory, tokenIn, tokenOut, plBps, feeBps));
+        uint256 amountIn = IERC20(tokenIn).balanceOf(address(this));
+
+        (uint256 poolIn, uint256 poolOut) = ButtonswapV2Library.getPoolsFromPair(address(pair), tokenIn, tokenOut);
+        amountOut = ButtonswapV2Library.getAmountOut(amountIn, poolIn, poolOut, plBps, feeBps);
 
         TransferHelper.safeApprove(tokenIn, address(pair), amountIn);
         if (tokenIn < tokenOut) {
@@ -123,6 +153,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         amountOut = address(this).balance;
     }
 
+    // Make a v2 version for this too
     // USDM-swap
     function _usdmSwap(address tokenIn, address tokenOut) internal returns (uint256 amountOut) {
         IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, tokenIn, tokenOut));
@@ -141,24 +172,6 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
     }
 
-    // Swap
-    function _swapV2(address tokenIn, address tokenOut, bytes calldata data) internal returns (uint256 amountOut) {
-        (, uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(data);
-        IButtonswapV2Pair pair =
-            IButtonswapV2Pair(ButtonswapV2Library.pairFor(v2Factory, tokenIn, tokenOut, plBps, feeBps));
-        uint256 amountIn = IERC20(tokenIn).balanceOf(address(this));
-
-        (uint256 poolIn, uint256 poolOut) = ButtonswapV2Library.getPoolsFromPair(address(pair), tokenIn, tokenOut);
-        amountOut = ButtonswapV2Library.getAmountOut(amountIn, poolIn, poolOut, plBps, feeBps);
-
-        TransferHelper.safeApprove(tokenIn, address(pair), amountIn);
-        if (tokenIn < tokenOut) {
-            pair.swap(amountIn, 0, 0, amountOut, address(this));
-        } else {
-            pair.swap(0, amountIn, amountOut, 0, address(this));
-        }
-    }
-
     function _swapStep(address tokenIn, SwapStep calldata swapStep)
         internal
         virtual
@@ -166,7 +179,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     {
         tokenOut = swapStep.tokenOut;
         if (swapStep.operation == ButtonswapOperations.Swap.SWAP) {
-            amountOut = _swap(tokenIn, tokenOut);
+            amountOut = _swap(tokenIn, tokenOut, swapStep.data);
         } else if (swapStep.operation == ButtonswapOperations.Swap.WRAP_BUTTON) {
             amountOut = _wrapButton(tokenIn, tokenOut);
         } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_BUTTON) {
@@ -177,8 +190,6 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             amountOut = _unwrapWETH(tokenIn, tokenOut);
         } else if (swapStep.operation == ButtonswapOperations.Swap.USDM_SWAP) {
             amountOut = _usdmSwap(tokenIn, tokenOut);
-        } else if (swapStep.operation == ButtonswapOperations.Swap.SWAP_V2) {
-            amountOut = _swapV2(tokenIn, tokenOut, swapStep.data);
         }
     }
 
@@ -240,8 +251,15 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         returns (uint256 amountIn)
     {
         if (swapStep.operation == ButtonswapOperations.Swap.SWAP) {
-            (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, swapStep.tokenOut);
-            amountIn = ButtonswapLibrary.getAmountIn(amountOut, poolIn, poolOut);
+            (uint8 version, uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(swapStep.data);
+            if (version == 1) {
+                (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, swapStep.tokenOut);
+                amountIn = ButtonswapLibrary.getAmountIn(amountOut, poolIn, poolOut);
+            } else if (version == 2) {
+                (uint256 poolIn, uint256 poolOut) =
+                    ButtonswapV2Library.getPools(v2Factory, tokenIn, swapStep.tokenOut, plBps, feeBps);
+                amountIn = ButtonswapV2Library.getAmountIn(amountOut, poolIn, poolOut, plBps, feeBps);
+            }
         } else if (swapStep.operation == ButtonswapOperations.Swap.WRAP_BUTTON) {
             amountIn = IButtonToken(swapStep.tokenOut).wrapperToUnderlying(amountOut);
         } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_BUTTON) {
@@ -253,11 +271,6 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         } else if (swapStep.operation == ButtonswapOperations.Swap.USDM_SWAP) {
             (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, swapStep.tokenOut);
             amountIn = ButtonswapLibrary.getAmountIn(amountOut, poolIn, poolOut) + 4;
-        } else if (swapStep.operation == ButtonswapOperations.Swap.SWAP_V2) {
-            (, uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(swapStep.data);
-            (uint256 poolIn, uint256 poolOut) =
-                ButtonswapV2Library.getPools(v2Factory, tokenIn, swapStep.tokenOut, plBps, feeBps);
-            amountIn = ButtonswapV2Library.getAmountIn(amountOut, poolIn, poolOut, plBps, feeBps);
         }
     }
 
@@ -281,8 +294,15 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         returns (uint256 amountOut)
     {
         if (swapStep.operation == ButtonswapOperations.Swap.SWAP) {
-            (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, swapStep.tokenOut);
-            amountOut = ButtonswapLibrary.getAmountOut(amountIn, poolIn, poolOut);
+            (uint8 version, uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(swapStep.data);
+            if (version == 1) {
+                (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, swapStep.tokenOut);
+                amountOut = ButtonswapLibrary.getAmountOut(amountIn, poolIn, poolOut);
+            } else if (version == 2) {
+                (uint256 poolIn, uint256 poolOut) =
+                    ButtonswapV2Library.getPools(v2Factory, tokenIn, swapStep.tokenOut, plBps, feeBps);
+                amountOut = ButtonswapV2Library.getAmountOut(amountIn, poolIn, poolOut, plBps, feeBps);
+            }
         } else if (swapStep.operation == ButtonswapOperations.Swap.WRAP_BUTTON) {
             amountOut = IButtonToken(swapStep.tokenOut).underlyingToWrapper(amountIn);
         } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_BUTTON) {
@@ -296,11 +316,6 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             amountOut = ButtonswapLibrary.getAmountOut(
                 IUSDM(tokenIn).convertToTokens(IUSDM(tokenIn).convertToShares(amountIn)), poolIn, poolOut
             );
-        } else if (swapStep.operation == ButtonswapOperations.Swap.SWAP_V2) {
-            (, uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(swapStep.data);
-            (uint256 poolIn, uint256 poolOut) =
-                ButtonswapV2Library.getPools(v2Factory, tokenIn, swapStep.tokenOut, plBps, feeBps);
-            amountOut = ButtonswapV2Library.getAmountOut(amountIn, poolIn, poolOut, plBps, feeBps);
         }
     }
 

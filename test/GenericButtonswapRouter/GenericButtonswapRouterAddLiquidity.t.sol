@@ -23,6 +23,7 @@ import {MockRebasingERC20} from "buttonswap-periphery_mock-contracts/MockRebasin
 
 contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRouterErrors {
     uint256 constant BPS = 10_000;
+    uint8 constant V1 = 1;
 
     address public feeToSetter;
     uint256 public feeToSetterPrivateKey;
@@ -106,7 +107,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
     }
 
     function encodeV1Data() private pure returns (bytes memory) {
-        return abi.encodePacked(uint8(1));
+        return abi.encodePacked(V1);
     }
 
     // Required function for receiving ETH refunds
@@ -379,6 +380,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.swapStepsA.push();
         addLiquidityParams.swapStepsA[0].operation = ButtonswapOperations.Swap.SWAP;
         addLiquidityParams.swapStepsA[0].tokenOut = address(tokenC);
+        addLiquidityParams.swapStepsA[0].data = abi.encodePacked(V1);
         //        addLiquidityParams.swapStepsB; // Default to []
         addLiquidityParams.amountADesired = amountADesired;
         addLiquidityParams.amountBDesired = amountBDesired;
@@ -440,6 +442,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.swapStepsB.push();
         addLiquidityParams.swapStepsB[0].operation = ButtonswapOperations.Swap.SWAP;
         addLiquidityParams.swapStepsB[0].tokenOut = address(tokenC);
+        addLiquidityParams.swapStepsB[0].data = abi.encodePacked(V1);
         addLiquidityParams.amountADesired = amountADesired;
         addLiquidityParams.amountBDesired = amountBDesired;
         addLiquidityParams.amountAMin = 0;
@@ -977,6 +980,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.swapStepsA.push();
         addLiquidityParams.swapStepsA[0].operation = ButtonswapOperations.Swap.SWAP;
         addLiquidityParams.swapStepsA[0].tokenOut = address(tokenC);
+        addLiquidityParams.swapStepsA[0].data = abi.encodePacked(V1);
         //        addLiquidityParams.swapStepsB; // Default to []
         addLiquidityParams.amountADesired = amountADesired;
         addLiquidityParams.amountBDesired = amountBDesired;
@@ -1040,6 +1044,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.swapStepsB.push();
         addLiquidityParams.swapStepsB[0].operation = ButtonswapOperations.Swap.SWAP;
         addLiquidityParams.swapStepsB[0].tokenOut = address(tokenC);
+        addLiquidityParams.swapStepsB[0].data = abi.encodePacked(V1);
         addLiquidityParams.amountADesired = amountADesired;
         addLiquidityParams.amountBDesired = amountBDesired;
         addLiquidityParams.amountAMin = 0;
@@ -1818,6 +1823,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.swapStepsB.push();
         addLiquidityParams.swapStepsB[0].operation = ButtonswapOperations.Swap.SWAP;
         addLiquidityParams.swapStepsB[0].tokenOut = address(tokenC);
+        addLiquidityParams.swapStepsB[0].data = abi.encodePacked(V1);
         addLiquidityParams.amountADesired = 0;
         addLiquidityParams.amountBDesired = amountBDesired;
         addLiquidityParams.amountAMin = 0;
@@ -1921,6 +1927,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         addLiquidityParams.swapStepsA.push();
         addLiquidityParams.swapStepsA[0].operation = ButtonswapOperations.Swap.SWAP;
         addLiquidityParams.swapStepsA[0].tokenOut = address(tokenC);
+        addLiquidityParams.swapStepsA[0].data = abi.encodePacked(V1);
         //        addLiquidityParams.swapStepsB; // Default to []
         addLiquidityParams.amountADesired = amountADesired;
         addLiquidityParams.amountBDesired = 0;

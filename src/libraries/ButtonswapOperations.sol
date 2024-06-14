@@ -9,8 +9,7 @@ library ButtonswapOperations {
         UNWRAP_BUTTON,
         WRAP_WETH,
         UNWRAP_WETH,
-        USDM_SWAP,
-        SWAP_V2
+        USDM_SWAP
     }
 
     enum Liquidity {

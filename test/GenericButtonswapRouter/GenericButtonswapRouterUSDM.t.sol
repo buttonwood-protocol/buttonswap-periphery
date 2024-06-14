@@ -24,6 +24,7 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
     string constant ARBITRUM_RPC_URL = "https://arb1.arbitrum.io/rpc";
     address constant USDM_MINTER = 0x48AEB395FB0E4ff8433e9f2fa6E0579838d33B62;
     uint256 constant BPS = 10_000;
+    uint8 constant V1 = 1;
 
     address public feeToSetter;
     address public isCreationRestrictedSetter;
@@ -37,6 +38,10 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
     GenericButtonswapRouter public genericButtonswapRouter;
 
     IERC20 public usdm;
+
+    function encodeV1Data() private pure returns (bytes memory) {
+        return abi.encodePacked(V1);
+    }
 
     // Required function for receiving ETH refunds
     receive() external payable {}
@@ -212,7 +217,8 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
 
         // Creating swapSteps for single swap
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
-        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.SWAP, address(usdm), "");
+        bytes memory data = encodeV1Data();
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.SWAP, address(usdm), data);
 
         // Approving the router to take at most amountIn tokenB
         tokenB.mint(address(this), amountIn);
@@ -309,7 +315,8 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
 
         // Creating swapSteps for single swap
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
-        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.SWAP, address(usdm), "");
+        bytes memory data = encodeV1Data();
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.SWAP, address(usdm), data);
 
         // Approving the router to take at most amountInMax tokenA
         tokenB.mint(address(this), amountInMax);

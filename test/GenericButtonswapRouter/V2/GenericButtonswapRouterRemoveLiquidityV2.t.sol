@@ -23,7 +23,6 @@ import {IButtonswapV2Factory} from
     "buttonswap-periphery_buttonswap-v2-core/interfaces/IButtonswapV2Factory/IButtonswapV2Factory.sol";
 import {ButtonswapV2Library} from "../../../src/libraries/ButtonswapV2Library.sol";
 
-
 contract GenericButtonswapRouterRemoveLiquidityV2Test is Test, IGenericButtonswapRouterErrors {
     uint256 constant BPS = 10_000;
 

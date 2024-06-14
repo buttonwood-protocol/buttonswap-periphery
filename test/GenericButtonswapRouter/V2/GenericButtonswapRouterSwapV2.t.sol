@@ -165,7 +165,7 @@ contract GenericButtonswapRouterSwapV2Test is Test, IGenericButtonswapRouterErro
         // Creating swapSteps for single swap
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
         bytes memory data = abi.encodePacked(V2, plBps, feeBps);
-        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.SWAP_V2, address(tokenB), data);
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.SWAP, address(tokenB), data);
 
         // Approving the router to take at most amountIn tokenA
         tokenA.mint(address(this), amountIn);
@@ -217,7 +217,7 @@ contract GenericButtonswapRouterSwapV2Test is Test, IGenericButtonswapRouterErro
         // Creating swapSteps for single swap
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
         bytes memory data = abi.encodePacked(V2, plBps, feeBps);
-        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.SWAP_V2, address(tokenB), data);
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.SWAP, address(tokenB), data);
 
         // Approving the router to take at most amountIn tokenA
         tokenA.mint(address(this), amountIn);
@@ -266,7 +266,7 @@ contract GenericButtonswapRouterSwapV2Test is Test, IGenericButtonswapRouterErro
         // Creating swapSteps for single swap
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
         bytes memory data = abi.encodePacked(V2, plBps, feeBps);
-        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.SWAP_V2, address(tokenB), data);
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.SWAP, address(tokenB), data);
 
         // Approving the router to take at most amountInMax tokenA
         tokenA.mint(address(this), amountInMax);
@@ -283,7 +283,6 @@ contract GenericButtonswapRouterSwapV2Test is Test, IGenericButtonswapRouterErro
         );
     }
 
-    // ToDo: test_swapTokensForExactTokens_singleSwapV2
     function test_swapTokensForExactTokens_singleSwapV2(
         uint256 poolA,
         uint256 poolB,
@@ -320,7 +319,7 @@ contract GenericButtonswapRouterSwapV2Test is Test, IGenericButtonswapRouterErro
         // Creating swapSteps for single swap
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
         bytes memory data = abi.encodePacked(V2, plBps, feeBps);
-        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.SWAP_V2, address(tokenB), data);
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.SWAP, address(tokenB), data);
 
         // Approving the router to take at most amountInMax tokenA
         tokenA.mint(address(this), amountInMax);
