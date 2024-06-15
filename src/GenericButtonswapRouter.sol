@@ -153,9 +153,17 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         amountOut = address(this).balance;
     }
 
-    // Make a v2 version for this too
+    function _usdmSwap(address tokenIn, address tokenOut, bytes calldata data) internal returns (uint256 amountOut) {
+        (uint8 version, uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(data);
+        if (version == 1) {
+            amountOut = _usdmSwapV1(tokenIn, tokenOut);
+        } else if (version == 2) {
+            amountOut = _usdmSwapV2(tokenIn, tokenOut, plBps, feeBps);
+        }
+    }
+
     // USDM-swap
-    function _usdmSwap(address tokenIn, address tokenOut) internal returns (uint256 amountOut) {
+    function _usdmSwapV1(address tokenIn, address tokenOut) internal returns (uint256 amountOut) {
         IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, tokenIn, tokenOut));
         uint256 amountIn = IERC20(tokenIn).balanceOf(address(this));
         uint256 receivedAmount =
@@ -163,6 +171,26 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
 
         (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, tokenOut);
         amountOut = ButtonswapLibrary.getAmountOut(receivedAmount, poolIn, poolOut);
+
+        TransferHelper.safeApprove(tokenIn, address(pair), amountIn);
+        if (tokenIn < tokenOut) {
+            pair.swap(amountIn, 0, 0, amountOut, address(this));
+        } else {
+            pair.swap(0, amountIn, amountOut, 0, address(this));
+        }
+    }
+
+    function _usdmSwapV2(address tokenIn, address tokenOut, uint16 plBps, uint16 feeBps)
+        internal
+        returns (uint256 amountOut)
+    {
+        IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, tokenIn, tokenOut));
+        uint256 amountIn = IERC20(tokenIn).balanceOf(address(this));
+        uint256 receivedAmount =
+            IUSDM(tokenIn).convertToTokens(IUSDM(tokenIn).convertToShares(IERC20(tokenIn).balanceOf(address(this))));
+
+        (uint256 poolIn, uint256 poolOut) = ButtonswapV2Library.getPoolsFromPair(address(pair), tokenIn, tokenOut);
+        amountOut = ButtonswapV2Library.getAmountOut(receivedAmount, poolIn, poolOut, plBps, feeBps);
 
         TransferHelper.safeApprove(tokenIn, address(pair), amountIn);
         if (tokenIn < tokenOut) {
@@ -189,7 +217,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_WETH) {
             amountOut = _unwrapWETH(tokenIn, tokenOut);
         } else if (swapStep.operation == ButtonswapOperations.Swap.USDM_SWAP) {
-            amountOut = _usdmSwap(tokenIn, tokenOut);
+            amountOut = _usdmSwap(tokenIn, tokenOut, swapStep.data);
         }
     }
 

@@ -170,7 +170,8 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
 
         // Creating swapSteps for single swap
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
-        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.USDM_SWAP, address(tokenB), "");
+        bytes memory data = encodeV1Data();
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.USDM_SWAP, address(tokenB), data);
 
         // Approving the router to take at most amountIn usdm
         mintUsdm(address(this), amountIn);
@@ -265,7 +266,8 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
 
         // Creating swapSteps for single swap
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
-        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.USDM_SWAP, address(tokenB), "");
+        bytes memory data = encodeV1Data();
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.USDM_SWAP, address(tokenB), data);
 
         // Approving the router to take at most amountInMax usdm
         mintUsdm(address(this), amountInMax);
