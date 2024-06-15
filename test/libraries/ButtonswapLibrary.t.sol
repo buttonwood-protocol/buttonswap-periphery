@@ -8,6 +8,7 @@ import {ButtonswapPair} from "buttonswap-periphery_buttonswap-core/ButtonswapPai
 import {MockERC20} from "buttonswap-periphery_mock-contracts/MockERC20.sol";
 import {MockRebasingERC20} from "buttonswap-periphery_mock-contracts/MockRebasingERC20.sol";
 import {PairMath} from "buttonswap-periphery_buttonswap-core/libraries/PairMath.sol";
+import {console} from "buttonswap-periphery_forge-std/console.sol";
 
 contract ButtonswapLibraryTest is Test {
     address public feeToSetter = 0x000000000000000000000000000000000000000A;
@@ -433,6 +434,10 @@ contract ButtonswapLibraryTest is Test {
         vm.assume(amountOut < (type(uint256).max / 1000) / poolIn);
         vm.assume(amountOut < poolOut);
         vm.assume(poolOut - amountOut < (type(uint256).max / 997));
+
+        uint256 numerator = poolIn * amountOut * 1000;
+        uint256 denominator = (poolOut - amountOut) * 997;
+        vm.assume(numerator < type(uint256).max - denominator + 1);
 
         uint256 amountIn = ButtonswapLibrary.getAmountIn(amountOut, poolIn, poolOut);
 

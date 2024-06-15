@@ -24,6 +24,7 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
     string constant ARBITRUM_RPC_URL = "https://arb1.arbitrum.io/rpc";
     address constant USDM_MINTER = 0x48AEB395FB0E4ff8433e9f2fa6E0579838d33B62;
     uint256 constant BPS = 10_000;
+    uint8 constant V1 = 1;
 
     address public feeToSetter;
     address public isCreationRestrictedSetter;
@@ -38,6 +39,9 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
 
     IERC20 public usdm;
 
+    function encodeV1Data() private pure returns (bytes memory) {
+        return abi.encodePacked(V1);
+    }
 
     // Required function for receiving ETH refunds
     receive() external payable {}
@@ -49,8 +53,8 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
 
     // Utility function for creating and initializing pairs with poolUsdm:poolB price ratio. Does not use ButtonwoodRouter
     function createAndInitializePair(MockRebasingERC20 tokenB1, uint256 poolUsdm, uint256 poolB)
-    private
-    returns (IButtonswapPair pair, uint256 liquidityOut)
+        private
+        returns (IButtonswapPair pair, uint256 liquidityOut)
     {
         pair = IButtonswapPair(buttonswapFactory.createPair(address(usdm), address(tokenB1)));
         mintUsdm(address(this), poolUsdm);
@@ -79,7 +83,7 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
         buttonswapFactory = new ButtonswapFactory(
             feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "Token Name", "SYMBOL"
         );
-        genericButtonswapRouter = new GenericButtonswapRouter(address(buttonswapFactory), address(weth));
+        genericButtonswapRouter = new GenericButtonswapRouter(address(buttonswapFactory), address(0), address(weth));
 
         usdm = IERC20(0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C);
     }
@@ -99,7 +103,9 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
         // Transfer from address(this) to userA and validate amount received
         transferAmount = bound(transferAmount, 0, usdm.balanceOf(address(this)));
         usdm.transfer(userA, transferAmount);
-        assertApproxEqAbs(usdm.balanceOf(userA), transferAmount, 2, "Received amount is always within 2 of transferAmount");
+        assertApproxEqAbs(
+            usdm.balanceOf(userA), transferAmount, 2, "Received amount is always within 2 of transferAmount"
+        );
     }
 
     function test_transfer2(uint256 balance, uint256 transferAmount) public {
@@ -121,10 +127,13 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
         // Calculate new user balance by converting transferredShares to tokens
         uint256 expectedUserBalance = IUSDM(address(usdm)).convertToTokens(transferredShares);
 
-        assertEq(usdm.balanceOf(address(this)), expectedBalance, "Curve pool balance should exactly equal expectedCurvePoolBalance");
+        assertEq(
+            usdm.balanceOf(address(this)),
+            expectedBalance,
+            "Curve pool balance should exactly equal expectedCurvePoolBalance"
+        );
         assertEq(usdm.balanceOf(userA), expectedUserBalance, "User balance should exactly equal expectedUserBalance");
     }
-
 
     function test_swapExactTokensForTokens_singleSwapUSDMIn(
         uint256 poolUsdm,
@@ -149,8 +158,10 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
         poolUsdm = usdm.balanceOf(address(pair));
 
         // Estimating how much output a trade would give
-        uint256 routerReceivingAmount = IUSDM(address(usdm)).convertToTokens(IUSDM(address(usdm)).convertToShares(amountIn));
-        uint256 pairReceivingAmount = IUSDM(address(usdm)).convertToTokens(IUSDM(address(usdm)).convertToShares(routerReceivingAmount));
+        uint256 routerReceivingAmount =
+            IUSDM(address(usdm)).convertToTokens(IUSDM(address(usdm)).convertToShares(amountIn));
+        uint256 pairReceivingAmount =
+            IUSDM(address(usdm)).convertToTokens(IUSDM(address(usdm)).convertToShares(routerReceivingAmount));
         uint256 expectedAmountOut = ButtonswapLibrary.getAmountOut(pairReceivingAmount, poolUsdm, poolB);
         // Making sure that expectedAmountOut is positive
         vm.assume(expectedAmountOut > 0);
@@ -159,7 +170,8 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
 
         // Creating swapSteps for single swap
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
-        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.USDM_SWAP, address(tokenB));
+        bytes memory data = encodeV1Data();
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.USDM_SWAP, address(tokenB), data);
 
         // Approving the router to take at most amountIn usdm
         mintUsdm(address(this), amountIn);
@@ -206,7 +218,8 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
 
         // Creating swapSteps for single swap
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
-        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.SWAP, address(usdm));
+        bytes memory data = encodeV1Data();
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.SWAP, address(usdm), data);
 
         // Approving the router to take at most amountIn tokenB
         tokenB.mint(address(this), amountIn);
@@ -253,7 +266,8 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
 
         // Creating swapSteps for single swap
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
-        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.USDM_SWAP, address(tokenB));
+        bytes memory data = encodeV1Data();
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.USDM_SWAP, address(tokenB), data);
 
         // Approving the router to take at most amountInMax usdm
         mintUsdm(address(this), amountInMax);
@@ -303,7 +317,8 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
 
         // Creating swapSteps for single swap
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
-        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.SWAP, address(usdm));
+        bytes memory data = encodeV1Data();
+        swapSteps[0] = IGenericButtonswapRouter.SwapStep(ButtonswapOperations.Swap.SWAP, address(usdm), data);
 
         // Approving the router to take at most amountInMax tokenA
         tokenB.mint(address(this), amountInMax);

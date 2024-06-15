@@ -7,3 +7,6 @@
 [submodule "lib/buttonswap-core"]
 	path = lib/buttonswap-core
 	url = https://github.com/buttonwood-protocol/buttonswap-core
+[submodule "lib/buttonswap-v2-core"]
+	path = lib/buttonswap-v2-core
+	url = https://github.com/buttonwood-protocol/buttonswap-v2-core
