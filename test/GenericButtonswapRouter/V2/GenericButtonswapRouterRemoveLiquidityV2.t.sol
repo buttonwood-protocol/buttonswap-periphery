@@ -78,8 +78,8 @@ contract GenericButtonswapRouterRemoveLiquidityV2Test is Test, IGenericButtonswa
             defaultPairCreationParameters.maxSwappableReservoirLimitBps,
             defaultPairCreationParameters.swappableReservoirGrowthWindow,
             defaultPairCreationParameters.protocolFeeMbps,
-            defaultPairCreationParameters.minSiphonDuration,
-            defaultPairCreationParameters.maxSiphonDuration
+            defaultPairCreationParameters.minBasinDuration,
+            defaultPairCreationParameters.maxBasinDuration
         );
     }
 
@@ -139,8 +139,8 @@ contract GenericButtonswapRouterRemoveLiquidityV2Test is Test, IGenericButtonswa
         defaultPairCreationParameters.maxSwappableReservoirLimitBps = 500;
         defaultPairCreationParameters.swappableReservoirGrowthWindow = 24 hours;
         defaultPairCreationParameters.protocolFeeMbps = 5000;
-        defaultPairCreationParameters.minSiphonDuration = 24 seconds;
-        defaultPairCreationParameters.maxSiphonDuration = 24 hours;
+        defaultPairCreationParameters.minBasinDuration = 24 seconds;
+        defaultPairCreationParameters.maxBasinDuration = 24 hours;
 
         genericButtonswapRouter = new GenericButtonswapRouter(address(0), address(buttonswapV2Factory), address(0));
     }
