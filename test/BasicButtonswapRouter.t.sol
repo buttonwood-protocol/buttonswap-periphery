@@ -423,13 +423,17 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         if (address(tokenA) < address(tokenB)) {
             // tokenA is token0
             vm.assume((poolB * newPoolA * BPS) > (newPoolB * poolA) * (BPS + 1));
-            movingAveragePrice0ThresholdBps = uint16((poolB * newPoolA * BPS) / (newPoolB * poolA) - BPS - 1) - 1;
+            movingAveragePrice0ThresholdBps = uint16((poolB * newPoolA * BPS) / (newPoolB * poolA) - BPS - 1);
+            vm.assume(0 < movingAveragePrice0ThresholdBps);
+            movingAveragePrice0ThresholdBps -= 1;
             vm.assume(0 < movingAveragePrice0ThresholdBps);
             vm.assume(movingAveragePrice0ThresholdBps < BPS);
         } else {
             // tokenB is token0
             vm.assume((poolA * newPoolB * BPS) > (newPoolA * poolB) * (BPS + 1));
-            movingAveragePrice0ThresholdBps = uint16((poolA * newPoolB * BPS) / (newPoolA * poolB) - BPS - 1) - 1;
+            movingAveragePrice0ThresholdBps = uint16((poolA * newPoolB * BPS) / (newPoolA * poolB) - BPS - 1);
+            vm.assume(0 < movingAveragePrice0ThresholdBps);
+            movingAveragePrice0ThresholdBps -= 1;
             vm.assume(0 < movingAveragePrice0ThresholdBps);
             vm.assume(movingAveragePrice0ThresholdBps < BPS);
         }

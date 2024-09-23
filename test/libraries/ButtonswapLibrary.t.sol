@@ -434,6 +434,7 @@ contract ButtonswapLibraryTest is Test {
         vm.assume(amountOut < (type(uint256).max / 1000) / poolIn);
         vm.assume(amountOut < poolOut);
         vm.assume(poolOut - amountOut < (type(uint256).max / 997));
+        vm.assume(poolIn * amountOut * 1000 < type(uint256).max - (poolOut - amountOut) * 997);
 
         uint256 numerator = poolIn * amountOut * 1000;
         uint256 denominator = (poolOut - amountOut) * 997;
