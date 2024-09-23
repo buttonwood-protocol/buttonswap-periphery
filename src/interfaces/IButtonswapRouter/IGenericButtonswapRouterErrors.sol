@@ -111,4 +111,10 @@ interface IGenericButtonswapRouterErrors {
      * @param minLiquidity The minimum amount of liquidity
      */
     error InsufficientOutputLiquidity(uint256 liquidity, uint256 minLiquidity);
+
+    /**
+     * @notice Unsupported Version
+     * @param version The version of the Pair
+     */
+    error UnsupportedVersion(uint8 version);
 }

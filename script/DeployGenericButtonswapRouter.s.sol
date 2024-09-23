@@ -7,7 +7,8 @@ import {GenericButtonswapRouter} from "../src/GenericButtonswapRouter.sol";
 contract DeployGenericButtonswapRouter is BaseScript {
     function run() public virtual broadcast returns (GenericButtonswapRouter genericButtonswapRouter) {
         address _factory = 0x0000000000000000000000000000000000000000;
+        address _factoryV2 = 0x0000000000000000000000000000000000000000;
         address _WETH = 0x0000000000000000000000000000000000000000;
-        genericButtonswapRouter = new GenericButtonswapRouter(_factory, _WETH);
+        genericButtonswapRouter = new GenericButtonswapRouter(_factory, _factoryV2, _WETH);
     }
 }

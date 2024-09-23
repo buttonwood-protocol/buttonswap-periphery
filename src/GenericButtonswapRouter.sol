@@ -13,6 +13,11 @@ import {IERC20} from "./interfaces/IERC20.sol";
 import {ButtonswapOperations} from "./libraries/ButtonswapOperations.sol";
 import {Math} from "./libraries/Math.sol";
 import {IUSDM} from "./interfaces/IUSDM.sol";
+import {ButtonswapV2Library} from "./libraries/ButtonswapV2Library.sol";
+import {IButtonswapV2Pair} from
+    "buttonswap-periphery_buttonswap-v2-core/interfaces/IButtonswapV2Pair/IButtonswapV2Pair.sol";
+import {IButtonswapV2Factory} from
+    "buttonswap-periphery_buttonswap-v2-core/interfaces/IButtonswapV2Factory/IButtonswapV2Factory.sol";
 
 contract GenericButtonswapRouter is IGenericButtonswapRouter {
     uint256 private constant BPS = 10_000;
@@ -21,6 +26,11 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
      * @inheritdoc IGenericButtonswapRouter
      */
     address public immutable override factory;
+
+    /**
+     * @inheritdoc IGenericButtonswapRouter
+     */
+    address public immutable override v2Factory;
     /**
      * @inheritdoc IGenericButtonswapRouter
      */
@@ -42,20 +52,51 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
     }
 
-    constructor(address _factory, address _WETH) {
+    constructor(address _factory, address _v2Factory, address _WETH) {
         factory = _factory;
+        v2Factory = _v2Factory;
         WETH = _WETH;
     }
 
     // **** TransformOperations **** //
 
     // Swap
-    function _swap(address tokenIn, address tokenOut) internal returns (uint256 amountOut) {
+    function _swap(address tokenIn, address tokenOut, bytes calldata data) internal returns (uint256 amountOut) {
+        (uint8 version, uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(data);
+        if (version == 1) {
+            amountOut = _swapV1(tokenIn, tokenOut);
+        } else if (version == 2) {
+            amountOut = _swapV2(tokenIn, tokenOut, plBps, feeBps);
+        }
+    }
+
+    // SwapV1
+    function _swapV1(address tokenIn, address tokenOut) internal returns (uint256 amountOut) {
         IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, tokenIn, tokenOut));
         uint256 amountIn = IERC20(tokenIn).balanceOf(address(this));
 
         (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, tokenOut);
         amountOut = ButtonswapLibrary.getAmountOut(amountIn, poolIn, poolOut);
+
+        TransferHelper.safeApprove(tokenIn, address(pair), amountIn);
+        if (tokenIn < tokenOut) {
+            pair.swap(amountIn, 0, 0, amountOut, address(this));
+        } else {
+            pair.swap(0, amountIn, amountOut, 0, address(this));
+        }
+    }
+
+    // SwapV2
+    function _swapV2(address tokenIn, address tokenOut, uint16 plBps, uint16 feeBps)
+        internal
+        returns (uint256 amountOut)
+    {
+        IButtonswapV2Pair pair =
+            IButtonswapV2Pair(ButtonswapV2Library.pairFor(v2Factory, tokenIn, tokenOut, plBps, feeBps));
+        uint256 amountIn = IERC20(tokenIn).balanceOf(address(this));
+
+        (uint256 poolIn, uint256 poolOut) = ButtonswapV2Library.getPoolsFromPair(address(pair), tokenIn, tokenOut);
+        amountOut = ButtonswapV2Library.getAmountOut(amountIn, poolIn, poolOut, plBps, feeBps);
 
         TransferHelper.safeApprove(tokenIn, address(pair), amountIn);
         if (tokenIn < tokenOut) {
@@ -112,8 +153,17 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         amountOut = address(this).balance;
     }
 
+    function _usdmSwap(address tokenIn, address tokenOut, bytes calldata data) internal returns (uint256 amountOut) {
+        (uint8 version, uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(data);
+        if (version == 1) {
+            amountOut = _usdmSwapV1(tokenIn, tokenOut);
+        } else if (version == 2) {
+            amountOut = _usdmSwapV2(tokenIn, tokenOut, plBps, feeBps);
+        }
+    }
+
     // USDM-swap
-    function _usdmSwap(address tokenIn, address tokenOut) internal returns (uint256 amountOut) {
+    function _usdmSwapV1(address tokenIn, address tokenOut) internal returns (uint256 amountOut) {
         IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, tokenIn, tokenOut));
         uint256 amountIn = IERC20(tokenIn).balanceOf(address(this));
         uint256 receivedAmount =
@@ -130,6 +180,26 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
     }
 
+    function _usdmSwapV2(address tokenIn, address tokenOut, uint16 plBps, uint16 feeBps)
+        internal
+        returns (uint256 amountOut)
+    {
+        IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, tokenIn, tokenOut));
+        uint256 amountIn = IERC20(tokenIn).balanceOf(address(this));
+        uint256 receivedAmount =
+            IUSDM(tokenIn).convertToTokens(IUSDM(tokenIn).convertToShares(IERC20(tokenIn).balanceOf(address(this))));
+
+        (uint256 poolIn, uint256 poolOut) = ButtonswapV2Library.getPoolsFromPair(address(pair), tokenIn, tokenOut);
+        amountOut = ButtonswapV2Library.getAmountOut(receivedAmount, poolIn, poolOut, plBps, feeBps);
+
+        TransferHelper.safeApprove(tokenIn, address(pair), amountIn);
+        if (tokenIn < tokenOut) {
+            pair.swap(amountIn, 0, 0, amountOut, address(this));
+        } else {
+            pair.swap(0, amountIn, amountOut, 0, address(this));
+        }
+    }
+
     function _swapStep(address tokenIn, SwapStep calldata swapStep)
         internal
         virtual
@@ -137,7 +207,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     {
         tokenOut = swapStep.tokenOut;
         if (swapStep.operation == ButtonswapOperations.Swap.SWAP) {
-            amountOut = _swap(tokenIn, tokenOut);
+            amountOut = _swap(tokenIn, tokenOut, swapStep.data);
         } else if (swapStep.operation == ButtonswapOperations.Swap.WRAP_BUTTON) {
             amountOut = _wrapButton(tokenIn, tokenOut);
         } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_BUTTON) {
@@ -147,7 +217,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_WETH) {
             amountOut = _unwrapWETH(tokenIn, tokenOut);
         } else if (swapStep.operation == ButtonswapOperations.Swap.USDM_SWAP) {
-            amountOut = _usdmSwap(tokenIn, tokenOut);
+            amountOut = _usdmSwap(tokenIn, tokenOut, swapStep.data);
         }
     }
 
@@ -209,8 +279,15 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         returns (uint256 amountIn)
     {
         if (swapStep.operation == ButtonswapOperations.Swap.SWAP) {
-            (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, swapStep.tokenOut);
-            amountIn = ButtonswapLibrary.getAmountIn(amountOut, poolIn, poolOut);
+            (uint8 version, uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(swapStep.data);
+            if (version == 1) {
+                (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, swapStep.tokenOut);
+                amountIn = ButtonswapLibrary.getAmountIn(amountOut, poolIn, poolOut);
+            } else if (version == 2) {
+                (uint256 poolIn, uint256 poolOut) =
+                    ButtonswapV2Library.getPools(v2Factory, tokenIn, swapStep.tokenOut, plBps, feeBps);
+                amountIn = ButtonswapV2Library.getAmountIn(amountOut, poolIn, poolOut, plBps, feeBps);
+            }
         } else if (swapStep.operation == ButtonswapOperations.Swap.WRAP_BUTTON) {
             amountIn = IButtonToken(swapStep.tokenOut).wrapperToUnderlying(amountOut);
         } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_BUTTON) {
@@ -245,8 +322,15 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         returns (uint256 amountOut)
     {
         if (swapStep.operation == ButtonswapOperations.Swap.SWAP) {
-            (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, swapStep.tokenOut);
-            amountOut = ButtonswapLibrary.getAmountOut(amountIn, poolIn, poolOut);
+            (uint8 version, uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(swapStep.data);
+            if (version == 1) {
+                (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, swapStep.tokenOut);
+                amountOut = ButtonswapLibrary.getAmountOut(amountIn, poolIn, poolOut);
+            } else if (version == 2) {
+                (uint256 poolIn, uint256 poolOut) =
+                    ButtonswapV2Library.getPools(v2Factory, tokenIn, swapStep.tokenOut, plBps, feeBps);
+                amountOut = ButtonswapV2Library.getAmountOut(amountIn, poolIn, poolOut, plBps, feeBps);
+            }
         } else if (swapStep.operation == ButtonswapOperations.Swap.WRAP_BUTTON) {
             amountOut = IButtonToken(swapStep.tokenOut).underlyingToWrapper(amountIn);
         } else if (swapStep.operation == ButtonswapOperations.Swap.UNWRAP_BUTTON) {
@@ -330,25 +414,80 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         finalAmountIn = amountIn;
     }
 
+    function _getPairVersion(bytes memory data) internal pure returns (uint8 version) {
+        assembly {
+            version := mload(add(data, 0x01))
+        }
+    }
+
+    function _validateMovingAveragePrice0ThresholdV1(
+        uint256 movingAveragePrice0,
+        uint256 movingAveragePrice0ThresholdBps,
+        uint256 pool0,
+        uint256 pool1
+    ) internal pure {
+        uint256 cachedTerm = Math.mulDiv(movingAveragePrice0, pool0 * BPS, 2 ** 112);
+        // Check above lowerbound
+        if ((movingAveragePrice0ThresholdBps < BPS) && pool1 * (BPS - movingAveragePrice0ThresholdBps) > cachedTerm) {
+            revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
+        }
+        // Check below upperbound
+        if (pool1 * (BPS + movingAveragePrice0ThresholdBps) < cachedTerm) {
+            revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
+        }
+    }
+
+    function _validateMovingAveragePrice0ThresholdV2(
+        uint256 movingAveragePrice0,
+        uint256 movingAveragePrice0ThresholdBps,
+        uint256 pool0,
+        uint256 pool1,
+        uint16 plBps
+    ) internal pure {
+        uint256 price0 = ButtonswapV2Library.price(pool1, pool0, plBps);
+        // Check above lowerbound
+        if (
+            (movingAveragePrice0ThresholdBps < BPS)
+                && (BPS * price0 < (BPS - movingAveragePrice0ThresholdBps) * movingAveragePrice0)
+        ) {
+            revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
+        }
+        // Check below upperbound
+        uint256 cachedTerm = BPS + movingAveragePrice0ThresholdBps;
+        if (movingAveragePrice0 < type(uint256).max / cachedTerm) {
+            // Can check without mulDiv
+            if (BPS * price0 > cachedTerm * movingAveragePrice0) {
+                revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
+            }
+        } else {
+            // Require mulDiv to check
+            if (Math.mulDiv(BPS, price0, 2 ** 112) > Math.mulDiv(cachedTerm, movingAveragePrice0, 2 ** 112)) {
+                revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
+            }
+        }
+    }
+
     function _validateMovingAveragePrice0Threshold(
         uint256 movingAveragePrice0ThresholdBps,
         uint256 pool0,
         uint256 pool1,
-        IButtonswapPair pair
+        IButtonswapPair pair,
+        bytes memory data
     ) internal view {
+        uint8 version = _getPairVersion(data);
         // Validate that the moving average price is within the threshold for pairs that exist
         // Skip if pair doesn't exist yet (empty pools) or if movingAveragePrice0ThresholdBps is maximum
         if (pool0 > 0 && pool1 > 0 && movingAveragePrice0ThresholdBps < type(uint256).max) {
             uint256 movingAveragePrice0 = pair.movingAveragePrice0();
-            uint256 cachedTerm = Math.mulDiv(movingAveragePrice0, pool0 * BPS, 2 ** 112);
-            // Check above lowerbound
-            if ((movingAveragePrice0ThresholdBps < BPS) && pool1 * (BPS - movingAveragePrice0ThresholdBps) > cachedTerm)
-            {
-                revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
-            }
-            // Check below upperbound
-            if (pool1 * (BPS + movingAveragePrice0ThresholdBps) < cachedTerm) {
-                revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
+            if (version == 1) {
+                _validateMovingAveragePrice0ThresholdV1(
+                    movingAveragePrice0, movingAveragePrice0ThresholdBps, pool0, pool1
+                );
+            } else if (version == 2) {
+                (, uint16 plBps,) = ButtonswapV2Library.decodeData(data);
+                _validateMovingAveragePrice0ThresholdV2(
+                    movingAveragePrice0, movingAveragePrice0ThresholdBps, pool0, pool1, plBps
+                );
             }
         }
     }
@@ -417,7 +556,11 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
 
         // Validate that the moving average price is within the threshold for pairs that already existed
         _validateMovingAveragePrice0Threshold(
-            addLiquidityParams.movingAveragePrice0ThresholdBps, aToken0 ? poolA : poolB, aToken0 ? poolB : poolA, pair
+            addLiquidityParams.movingAveragePrice0ThresholdBps,
+            aToken0 ? poolA : poolB,
+            aToken0 ? poolB : poolA,
+            pair,
+            addLiquidityParams.data
         );
     }
 
@@ -442,18 +585,21 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
     }
 
-    function _addLiquidityGetMintSwappedAmounts(
+    // Works for both V1 and V2
+    function _addLiquidityGetMintSwappedAmountsV2(
         AddLiquidityParams calldata addLiquidityParams,
         address pairTokenA,
         address pairTokenB,
         bool isReservoirA
     ) internal returns (uint256 amountA, uint256 amountB) {
+        address pairAddress = _getPair(pairTokenA, pairTokenB, addLiquidityParams.data);
+
         // ReservoirA is non-empty
         if (isReservoirA) {
             // we take from reservoirA and the user-provided amountBDesired
             // But modify so that you don't do liquidityOut logic since you don't need it
-            (, uint256 amountAOptimal) = ButtonswapLibrary.getMintSwappedAmounts(
-                factory,
+            (, uint256 amountAOptimal) = ButtonswapV2Library.getMintSwappedAmounts(
+                pairAddress,
                 pairTokenB,
                 pairTokenA,
                 _getAmountOut(
@@ -469,8 +615,8 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         } else {
             // ReservoirB is non-empty
             // we take from reservoirB and the user-provided amountADesired
-            (, uint256 amountBOptimal) = ButtonswapLibrary.getMintSwappedAmounts(
-                factory,
+            (, uint256 amountBOptimal) = ButtonswapV2Library.getMintSwappedAmounts(
+                pairAddress,
                 pairTokenA,
                 pairTokenB,
                 _getAmountOut(
@@ -512,8 +658,9 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             revert NoReservoir(address(pair));
         }
 
+        //        (amountA, amountB) = _addLiquidityGetMintSwappedAmounts(addLiquidityParams, pairTokenA, pairTokenB, reservoirA > 0);
         (amountA, amountB) =
-            _addLiquidityGetMintSwappedAmounts(addLiquidityParams, pairTokenA, pairTokenB, reservoirA > 0);
+            _addLiquidityGetMintSwappedAmountsV2(addLiquidityParams, pairTokenA, pairTokenB, reservoirA > 0);
     }
 
     function _addLiquiditySingle(
@@ -538,6 +685,39 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         }
     }
 
+    function _getPair(address pairTokenA, address pairTokenB, bytes memory data)
+        internal
+        view
+        returns (address pairAddress)
+    {
+        uint8 version = _getPairVersion(data);
+
+        if (version == 1) {
+            pairAddress = IButtonswapFactory(factory).getPair(pairTokenA, pairTokenB);
+        } else if (version == 2) {
+            (, uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(data);
+            pairAddress = IButtonswapV2Factory(v2Factory).getPair(pairTokenA, pairTokenB, plBps, feeBps);
+        } else {
+            revert UnsupportedVersion(version);
+        }
+    }
+
+    function _createPair(address pairTokenA, address pairTokenB, bytes memory data)
+        internal
+        returns (address pairAddress)
+    {
+        uint8 version = _getPairVersion(data);
+
+        if (version == 1) {
+            pairAddress = IButtonswapFactory(factory).createPair(pairTokenA, pairTokenB);
+        } else if (version == 2) {
+            (, uint16 plBps, uint16 feeBps) = ButtonswapV2Library.decodeData(data);
+            pairAddress = IButtonswapV2Factory(v2Factory).createPair(pairTokenA, pairTokenB, plBps, feeBps);
+        } else {
+            revert UnsupportedVersion(version);
+        }
+    }
+
     function _addLiquidityGetOrCreatePair(AddLiquidityParams calldata addLiquidityParams)
         internal
         returns (address pairAddress, address pairTokenA, address pairTokenB)
@@ -551,17 +731,19 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             : addLiquidityParams.tokenB;
 
         // Fetch the pair
-        pairAddress = IButtonswapFactory(factory).getPair(pairTokenA, pairTokenB);
+        pairAddress = _getPair(pairTokenA, pairTokenB, addLiquidityParams.data);
 
         // Pair doesn't exist
         if (pairAddress == address(0)) {
             // If the operation is dual-sided and createPair is true, then create the pair. Otherwise throw an error
             if (addLiquidityParams.operation == ButtonswapOperations.Liquidity.DUAL && addLiquidityParams.createPair) {
-                pairAddress = IButtonswapFactory(factory).createPair(pairTokenA, pairTokenB);
+                pairAddress = _createPair(pairTokenA, pairTokenB, addLiquidityParams.data);
             } else {
+                // ToDo: Update error to include v2 params: plBps, feeBps?
                 revert PairDoesNotExist(pairTokenA, pairTokenB);
             }
         } else if (addLiquidityParams.createPair) {
+            // ToDo: Update error to include v2 params: plBps, feeBps?
             // The pair already exists but createPair is true
             revert PairAlreadyExists(pairTokenA, pairTokenB, pairAddress);
         }
@@ -685,7 +867,7 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
         view
         returns (address pairAddress)
     {
-        pairAddress = IButtonswapFactory(factory).getPair(removeLiquidityParams.tokenA, removeLiquidityParams.tokenB);
+        pairAddress = _getPair(removeLiquidityParams.tokenA, removeLiquidityParams.tokenB, removeLiquidityParams.data);
         // If pair doesn't exist, throw error
         if (pairAddress == address(0)) {
             revert PairDoesNotExist(removeLiquidityParams.tokenA, removeLiquidityParams.tokenB);
