@@ -116,11 +116,8 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
     function _usdmSwap(address tokenIn, address tokenOut) internal returns (uint256 amountOut) {
         IButtonswapPair pair = IButtonswapPair(ButtonswapLibrary.pairFor(factory, tokenIn, tokenOut));
         uint256 amountIn = IERC20(tokenIn).balanceOf(address(this));
-        uint256 receivedAmount = IUSDM(tokenIn).convertToTokens(
-            IUSDM(tokenIn).convertToShares(
-                IERC20(tokenIn).balanceOf(address(this))
-            )
-        );
+        uint256 receivedAmount =
+            IUSDM(tokenIn).convertToTokens(IUSDM(tokenIn).convertToShares(IERC20(tokenIn).balanceOf(address(this))));
 
         (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, tokenOut);
         amountOut = ButtonswapLibrary.getAmountOut(receivedAmount, poolIn, poolOut);
@@ -260,7 +257,9 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             amountOut = amountIn;
         } else if (swapStep.operation == ButtonswapOperations.Swap.USDM_SWAP) {
             (uint256 poolIn, uint256 poolOut) = ButtonswapLibrary.getPools(factory, tokenIn, swapStep.tokenOut);
-            amountOut = ButtonswapLibrary.getAmountOut(IUSDM(tokenIn).convertToTokens(IUSDM(tokenIn).convertToShares(amountIn)), poolIn, poolOut);
+            amountOut = ButtonswapLibrary.getAmountOut(
+                IUSDM(tokenIn).convertToTokens(IUSDM(tokenIn).convertToShares(amountIn)), poolIn, poolOut
+            );
         }
     }
 
@@ -343,12 +342,12 @@ contract GenericButtonswapRouter is IGenericButtonswapRouter {
             uint256 movingAveragePrice0 = pair.movingAveragePrice0();
             uint256 cachedTerm = Math.mulDiv(movingAveragePrice0, pool0 * BPS, 2 ** 112);
             // Check above lowerbound
-            if ((movingAveragePrice0ThresholdBps < BPS) && pool1 * (BPS - movingAveragePrice0ThresholdBps) > cachedTerm) {
+            if ((movingAveragePrice0ThresholdBps < BPS) && pool1 * (BPS - movingAveragePrice0ThresholdBps) > cachedTerm)
+            {
                 revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
             }
             // Check below upperbound
-            if (pool1 * (BPS + movingAveragePrice0ThresholdBps) < cachedTerm
-            ) {
+            if (pool1 * (BPS + movingAveragePrice0ThresholdBps) < cachedTerm) {
                 revert MovingAveragePriceOutOfBounds(pool0, pool1, movingAveragePrice0, movingAveragePrice0ThresholdBps);
             }
         }

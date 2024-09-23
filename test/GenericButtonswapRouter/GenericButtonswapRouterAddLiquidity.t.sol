@@ -217,9 +217,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         uint256 amountBDesired,
         uint256 liquidityMin,
         uint256 movingAveragePrice0ThresholdBps
-    )
-    public
-    {
+    ) public {
         // Minting enough for minimum liquidity requirement
         amountADesired = bound(amountADesired, 10000, type(uint112).max);
         amountBDesired = bound(amountBDesired, 10000, type(uint112).max);
@@ -256,7 +254,7 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         // Creating the pair
 
         (uint256[] memory amountsA, uint256[] memory amountsB, uint256 liquidity) =
-                            genericButtonswapRouter.addLiquidity(addLiquidityParams, to, deadline);
+            genericButtonswapRouter.addLiquidity(addLiquidityParams, to, deadline);
 
         // Validating state
         address pairAddress = buttonswapFactory.getPair(address(tokenA), address(tokenB));

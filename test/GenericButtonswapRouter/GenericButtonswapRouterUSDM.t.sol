@@ -38,7 +38,6 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
 
     IERC20 public usdm;
 
-
     // Required function for receiving ETH refunds
     receive() external payable {}
 
@@ -49,8 +48,8 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
 
     // Utility function for creating and initializing pairs with poolUsdm:poolB price ratio. Does not use ButtonwoodRouter
     function createAndInitializePair(MockRebasingERC20 tokenB1, uint256 poolUsdm, uint256 poolB)
-    private
-    returns (IButtonswapPair pair, uint256 liquidityOut)
+        private
+        returns (IButtonswapPair pair, uint256 liquidityOut)
     {
         pair = IButtonswapPair(buttonswapFactory.createPair(address(usdm), address(tokenB1)));
         mintUsdm(address(this), poolUsdm);
@@ -99,7 +98,9 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
         // Transfer from address(this) to userA and validate amount received
         transferAmount = bound(transferAmount, 0, usdm.balanceOf(address(this)));
         usdm.transfer(userA, transferAmount);
-        assertApproxEqAbs(usdm.balanceOf(userA), transferAmount, 2, "Received amount is always within 2 of transferAmount");
+        assertApproxEqAbs(
+            usdm.balanceOf(userA), transferAmount, 2, "Received amount is always within 2 of transferAmount"
+        );
     }
 
     function test_transfer2(uint256 balance, uint256 transferAmount) public {
@@ -121,10 +122,13 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
         // Calculate new user balance by converting transferredShares to tokens
         uint256 expectedUserBalance = IUSDM(address(usdm)).convertToTokens(transferredShares);
 
-        assertEq(usdm.balanceOf(address(this)), expectedBalance, "Curve pool balance should exactly equal expectedCurvePoolBalance");
+        assertEq(
+            usdm.balanceOf(address(this)),
+            expectedBalance,
+            "Curve pool balance should exactly equal expectedCurvePoolBalance"
+        );
         assertEq(usdm.balanceOf(userA), expectedUserBalance, "User balance should exactly equal expectedUserBalance");
     }
-
 
     function test_swapExactTokensForTokens_singleSwapUSDMIn(
         uint256 poolUsdm,
@@ -149,8 +153,10 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
         poolUsdm = usdm.balanceOf(address(pair));
 
         // Estimating how much output a trade would give
-        uint256 routerReceivingAmount = IUSDM(address(usdm)).convertToTokens(IUSDM(address(usdm)).convertToShares(amountIn));
-        uint256 pairReceivingAmount = IUSDM(address(usdm)).convertToTokens(IUSDM(address(usdm)).convertToShares(routerReceivingAmount));
+        uint256 routerReceivingAmount =
+            IUSDM(address(usdm)).convertToTokens(IUSDM(address(usdm)).convertToShares(amountIn));
+        uint256 pairReceivingAmount =
+            IUSDM(address(usdm)).convertToTokens(IUSDM(address(usdm)).convertToShares(routerReceivingAmount));
         uint256 expectedAmountOut = ButtonswapLibrary.getAmountOut(pairReceivingAmount, poolUsdm, poolB);
         // Making sure that expectedAmountOut is positive
         vm.assume(expectedAmountOut > 0);
