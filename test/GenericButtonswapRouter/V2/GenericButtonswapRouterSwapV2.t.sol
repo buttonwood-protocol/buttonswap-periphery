@@ -90,8 +90,8 @@ contract GenericButtonswapRouterSwapV2Test is Test, IGenericButtonswapRouterErro
         (isPausedSetter, isPausedSetterPrivateKey) = makeAddrAndKey("isPausedSetter");
         (paramSetter, paramSetterPrivateKey) = makeAddrAndKey("paramSetter");
         (userA, userAPrivateKey) = makeAddrAndKey("userA");
-        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18);
-        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
+        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18, 1e36);
+        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18, 1e36);
         buttonswapV2FactoryHelper = new ButtonswapV2FactoryHelper();
         buttonswapV2Factory = new ButtonswapV2Factory(
             feeToSetter,
@@ -262,6 +262,7 @@ contract GenericButtonswapRouterSwapV2Test is Test, IGenericButtonswapRouterErro
         // Estimating how much input a trade would take and making amountInMax -1 lower
         uint256 expectedAmountIn = ButtonswapV2Library.getAmountIn(amountOut, poolA, poolB, plBps, feeBps);
         uint256 amountInMax = expectedAmountIn - 1;
+        vm.assume(amountInMax < tokenA.mintableBalance());
 
         // Creating swapSteps for single swap
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);

@@ -74,8 +74,8 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Creating the two tokens
         // Salts are used to fuzz unique addresses in arbitrary order
-        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
-        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18, 1e36);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18, 1e36);
 
         address expectedPairAddress = buttonswapFactory.createPair(address(tokenA), address(tokenB));
         address pairAddress = buttonswapRouter.getPair(address(tokenA), address(tokenB));
@@ -171,7 +171,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         // Creating all the tokens for the path
         address[] memory path = new address[](poolOutAmounts.length);
         for (uint256 idx; idx < path.length; idx++) {
-            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18, 1e36);
             path[idx] = address(token);
         }
 
@@ -236,7 +236,7 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         // Creating all the tokens for the path
         address[] memory path = new address[](poolOutAmounts.length);
         for (uint256 idx; idx < path.length; idx++) {
-            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18, 1e36);
             path[idx] = address(token);
         }
 
@@ -281,8 +281,8 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Creating the two tokens
         // Salts are used to fuzz unique addresses in arbitrary order
-        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
-        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18, 1e36);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18, 1e36);
 
         // Creating the pair with poolA:poolB price ratio
         createAndInitializePair(tokenA, tokenB, poolA, poolB);
@@ -324,8 +324,8 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
 
         // Creating the two tokens
         // Salts are used to fuzz unique addresses in arbitrary order
-        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
-        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18, 1e36);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18, 1e36);
 
         // Creating the pair with poolA:poolB price ratio
         (IButtonswapPair pair,) = createAndInitializePair(tokenA, tokenB, poolA, poolB);

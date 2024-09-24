@@ -127,8 +127,8 @@ contract ButtonswapLibraryTest is Test {
     function testFail_getLiquidityBalances_missingPair(bytes32 saltA, bytes32 saltB) public {
         // Creating the two tokens
         // Salts are used to fuzz unique addresses in arbitrary order
-        MockERC20 tokenA = new MockERC20{salt: saltA}("Token A", "TKN_A");
-        MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B");
+        MockERC20 tokenA = new MockERC20{salt: saltA}("Token A", "TKN_A", 18);
+        MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B", 18);
 
         // Call getReservoirs() without having created the pair
         ButtonswapLibrary.getLiquidityBalances(address(buttonswapFactory), address(tokenA), address(tokenB));
@@ -137,8 +137,8 @@ contract ButtonswapLibraryTest is Test {
     function test_getLiquidityBalances_emptyPair(bytes32 saltA, bytes32 saltB) public {
         // Creating the two tokens
         // Salts are used to fuzz unique addresses in arbitrary order
-        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
-        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18, 1e36);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18, 1e36);
 
         // Create the pair with the factory and two tokens
         buttonswapFactory.createPair(address(tokenA), address(tokenB));
@@ -172,8 +172,8 @@ contract ButtonswapLibraryTest is Test {
 
         // Creating the two tokens
         // Salts are used to fuzz unique addresses in arbitrary order
-        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
-        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18, 1e36);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18, 1e36);
 
         // Create the pair with the factory and two tokens
         // First liquidity mint - determines price-ratios between the assets
@@ -205,8 +205,8 @@ contract ButtonswapLibraryTest is Test {
     function testFail_getPools_missingPair(bytes32 saltA, bytes32 saltB) public {
         // Creating the two tokens
         // Salts are used to fuzz unique addresses in arbitrary order
-        MockERC20 tokenA = new MockERC20{salt: saltA}("Token A", "TKN_A");
-        MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B");
+        MockERC20 tokenA = new MockERC20{salt: saltA}("Token A", "TKN_A", 18);
+        MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B", 18);
 
         // Call getPools() without having created the pair
         ButtonswapLibrary.getPools(address(buttonswapFactory), address(tokenA), address(tokenB));
@@ -215,8 +215,8 @@ contract ButtonswapLibraryTest is Test {
     function test_getPools_emptyPair(bytes32 saltA, bytes32 saltB) public {
         // Creating the two tokens
         // Salts are used to fuzz unique addresses in arbitrary order
-        MockERC20 tokenA = new MockERC20{salt: saltA}("Token A", "TKN_A");
-        MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B");
+        MockERC20 tokenA = new MockERC20{salt: saltA}("Token A", "TKN_A", 18);
+        MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B", 18);
 
         // Create the pair with the factory and two tokens
         buttonswapFactory.createPair(address(tokenA), address(tokenB));
@@ -237,8 +237,8 @@ contract ButtonswapLibraryTest is Test {
 
         // Creating the two tokens
         // Salts are used to fuzz unique addresses in arbitrary order
-        MockERC20 tokenA = new MockERC20{salt: saltA}("Token A", "TKN_A");
-        MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B");
+        MockERC20 tokenA = new MockERC20{salt: saltA}("Token A", "TKN_A", 18);
+        MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B", 18);
 
         // Create the pair with the factory and two tokens
         // Minting liquidity in the pair
@@ -256,8 +256,8 @@ contract ButtonswapLibraryTest is Test {
     function testFail_getReservoirs_missingPair(bytes32 saltA, bytes32 saltB) public {
         // Creating the two tokens
         // Salts are used to fuzz unique addresses in arbitrary order
-        MockERC20 tokenA = new MockERC20{salt: saltA}("Token A", "TKN_A");
-        MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B");
+        MockERC20 tokenA = new MockERC20{salt: saltA}("Token A", "TKN_A", 18);
+        MockERC20 tokenB = new MockERC20{salt: saltB}("Token B", "TKN_B", 18);
 
         // Call getReservoirs() without having created the pair
         ButtonswapLibrary.getReservoirs(address(buttonswapFactory), address(tokenA), address(tokenB));
@@ -266,8 +266,8 @@ contract ButtonswapLibraryTest is Test {
     function test_getReservoirs_emptyPair(bytes32 saltA, bytes32 saltB) public {
         // Creating the two tokens
         // Salts are used to fuzz unique addresses in arbitrary order
-        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
-        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18, 1e36);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18, 1e36);
 
         // Create the pair with the factory and two tokens
         buttonswapFactory.createPair(address(tokenA), address(tokenB));
@@ -299,8 +299,8 @@ contract ButtonswapLibraryTest is Test {
 
         // Creating the two tokens
         // Salts are used to fuzz unique addresses in arbitrary order
-        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
-        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18, 1e36);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18, 1e36);
 
         // Create the pair with the factory and two tokens
         // First liquidity mint - determines price-ratios between the assets
@@ -471,7 +471,7 @@ contract ButtonswapLibraryTest is Test {
         // Creating all the tokens for the path
         address[] memory path = new address[](pathLength);
         for (uint256 idx = 0; idx < pathLength; idx++) {
-            MockERC20 token = new MockERC20("Token", "TKN");
+            MockERC20 token = new MockERC20("Token", "TKN", 18);
             path[idx] = address(token);
         }
 
@@ -507,7 +507,7 @@ contract ButtonswapLibraryTest is Test {
         // Creating all the tokens for the path
         address[] memory path = new address[](poolOutAmounts.length);
         for (uint256 idx; idx < path.length; idx++) {
-            MockERC20 token = new MockERC20("Token", "TKN");
+            MockERC20 token = new MockERC20("Token", "TKN", 18);
             path[idx] = address(token);
         }
 
@@ -549,7 +549,7 @@ contract ButtonswapLibraryTest is Test {
         // Creating all the tokens for the path
         address[] memory path = new address[](pathLength);
         for (uint256 idx = 0; idx < pathLength; idx++) {
-            MockERC20 token = new MockERC20("Token", "TKN");
+            MockERC20 token = new MockERC20("Token", "TKN", 18);
             path[idx] = address(token);
         }
 
@@ -585,7 +585,7 @@ contract ButtonswapLibraryTest is Test {
         // Creating all the tokens for the path
         address[] memory path = new address[](poolOutAmounts.length);
         for (uint256 idx; idx < path.length; idx++) {
-            MockERC20 token = new MockERC20("Token", "TKN");
+            MockERC20 token = new MockERC20("Token", "TKN", 18);
             path[idx] = address(token);
         }
 
@@ -623,7 +623,7 @@ contract ButtonswapLibraryTest is Test {
         // Creating all the tokens for the path
         address[] memory path = new address[](poolOutAmounts.length);
         for (uint256 idx; idx < path.length; idx++) {
-            MockERC20 token = new MockERC20("Token", "TKN");
+            MockERC20 token = new MockERC20("Token", "TKN", 18);
             path[idx] = address(token);
         }
 
@@ -659,8 +659,8 @@ contract ButtonswapLibraryTest is Test {
 
         // Creating the two tokens
         // Salts are used to fuzz unique addresses in arbitrary order
-        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
-        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18, 1e36);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18, 1e36);
 
         // Creating the pair with poolA:poolB price ratio
         ButtonswapPair pair = createAndInitializePairRebasing(tokenA, tokenB, poolA, poolB);
@@ -716,8 +716,8 @@ contract ButtonswapLibraryTest is Test {
 
         // Creating the two tokens
         // Salts are used to fuzz unique addresses in arbitrary order
-        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
-        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+        MockRebasingERC20 tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18, 1e36);
+        MockRebasingERC20 tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18, 1e36);
 
         // Creating the pair with poolA:poolB price ratio
         ButtonswapPair pair = createAndInitializePairRebasing(tokenA, tokenB, poolA, poolB);

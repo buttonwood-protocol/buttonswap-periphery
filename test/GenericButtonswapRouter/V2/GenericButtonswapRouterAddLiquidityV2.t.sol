@@ -98,8 +98,8 @@ contract GenericButtonswapRouterAddLiquidityV2Test is Test, IGenericButtonswapRo
         (isPausedSetter, isPausedSetterPrivateKey) = makeAddrAndKey("isPausedSetter");
         (paramSetter, paramSetterPrivateKey) = makeAddrAndKey("paramSetter");
         (userA, userAPrivateKey) = makeAddrAndKey("userA");
-        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18);
-        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
+        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18, 1e36);
+        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18, 1e36);
 
         buttonswapV2FactoryHelper = new ButtonswapV2FactoryHelper();
         buttonswapV2Factory = new ButtonswapV2Factory(
@@ -597,8 +597,8 @@ contract GenericButtonswapRouterAddLiquidityV2Test is Test, IGenericButtonswapRo
         setupButtonswapV2FactoryParameters(plBps, feeBps);
 
         // Creating new tokens to ensure the pair does not exist
-        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18);
-        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
+        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18, 1e36);
+        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18, 1e36);
 
         // Creating the addLiquidityParams
         addLiquidityParams.operation = ButtonswapOperations.Liquidity.SINGLE;
@@ -647,8 +647,8 @@ contract GenericButtonswapRouterAddLiquidityV2Test is Test, IGenericButtonswapRo
         setupButtonswapV2FactoryParameters(plBps, feeBps);
 
         // Re-assigning tokenA and tokenB to ensure random new pair
-        tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
-        tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+        tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18, 1e36);
+        tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18, 1e36);
 
         // Creating random A1-B1 pair without initializing
         address pair = buttonswapV2Factory.createPair(address(tokenA), address(tokenB), plBps, feeBps);

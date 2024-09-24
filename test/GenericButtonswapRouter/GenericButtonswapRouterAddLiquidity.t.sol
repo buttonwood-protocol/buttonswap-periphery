@@ -120,9 +120,9 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
         (isPausedSetter, isPausedSetterPrivateKey) = makeAddrAndKey("isPausedSetter");
         (paramSetter, paramSetterPrivateKey) = makeAddrAndKey("paramSetter");
         (userA, userAPrivateKey) = makeAddrAndKey("userA");
-        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18);
-        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
-        tokenC = new MockRebasingERC20("TokenC", "TKNC", 18);
+        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18, 1e36);
+        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18, 1e36);
+        tokenC = new MockRebasingERC20("TokenC", "TKNC", 18, 1e36);
         buttonTokenA = new MockButtonToken(address(tokenA));
         buttonTokenB = new MockButtonToken(address(tokenB));
         weth = new MockWeth();
@@ -1375,8 +1375,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
 
     function test_addLiquidityWithReservoir_revertWhenPairDoesNotExist() public {
         // Creating new tokens to ensure the pair does not exist
-        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18);
-        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
+        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18, 1e36);
+        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18, 1e36);
 
         // Creating the addLiquidityParams
         addLiquidityParams.operation = ButtonswapOperations.Liquidity.SINGLE;
@@ -1409,8 +1409,8 @@ contract GenericButtonswapRouterAddLiquidityTest is Test, IGenericButtonswapRout
 
     function test_addLiquidityWithReservoir_revertWhenPairIsNotInitialized(bytes32 saltA, bytes32 saltB) public {
         // Re-assigning tokenA and tokenB to ensure random new pair
-        tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
-        tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+        tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18, 1e36);
+        tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18, 1e36);
 
         // Creating random A1-B1 pair without initializing
         address pair = buttonswapFactory.createPair(address(tokenA), address(tokenB));

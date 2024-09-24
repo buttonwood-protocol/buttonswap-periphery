@@ -117,8 +117,8 @@ contract GenericButtonswapRouterRemoveLiquidityV2Test is Test, IGenericButtonswa
         (isPausedSetter, isPausedSetterPrivateKey) = makeAddrAndKey("isPausedSetter");
         (paramSetter, paramSetterPrivateKey) = makeAddrAndKey("paramSetter");
         (userA, userAPrivateKey) = makeAddrAndKey("userA");
-        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18);
-        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
+        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18, 1e36);
+        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18, 1e36);
 
         buttonswapV2FactoryHelper = new ButtonswapV2FactoryHelper();
         buttonswapV2Factory = new ButtonswapV2Factory(
