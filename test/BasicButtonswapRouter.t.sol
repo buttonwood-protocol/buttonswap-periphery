@@ -71,8 +71,8 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         (isPausedSetter, isPausedSetterPrivateKey) = makeAddrAndKey("isPausedSetter");
         (paramSetter, paramSetterPrivateKey) = makeAddrAndKey("paramSetter");
         (userA, userAPrivateKey) = makeAddrAndKey("userA");
-        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18);
-        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
+        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18, 1e36);
+        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18, 1e36);
         buttonswapFactory = new ButtonswapFactory(
             feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "LP Token", "LP"
         );
@@ -392,8 +392,8 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         uint256 swappedA
     ) public {
         // Re-assigning tokenA and tokenB to fuzz the order of the tokens
-        tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18);
-        tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18);
+        tokenA = new MockRebasingERC20{salt: saltA}("Token A", "TKN_A", 18, 1e36);
+        tokenB = new MockRebasingERC20{salt: saltB}("Token B", "TKN_B", 18, 1e36);
 
         // Minting enough for minimum liquidity requirement
         poolA = bound(poolA, 10000, type(uint112).max);
@@ -1337,7 +1337,7 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         // Creating all the tokens for the path
         address[] memory path = new address[](poolOutAmounts.length);
         for (uint256 idx; idx < path.length; idx++) {
-            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18, 1e36);
             path[idx] = address(token);
         }
 
@@ -1383,7 +1383,7 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         // Creating all the tokens for the path
         address[] memory path = new address[](poolOutAmounts.length);
         for (uint256 idx; idx < path.length; idx++) {
-            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18, 1e36);
             path[idx] = address(token);
         }
 
@@ -1445,7 +1445,7 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         // Creating all the tokens for the path
         address[] memory path = new address[](poolOutAmounts.length);
         for (uint256 idx; idx < path.length; idx++) {
-            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18, 1e36);
             path[idx] = address(token);
         }
 
@@ -1491,7 +1491,7 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         // Creating all the tokens for the path
         address[] memory path = new address[](poolOutAmounts.length);
         for (uint256 idx; idx < path.length; idx++) {
-            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18, 1e36);
             path[idx] = address(token);
         }
 

@@ -96,7 +96,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         (isPausedSetter, isPausedSetterPrivateKey) = makeAddrAndKey("isPausedSetter");
         (paramSetter, paramSetterPrivateKey) = makeAddrAndKey("paramSetter");
         (userA, userAPrivateKey) = makeAddrAndKey("userA");
-        rebasingToken = new MockRebasingERC20("RebasingToken", "rTKN", 18);
+        rebasingToken = new MockRebasingERC20("RebasingToken", "rTKN", 18, 1e36);
         weth = new MockWeth();
         buttonswapFactory = new ButtonswapFactory(
             feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "LP Token", "LP"
@@ -419,7 +419,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         uint256 swappedToken
     ) public {
         // Re-assigning token to fuzz the order of the tokens
-        rebasingToken = new MockRebasingERC20{salt: saltToken}("Rebasing Token", "rTKN", 18);
+        rebasingToken = new MockRebasingERC20{salt: saltToken}("Rebasing Token", "rTKN", 18, 1e36);
 
         // Minting enough for minimum liquidity requirement
         poolToken = bound(poolToken, 10000, type(uint112).max);
@@ -1386,7 +1386,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         // Key thing here is that the first token is not WETH
         address[] memory path = new address[](poolOutAmounts.length);
         for (uint256 idx; idx < path.length; idx++) {
-            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18, 1e36);
             path[idx] = address(token);
         }
 
@@ -1431,7 +1431,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         address[] memory path = new address[](poolOutAmounts.length);
         path[0] = address(weth);
         for (uint256 idx = 1; idx < path.length; idx++) {
-            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18, 1e36);
             path[idx] = address(token);
         }
 
@@ -1485,7 +1485,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         address[] memory path = new address[](poolOutAmounts.length);
         path[0] = address(weth);
         for (uint256 idx = 1; idx < path.length; idx++) {
-            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18, 1e36);
             path[idx] = address(token);
         }
 
@@ -1550,7 +1550,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         // Creating all the tokens for the path (last token is not WETH)
         address[] memory path = new address[](poolOutAmounts.length);
         for (uint256 idx; idx < path.length; idx++) {
-            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18, 1e36);
             path[idx] = address(token);
         }
 
@@ -1591,7 +1591,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         // Creating all the tokens for the path (last token is WETH)
         address[] memory path = new address[](poolOutAmounts.length);
         for (uint256 idx; idx < path.length - 1; idx++) {
-            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18, 1e36);
             path[idx] = address(token);
         }
         path[path.length - 1] = address(weth);
@@ -1642,7 +1642,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         // Creating all the tokens for the path (last token is WETH)
         address[] memory path = new address[](poolOutAmounts.length);
         for (uint256 idx; idx < path.length - 1; idx++) {
-            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18, 1e36);
             path[idx] = address(token);
         }
         path[path.length - 1] = address(weth);
@@ -1711,7 +1711,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         // Creating all the tokens for the path (last token is not WETH)
         address[] memory path = new address[](poolOutAmounts.length);
         for (uint256 idx; idx < path.length; idx++) {
-            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18, 1e36);
             path[idx] = address(token);
         }
 
@@ -1752,7 +1752,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         // Creating all the tokens for the path (last token is WETH)
         address[] memory path = new address[](poolOutAmounts.length);
         for (uint256 idx; idx < path.length - 1; idx++) {
-            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18, 1e36);
             path[idx] = address(token);
         }
         path[path.length - 1] = address(weth);
@@ -1803,7 +1803,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         // Creating all the tokens for the path (last token is WETH)
         address[] memory path = new address[](poolOutAmounts.length);
         for (uint256 idx; idx < path.length - 1; idx++) {
-            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18, 1e36);
             path[idx] = address(token);
         }
         path[path.length - 1] = address(weth);
@@ -1865,7 +1865,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         // Creating all the tokens for the path (first token is not WETH)
         address[] memory path = new address[](poolOutAmounts.length);
         for (uint256 idx; idx < path.length; idx++) {
-            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18, 1e36);
             path[idx] = address(token);
         }
 
@@ -1908,7 +1908,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         address[] memory path = new address[](poolOutAmounts.length);
         path[0] = address(weth);
         for (uint256 idx = 1; idx < path.length; idx++) {
-            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18, 1e36);
             path[idx] = address(token);
         }
 
@@ -1959,7 +1959,7 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         address[] memory path = new address[](poolOutAmounts.length);
         path[0] = address(weth);
         for (uint256 idx = 1; idx < path.length; idx++) {
-            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18);
+            MockRebasingERC20 token = new MockRebasingERC20("Token", "TKN", 18, 1e36);
             path[idx] = address(token);
         }
 

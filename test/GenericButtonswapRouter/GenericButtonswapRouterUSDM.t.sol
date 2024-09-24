@@ -78,7 +78,7 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
         isPausedSetter = makeAddr("isPausedSetter");
         paramSetter = makeAddr("paramSetter");
         (userA, userAPrivateKey) = makeAddrAndKey("userA");
-        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
+        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18, 1e36);
         weth = new MockWeth();
         buttonswapFactory = new ButtonswapFactory(
             feeToSetter, isCreationRestrictedSetter, isPausedSetter, paramSetter, "Token Name", "SYMBOL"
@@ -142,7 +142,7 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
         uint256 amountOutMin
     ) public {
         // Regenerating tokenB to mix up the token order
-        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
+        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18, 1e36);
 
         // Minting enough for minimum liquidity requirement
         poolUsdm = bound(poolUsdm, 10000, type(uint112).max - 3);
@@ -194,7 +194,7 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
         uint256 amountOutMin
     ) public {
         // Regenerating tokenB to mix up the token order
-        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
+        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18, 1e36);
 
         // Minting enough for minimum liquidity requirement
         poolUsdm = bound(poolUsdm, 10000, type(uint112).max);
@@ -242,7 +242,7 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
         uint256 amountInMax
     ) public {
         // Regenerating tokenB to mix up the token order
-        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
+        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18, 1e36);
 
         // Minting enough for minimum liquidity requirement
         poolUsdm = bound(poolUsdm, 10000, type(uint112).max);
@@ -293,7 +293,7 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
         uint256 amountInMax
     ) public {
         // Regenerating tokenB to mix up the token order
-        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
+        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18, 1e36);
 
         // Minting enough for minimum liquidity requirement
         poolUsdm = bound(poolUsdm, 10000, type(uint112).max);

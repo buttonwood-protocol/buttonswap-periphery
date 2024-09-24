@@ -16,6 +16,7 @@ import {MockWeth} from "./../mocks/MockWeth.sol";
 import {MockButtonToken} from "./../mocks/MockButtonToken.sol";
 import {IButtonswapPairErrors} from
     "buttonswap-periphery_buttonswap-core/interfaces/IButtonswapPair/IButtonswapPairErrors.sol";
+import {console} from "buttonswap-periphery_forge-std/console.sol";
 
 contract GenericButtonswapRouterSwapTest is Test, IGenericButtonswapRouterErrors {
     uint256 constant BPS = 10_000;
@@ -70,8 +71,8 @@ contract GenericButtonswapRouterSwapTest is Test, IGenericButtonswapRouterErrors
         (isPausedSetter, isPausedSetterPrivateKey) = makeAddrAndKey("isPausedSetter");
         (paramSetter, paramSetterPrivateKey) = makeAddrAndKey("paramSetter");
         (userA, userAPrivateKey) = makeAddrAndKey("userA");
-        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18);
-        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18);
+        tokenA = new MockRebasingERC20("TokenA", "TKNA", 18, 1e36);
+        tokenB = new MockRebasingERC20("TokenB", "TKNB", 18, 1e36);
         buttonTokenA = new MockButtonToken(address(tokenA));
         weth = new MockWeth();
         buttonswapFactory = new ButtonswapFactory(
@@ -479,6 +480,7 @@ contract GenericButtonswapRouterSwapTest is Test, IGenericButtonswapRouterErrors
         // Estimating how much input a trade would take and making amountInMax -1 lower
         uint256 expectedAmountIn = ButtonswapLibrary.getAmountIn(amountOut, poolA, poolB);
         uint256 amountInMax = expectedAmountIn - 1;
+        vm.assume(amountInMax < tokenA.mintableBalance());
 
         // Creating swapSteps for single swap
         IGenericButtonswapRouter.SwapStep[] memory swapSteps = new IGenericButtonswapRouter.SwapStep[](1);
