@@ -117,7 +117,7 @@ contract GenericButtonswapRouterSwapV2Test is Test, IGenericButtonswapRouterErro
         genericButtonswapRouter = new GenericButtonswapRouter(address(0), address(buttonswapV2Factory), address(0));
     }
 
-    function test_factoryV2() public {
+    function test_factoryV2() public view {
         assertEq(genericButtonswapRouter.v2Factory(), address(buttonswapV2Factory));
     }
 

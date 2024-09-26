@@ -104,11 +104,11 @@ contract ETHButtonswapRouterTest is Test, IButtonswapRouterErrors, IETHButtonswa
         ethButtonswapRouter = new ETHButtonswapRouter(address(buttonswapFactory), address(weth));
     }
 
-    function test_WETH() public {
+    function test_WETH() public view {
         assertEq(ethButtonswapRouter.WETH(), address(weth));
     }
 
-    function test_constructor() public {
+    function test_constructor() public view {
         assertEq(ethButtonswapRouter.WETH(), address(weth));
         assertEq(ethButtonswapRouter.factory(), address(buttonswapFactory));
     }

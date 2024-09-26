@@ -30,11 +30,11 @@ contract RootButtonswapRouterTest is Test, IButtonswapRouterErrors {
         rootButtonswapRouter = new RootButtonswapRouter(address(buttonswapFactory));
     }
 
-    function test_factory() public {
+    function test_factory() public view {
         assertEq(rootButtonswapRouter.factory(), address(buttonswapFactory));
     }
 
-    function test_constructor() public {
+    function test_constructor() public view {
         assertEq(rootButtonswapRouter.factory(), address(buttonswapFactory));
     }
 }

@@ -57,12 +57,12 @@ contract ButtonswapRouterTest is Test, IButtonswapRouterErrors {
         buttonswapRouter = new ButtonswapRouter(address(buttonswapFactory), address(weth));
     }
 
-    function test_constructor() public {
+    function test_constructor() public view {
         assertEq(buttonswapRouter.WETH(), address(weth));
         assertEq(buttonswapRouter.factory(), address(buttonswapFactory));
     }
 
-    function test_getPair_pairDoesNotExist(address tokenA, address tokenB) public {
+    function test_getPair_pairDoesNotExist(address tokenA, address tokenB) public view {
         address pairAddress = buttonswapRouter.getPair(tokenA, tokenB);
         assertEq(pairAddress, address(0), "Pair should not exist");
     }

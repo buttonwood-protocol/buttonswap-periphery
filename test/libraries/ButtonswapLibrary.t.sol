@@ -62,7 +62,7 @@ contract ButtonswapLibraryTest is Test {
         );
     }
 
-    function test_sortTokens_validAddresses(address tokenA, address tokenB) public {
+    function test_sortTokens_validAddresses(address tokenA, address tokenB) public pure {
         // Ensuring that the addresses are not equal
         vm.assume(tokenA != tokenB);
         // Ensuring that the addresses are not zero
@@ -347,7 +347,7 @@ contract ButtonswapLibraryTest is Test {
         ButtonswapLibrary.quote(amountA, poolA, poolB);
     }
 
-    function test_quote_nonzeroValues(uint256 amountA, uint256 poolA, uint256 poolB) public {
+    function test_quote_nonzeroValues(uint256 amountA, uint256 poolA, uint256 poolB) public pure {
         // Ensuring that amountA is non-zero
         vm.assume(amountA > 0);
 
@@ -386,7 +386,7 @@ contract ButtonswapLibraryTest is Test {
         ButtonswapLibrary.getAmountOut(amountIn, poolIn, poolOut);
     }
 
-    function test_getAmountOut_nonZeroValues(uint256 amountIn, uint256 poolIn, uint256 poolOut) public {
+    function test_getAmountOut_nonZeroValues(uint256 amountIn, uint256 poolIn, uint256 poolOut) public pure {
         // Ensuring that amountIn is non-zero
         vm.assume(amountIn > 0);
 
@@ -422,7 +422,7 @@ contract ButtonswapLibraryTest is Test {
         ButtonswapLibrary.getAmountIn(amountOut, poolIn, poolOut);
     }
 
-    function test_getAmountIn_nonZeroValues(uint256 amountOut, uint256 poolIn, uint256 poolOut) public {
+    function test_getAmountIn_nonZeroValues(uint256 amountOut, uint256 poolIn, uint256 poolOut) public pure {
         // Ensuring that amountIn is non-zero
         vm.assume(amountOut > 0);
 

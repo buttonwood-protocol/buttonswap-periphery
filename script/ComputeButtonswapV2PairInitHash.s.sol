@@ -6,7 +6,7 @@ import {console} from "buttonswap-periphery_forge-std/console.sol";
 import {ButtonswapV2Pair} from "buttonswap-periphery_buttonswap-v2-core/ButtonswapV2Pair.sol";
 
 contract ComputeButtonswapV2PairInitHash is Script {
-    function run() external view {
+    function run() external pure {
         bytes32 initHashCode = keccak256(abi.encodePacked(type(ButtonswapV2Pair).creationCode));
         console.log("The initHashCode is as follows:");
         console.logBytes32(initHashCode);

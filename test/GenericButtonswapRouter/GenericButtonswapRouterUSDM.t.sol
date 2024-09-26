@@ -88,7 +88,7 @@ contract GenericButtonswapRouterUSDMTest is Test, IGenericButtonswapRouterErrors
         usdm = IERC20(0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C);
     }
 
-    function test_validateUSDM() public {
+    function test_validateUSDM() public view {
         assertEq(usdm.symbol(), "USDM", "USDM symbol should be USDM");
     }
 

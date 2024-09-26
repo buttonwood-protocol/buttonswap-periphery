@@ -81,15 +81,15 @@ contract GenericButtonswapRouterSwapTest is Test, IGenericButtonswapRouterErrors
         genericButtonswapRouter = new GenericButtonswapRouter(address(buttonswapFactory), address(0), address(weth));
     }
 
-    function test_factory() public {
+    function test_factory() public view {
         assertEq(genericButtonswapRouter.factory(), address(buttonswapFactory));
     }
 
-    function test_WETH() public {
+    function test_WETH() public view {
         assertEq(genericButtonswapRouter.WETH(), address(weth));
     }
 
-    function test_constructor() public {
+    function test_constructor() public view {
         assertEq(genericButtonswapRouter.WETH(), address(weth));
         assertEq(genericButtonswapRouter.factory(), address(buttonswapFactory));
     }
