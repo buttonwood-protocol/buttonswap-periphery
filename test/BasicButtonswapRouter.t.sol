@@ -79,7 +79,7 @@ contract BasicButtonswapRouterTest is Test, IButtonswapRouterErrors {
         basicButtonswapRouter = new BasicButtonswapRouter(address(buttonswapFactory));
     }
 
-    function test_constructor() public {
+    function test_constructor() public view {
         assertEq(basicButtonswapRouter.factory(), address(buttonswapFactory));
     }
 
